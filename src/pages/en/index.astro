@@ -1,0 +1,31 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import HeroBanner from '../../components/HeroBanner.astro';
+import MissionSection from '../../components/MissionSection.astro';
+import ActionsSection from '../../components/ActionsSection.astro';
+import NewsSection from '../../components/NewsSection.astro';
+import PartnersSection from '../../components/PartnersSection.astro';
+import ContactSection from '../../components/ContactSection.astro';
+---
+
+<Layout 
+  title="Home" 
+  description="Wergu Yaram - Program for inclusive digitalization of healthcare facilities"
+  lang="en"
+>
+  <HeroBanner
+    title="Together, let's be tomorrow's heroes"
+    subtitle="Program for inclusive digitalization of healthcare facilities"
+    buttonText="Discover our mission"
+    buttonLink="#mission"
+    secondaryButtonText="Our actions"
+    secondaryButtonLink="#actions"
+    image="https://images.pexels.com/photos/7578906/pexels-photo-7578906.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+  />
+  
+  <MissionSection lang="en" />
+  <ActionsSection lang="en" />
+  <NewsSection lang="en" />
+  <PartnersSection lang="en" />
+  <ContactSection lang="en" />
+</Layout>

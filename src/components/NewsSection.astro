@@ -1,0 +1,329 @@
+---
+import SectionTitle from './SectionTitle.astro';
+
+const { lang = 'fr' } = Astro.props;
+
+// Sample news articles
+const newsItems = {
+  fr: [
+    {
+      title: "Partenariat entre Eyone Medical et Ecobank dans le cadre du pacte Wergu Yaram",
+      summary: "Dans le cadre du pacte Wergu Yaram, Eyone Medical et Ecobank s'unissent afin de contribuer à la digitalisation des structures de santé au Sénégal, avec comme point de départ un don de 40 ordinateurs de la part d'Ecobank.",
+      date: "2025-05-08",
+      image: "https://i.ibb.co/n8Pb1jYm/Eyone-x-Ecobank.jpg"
+    },
+    {
+      title: "Formation de 200 professionnels de santé aux outils numériques",
+      summary: "Notre programme de renforcement des capacités a permis de former 200 médecins et infirmiers à l'utilisation des outils de santé numérique.",
+      date: "2023-02-08",
+      image: "https://images.pexels.com/photos/3846005/pexels-photo-3846005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+    }
+  ],
+  en: [
+    {
+      title: "Partnership between Eyone Medical and Ecobank as part of the Wergu Yaram pact",
+      summary: "As part of the Wergu Yaram pact, Eyone Medical and Ecobank are joining forces to contribute to the digitisation of healthcare facilities in Senegal, starting with a donation of 40 computers from Ecobank.",
+      date: "2025-05-08",
+      image: "https://i.ibb.co/n8Pb1jYm/Eyone-x-Ecobank.jpg"
+    },
+    {
+      title: "Training of 200 healthcare professionals in digital tools",
+      summary: "Our capacity building program has trained 200 doctors and nurses in the use of digital health tools.",
+      date: "2023-02-08",
+      image: "https://images.pexels.com/photos/3846005/pexels-photo-3846005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+    }
+  ]
+};
+
+const content = {
+  fr: {
+    title: "Actualités",
+    subtitle: "Restez informé des dernières initiatives et avancées",
+    prev: "Précédent",
+    next: "Suivant"
+  },
+  en: {
+    title: "News",
+    subtitle: "Stay informed about the latest initiatives and progress",
+    prev: "Previous",
+    next: "Next"
+  }
+};
+
+const { title, subtitle, prev, next } = content[lang];
+const articles = newsItems[lang];
+
+// Format date according to language
+function formatDate(dateString: string, language: string) {
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  return date.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', options);
+}
+---
+
+<section id="news" class="section bg-gray-50">
+  <div class="container-custom">
+    <SectionTitle title={title} subtitle={subtitle} />
+    
+    <div class="relative max-w-5xl mx-auto opacity-0 translate-y-4" data-animate>
+      <!-- Carousel Container -->
+      <div class="carousel-container overflow-hidden relative rounded-xl shadow-lg bg-white">
+        <div class="carousel-track flex transition-all duration-700 ease-out">
+          {articles.map((article, index) => (
+            <div class="carousel-slide w-full flex-shrink-0 opacity-0 transition-opacity duration-500">
+              <div class="grid md:grid-cols-2 h-full">
+                <div class="relative h-64 md:h-full overflow-hidden">
+                  <img 
+                    src={article.image} 
+                    alt={article.title}
+                    class="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                  <div class="absolute top-4 left-4 bg-primary-500 text-white px-3 py-1 rounded-md text-sm transform transition-transform duration-300 hover:scale-105">
+                    {formatDate(article.date, lang)}
+                  </div>
+                </div>
+                
+                <div class="p-8 flex flex-col justify-center">
+                  <h3 class="text-2xl font-bold mb-4 text-gray-800 transform transition-all duration-300 hover:text-primary-600">
+                    {article.title}
+                  </h3>
+                  <p class="text-gray-600">
+                    {article.summary}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <!-- Navigation Arrows -->
+        <button 
+          class="carousel-nav prev absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-300 backdrop-blur-sm opacity-0 scale-95"
+          aria-label={prev}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <button 
+          class="carousel-nav next absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-300 backdrop-blur-sm opacity-0 scale-95"
+          aria-label={next}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Indicators -->
+      <div class="flex justify-center mt-6 space-x-2">
+        {articles.map((_, index) => (
+          <button
+            class="carousel-indicator w-2 h-2 rounded-full bg-gray-300 transition-all duration-300 ease-out transform hover:scale-125"
+            aria-label={`Slide ${index + 1}`}
+            data-index={index}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .carousel-container {
+    height: 500px;
+  }
+  
+  .carousel-track {
+    width: 300%;
+  }
+  
+  .carousel-slide {
+    width: 33.333%;
+  }
+  
+  .carousel-nav {
+    opacity: 0;
+    transform: translate(0, -50%) scale(0.95);
+  }
+  
+  .carousel-container:hover .carousel-nav {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+  
+  .carousel-indicator.active {
+    @apply bg-primary-500 w-4;
+    transform: scale(1.1);
+  }
+  
+  @media (max-width: 768px) {
+    .carousel-container {
+      height: auto;
+    }
+    
+    .carousel-nav {
+      opacity: 1;
+      transform: translate(0, -50%) scale(1);
+    }
+  }
+</style>
+
+<script>
+  const track = document.querySelector('.carousel-track');
+  const slides = document.querySelectorAll('.carousel-slide');
+  const indicators = document.querySelectorAll('.carousel-indicator');
+  const prevButton = document.querySelector('.carousel-nav.prev');
+  const nextButton = document.querySelector('.carousel-nav.next');
+  const container = document.querySelector('[data-animate]');
+  
+  let currentIndex = 0;
+  let autoplayInterval: number;
+  let isTransitioning = false;
+  
+  // Intersection Observer for fade-in animation
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove('opacity-0', 'translate-y-4');
+        entry.target.classList.add('transition-all', 'duration-1000', 'ease-out');
+        observer.unobserve(entry.target);
+        
+        // Initialize carousel after fade-in
+        setTimeout(() => {
+          initializeCarousel();
+        }, 500);
+      }
+    });
+  }, {
+    threshold: 0.2
+  });
+  
+  if (container) {
+    observer.observe(container);
+  }
+  
+  function initializeCarousel() {
+    updateCarousel(true);
+    startAutoplay();
+    
+    // Show first slide
+    const firstSlide = slides[0] as HTMLElement;
+    if (firstSlide) {
+      firstSlide.style.opacity = '1';
+    }
+  }
+  
+  // Navigation buttons
+  prevButton?.addEventListener('click', () => {
+    if (isTransitioning) return;
+    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+    updateCarousel();
+    resetAutoplay();
+  });
+  
+  nextButton?.addEventListener('click', () => {
+    if (isTransitioning) return;
+    currentIndex = (currentIndex + 1) % slides.length;
+    updateCarousel();
+    resetAutoplay();
+  });
+  
+  // Indicator buttons
+  indicators.forEach((indicator, index) => {
+    indicator.addEventListener('click', () => {
+      if (isTransitioning || currentIndex === index) return;
+      currentIndex = index;
+      updateCarousel();
+      resetAutoplay();
+    });
+  });
+  
+  // Update carousel position and indicators
+  function updateCarousel(isInitial = false) {
+    if (!track) return;
+    
+    isTransitioning = true;
+    
+    // Fade out current slide
+    slides.forEach((slide: Element) => {
+      (slide as HTMLElement).style.opacity = '0';
+    });
+    
+    // Update track position
+    const offset = -currentIndex * 100;
+    track.style.transform = `translateX(${offset}%)`;
+    
+    // Fade in new slide after position update
+    setTimeout(() => {
+      const currentSlide = slides[currentIndex] as HTMLElement;
+      if (currentSlide) {
+        currentSlide.style.opacity = '1';
+      }
+      isTransitioning = false;
+    }, isInitial ? 0 : 500);
+    
+    // Update indicators
+    indicators.forEach((indicator, index) => {
+      indicator.classList.toggle('active', index === currentIndex);
+    });
+  }
+  
+  // Autoplay functionality
+  function startAutoplay() {
+    autoplayInterval = setInterval(() => {
+      if (!isTransitioning) {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateCarousel();
+      }
+    }, 5000);
+  }
+  
+  function resetAutoplay() {
+    clearInterval(autoplayInterval);
+    startAutoplay();
+  }
+  
+  // Pause autoplay on hover
+  const carouselContainer = document.querySelector('.carousel-container');
+  carouselContainer?.addEventListener('mouseenter', () => clearInterval(autoplayInterval));
+  carouselContainer?.addEventListener('mouseleave', startAutoplay);
+  
+  // Touch support
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  carouselContainer?.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    clearInterval(autoplayInterval);
+  });
+  
+  carouselContainer?.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+    startAutoplay();
+  });
+  
+  function handleSwipe() {
+    if (isTransitioning) return;
+    
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        // Swipe left
+        currentIndex = (currentIndex + 1) % slides.length;
+      } else {
+        // Swipe right
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      }
+      updateCarousel();
+    }
+  }
+</script>

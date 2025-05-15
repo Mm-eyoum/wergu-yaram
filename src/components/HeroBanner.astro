@@ -1,0 +1,72 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  image: string;
+  overlay?: boolean;
+}
+
+const { 
+  title, 
+  subtitle, 
+  buttonText, 
+  buttonLink = '#', 
+  secondaryButtonText, 
+  secondaryButtonLink = '#',
+  image,
+  overlay = true
+} = Astro.props;
+---
+
+<section class="relative bg-gray-900 h-screen-80 min-h-[600px] flex items-center justify-center overflow-hidden">
+  <!-- Background Image -->
+  <div class="absolute inset-0 z-0">
+    <img 
+      src="https://i.ibb.co/mVzZq8Pb/bg.png" 
+      alt="" 
+      class="w-full h-full object-cover" 
+      fetchpriority="high"
+    />
+    {overlay && <div class="absolute inset-0 bg-gradient-to-r from-primary-900/80 to-secondary-900/70"></div>}
+  </div>
+
+  <!-- Content -->
+  <div class="container-custom relative z-10 text-white">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight fade-in">
+        {title}
+      </h1>
+      
+      {subtitle && (
+        <p class="text-xl md:text-2xl mb-8 opacity-90 slide-up">
+          {subtitle}
+        </p>
+      )}
+      
+      <div class="flex flex-wrap justify-center gap-4 mt-8">
+        {buttonText && (
+          <a href={buttonLink} class="btn btn-primary text-lg px-8 py-4">
+            {buttonText}
+          </a>
+        )}
+        
+        {secondaryButtonText && (
+          <a href={secondaryButtonLink} class="btn bg-white text-primary-900 hover:bg-gray-100 text-lg px-8 py-4">
+            {secondaryButtonText}
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll Indicator -->
+  <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
+  </div>
+</section>

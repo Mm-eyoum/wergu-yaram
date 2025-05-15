@@ -1,0 +1,97 @@
+---
+const currentPath = Astro.url.pathname;
+const isEnglish = currentPath.startsWith('/en');
+
+const currentHash = Astro.url.hash;
+---
+
+<div class="relative group">
+  <button 
+    class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white font-medium"
+    aria-label={isEnglish ? "Change language" : "Changer de langue"}
+    aria-expanded="false"
+  >
+    <svg 
+      class="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      stroke-width="2" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+    >
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      <path d="M2 12h20"/>
+    </svg>
+    <span class="text-sm tracking-wide">{isEnglish ? 'EN' : 'FR'}</span>
+    <svg 
+      class="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      stroke-width="2" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+
+  <div class="absolute right-0 mt-2 w-36 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right">
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+      <a 
+        href={`/${currentHash}`}
+        class={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-200 ${!isEnglish ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50 text-gray-700'}`}
+        data-lang="fr"
+      >
+        <span class="font-medium">Français</span>
+        {!isEnglish && (
+          <svg class="w-4 h-4 ml-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        )}
+      </a>
+      <a 
+        href={`/en${currentHash}`}
+        class={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-200 ${isEnglish ? 'bg-primary-50 text-primary-700' : 'hover:bg-gray-50 text-gray-700'}`}
+        data-lang="en"
+      >
+        <span class="font-medium">English</span>
+        {isEnglish && (
+          <svg class="w-4 h-4 ml-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        )}
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Preserve scroll position when switching languages
+  const languageLinks = document.querySelectorAll('[data-lang]');
+  
+  languageLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const href = (e.currentTarget as HTMLAnchorElement).href;
+      const scrollPosition = window.scrollY;
+      
+      // Store scroll position
+      sessionStorage.setItem('scrollPosition', scrollPosition.toString());
+      
+      // Navigate to new language version
+      window.location.href = href;
+    });
+  });
+
+  // Restore scroll position after page load
+  window.addEventListener('load', () => {
+    const savedPosition = sessionStorage.getItem('scrollPosition');
+    if (savedPosition) {
+      window.scrollTo(0, parseInt(savedPosition));
+      sessionStorage.removeItem('scrollPosition');
+    }
+  });
+</script>

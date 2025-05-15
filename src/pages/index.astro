@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeroBanner from '../components/HeroBanner.astro';
+import MissionSection from '../components/MissionSection.astro';
+import ActionsSection from '../components/ActionsSection.astro';
+import NewsSection from '../components/NewsSection.astro';
+import PartnersSection from '../components/PartnersSection.astro';
+import ContactSection from '../components/ContactSection.astro';
+---
+
+<Layout 
+  title="Accueil" 
+  description="Wergu Yaram - Programme de digitalisation inclusive des structures de santé"
+>
+  <HeroBanner
+    title="Ensemble, soyons les héros de demain"
+    subtitle="Programme de digitalisation inclusive des structures de santé"
+    buttonText="Découvrir notre mission"
+    buttonLink="#mission"
+    secondaryButtonText="Nos actions"
+    secondaryButtonLink="#actions"
+    image="https://images.pexels.com/photos/7578906/pexels-photo-7578906.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+  />
+  
+  <MissionSection lang="fr" />
+  <ActionsSection lang="fr" />
+  <NewsSection lang="fr" />
+  <PartnersSection lang="fr" />
+  <ContactSection lang="fr" />
+</Layout>

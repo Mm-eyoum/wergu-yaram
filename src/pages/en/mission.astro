@@ -1,0 +1,120 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SectionTitle from '../../components/SectionTitle.astro';
+import MissionSection from '../../components/MissionSection.astro';
+---
+
+<Layout 
+  title="Mission" 
+  description="Discover Wergu Yaram's mission and our approach to digitalizing healthcare facilities"
+  lang="en"
+>
+  <div class="pt-32 pb-12 bg-primary-50">
+    <div class="container-custom">
+      <SectionTitle 
+        title="Our Mission" 
+        subtitle="An innovative approach to transform healthcare through digital solutions"
+      />
+    </div>
+  </div>
+  
+  <MissionSection lang="en" />
+  
+  <section class="section">
+    <div class="container-custom">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2 class="text-3xl font-bold mb-6 text-primary-700">Our commitment to SDG 3</h2>
+          <p class="text-lg mb-4">
+            The Wergu Yaram program is fundamentally aligned with the United Nations Sustainable Development Goal 3: "Ensure healthy lives and promote well-being for all at all ages."
+          </p>
+          <p class="text-lg mb-6">
+            Our initiatives to digitalize healthcare facilities aim to strengthen health systems, improve access to services, and optimize the quality of care, particularly in underserved areas.
+          </p>
+          <ul class="space-y-2 mb-6">
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Improving access to essential healthcare services</span>
+            </li>
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Building capacity of healthcare professionals</span>
+            </li>
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Optimizing health data management</span>
+            </li>
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Developing solutions adapted to local contexts</span>
+            </li>
+          </ul>
+        </div>
+        <div class="rounded-lg overflow-hidden shadow-xl">
+          <img 
+            src="https://images.pexels.com/photos/3952240/pexels-photo-3952240.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
+            alt="Healthcare professional using a digital solution" 
+            class="w-full h-auto"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="section bg-primary-50">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <h2 class="text-3xl font-bold mb-6">Our vision for the future</h2>
+        <p class="text-lg">
+          We aspire to create a digital health ecosystem where every individual, regardless of location or socioeconomic status, can benefit from quality medical care.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="rounded-full bg-primary-100 w-16 h-16 flex items-center justify-center mb-4 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-3 text-center">Universal Healthcare</h3>
+          <p class="text-gray-600 text-center">
+            Ensuring access to care for everyone, everywhere, through inclusive digital solutions.
+          </p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="rounded-full bg-primary-100 w-16 h-16 flex items-center justify-center mb-4 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-3 text-center">Responsible Innovation</h3>
+          <p class="text-gray-600 text-center">
+            Developing technologies that address real needs while respecting ethical standards.
+          </p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="rounded-full bg-primary-100 w-16 h-16 flex items-center justify-center mb-4 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-3 text-center">Connected Ecosystem</h3>
+          <p class="text-gray-600 text-center">
+            Creating an integrated network where patients, professionals, and healthcare facilities collaborate effectively.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

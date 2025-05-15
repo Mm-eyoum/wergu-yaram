@@ -1,0 +1,86 @@
+---
+import SectionTitle from './SectionTitle.astro';
+
+const { lang = 'fr' } = Astro.props;
+
+const content = {
+  fr: {
+    title: "Nos Partenaires",
+    subtitle: "Ensemble pour transformer la santé numérique",
+    description: "Wergu Yaram collabore avec un réseau diversifié de partenaires qui partagent notre vision d'une santé numérique inclusive et efficace.",
+    partners: [
+      {
+        name: "Eyone Medical",
+        logo: "https://i.ibb.co/C5NrBDxy/Logo-Eyone.jpg",
+      },
+      {
+        name: "Ministère de la Santé et de l'Action Sociale",
+        logo: "https://i.ibb.co/5WdfVNHY/msas.jpg",
+      },
+      {
+        name: "Groupe Sonatel",
+        logo: "https://i.ibb.co/N2b17w6n/sonatel.jpg",
+      },
+      {
+        name: "Ecobank",
+        logo: "https://i.ibb.co/4nVkvBBK/ecobank.jpg",
+      },
+      {
+        name: "Univers Telecom",
+        logo: "https://i.ibb.co/Y4njXGpw/Univers-Telecom-Logo.jpg",
+      },
+    ]
+  },
+  en: {
+    title: "Our Partners",
+    subtitle: "Together to transform digital health",
+    description: "Wergu Yaram collaborates with a diverse network of partners who share our vision of inclusive and effective digital health.",
+    partners: [
+      {
+        name: "Eyone Medical",
+        logo: "https://i.ibb.co/C5NrBDxy/Logo-Eyone.jpg",
+      },
+      {
+        name: "Ministry of Health",
+        logo: "https://i.ibb.co/5WdfVNHY/msas.jpg",
+      },
+      {
+        name: "Sonatel Group",
+        logo: "https://i.ibb.co/N2b17w6n/sonatel.jpg",
+      },
+      {
+        name: "Ecobank",
+        logo: "https://i.ibb.co/4nVkvBBK/ecobank.jpg",
+      },
+      {
+        name: "Univers Telecom",
+        logo: "https://i.ibb.co/Y4njXGpw/Univers-Telecom-Logo.jpg",
+      },
+    ]
+  }
+};
+
+const { title, subtitle, description, partners } = content[lang];
+---
+
+<section id="partners" class="section">
+  <div class="container-custom">
+    <SectionTitle title={title} subtitle={subtitle} />
+    
+    <p class="text-center text-lg text-gray-600 max-w-3xl mx-auto mb-12">
+      {description}
+    </p>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {partners.map(partner => (
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col items-center text-center">
+          <div class="bg-gray-50 p-4 rounded-lg mb-4 w-full flex items-center justify-center h-32">
+            <img src={partner.logo} alt={partner.name} class="max-h-20" />
+          </div>
+          <h3 class="text-xl font-semibold mb-2">{partner.name}</h3>
+          <p class="text-gray-600">{partner.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

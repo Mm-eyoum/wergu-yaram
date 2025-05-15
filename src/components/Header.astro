@@ -1,0 +1,135 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+const currentPath = Astro.url.pathname;
+const isEnglish = currentPath.startsWith('/en');
+
+const navItems = [
+  ['#home', 'Accueil', 'Home'],
+  ['#mission', 'Mission', 'Mission'],
+  ['#actions', 'Actions', 'Actions'],
+  ['#news', 'Actualités', 'News'],
+  ['#partners', 'Partenaires', 'Partners'],
+  ['#contact', 'Contact', 'Contact'],
+];
+---
+
+<header>
+  <!-- Logo -->
+  <a href="#home" class="fixed top-6 left-8 z-50 flex items-center space-x-2">
+    <img 
+      src="https://i.ibb.co/MxgRNrX9/8.png" 
+      alt="Wergu Yaram Logo" 
+      class="h-24 w-auto transform transition-transform duration-300 hover:scale-105" 
+      style="transform-origin: center;"
+    />
+  </a>
+
+  <!-- Desktop Navigation -->
+  <nav class="nav-menu hidden lg:flex flex-col items-center space-y-6">
+    {navItems.map(([anchor, frText, enText]) => (
+      <a 
+        href={anchor}
+        class="nav-link"
+        data-section={anchor.substring(1)}
+      >
+        {isEnglish ? enText : frText}
+      </a>
+    ))}
+    
+    <div class="mt-4 pt-4 border-t border-white/20">
+      <LanguageSwitcher />
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Toggle -->
+  <button id="mobile-menu-toggle" class="lg:hidden fixed top-6 right-8 z-50 bg-primary-500 text-white p-2 rounded-lg">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+  </button>
+
+  <!-- Mobile Navigation Menu -->
+  <div id="mobile-menu" class="hidden lg:hidden fixed inset-0 bg-primary-500/95 backdrop-blur-sm z-40">
+    <div class="container-custom h-full flex flex-col items-center justify-center space-y-6">
+      {navItems.map(([anchor, frText, enText]) => (
+        <a 
+          href={anchor}
+          class="nav-link mobile text-2xl"
+          data-section={anchor.substring(1)}
+        >
+          {isEnglish ? enText : frText}
+        </a>
+      ))}
+      
+      <div class="mt-8 pt-8 border-t border-white/20">
+        <LanguageSwitcher />
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Mobile menu toggle functionality
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileLinks = document.querySelectorAll('.nav-link.mobile');
+
+  if (mobileMenuToggle && mobileMenu) {
+    mobileMenuToggle.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+      document.body.classList.toggle('overflow-hidden');
+    });
+
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      });
+    });
+  }
+
+  // Active section detection
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const observerOptions = {
+    root: null,
+    rootMargin: '-20% 0px -80% 0px',
+    threshold: 0
+  };
+
+  function updateActiveSection(entries) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const activeId = entry.target.id;
+        navLinks.forEach(link => {
+          const section = link.getAttribute('data-section');
+          if (section === activeId) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+    });
+  }
+
+  const observer = new IntersectionObserver(updateActiveSection, observerOptions);
+  sections.forEach(section => observer.observe(section));
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      const targetElement = document.querySelector(targetId);
+      
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+</script>
