@@ -114,6 +114,8 @@ const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSc2oW1y
           <input type="hidden" name="entry.xxxxxxxxx" value={new Date().toISOString()} />
           
           <div>
+          
+          <div class="g-recaptcha" data-sitekey="6Le1PUErAAAAAB0LhHlAA4oEEMGpWCCGZqwKQOiA"></div>
             <button
               type="submit"
               class="w-full btn btn-primary"
@@ -209,6 +211,13 @@ const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/u/0/d/e/1FAIpQLSc2oW1y
     });
 
     contactForm.addEventListener('submit', (e) => {
+      const token = grecaptcha.getResponse();
+if (!token) {
+e.preventDefault();
+formError.textContent = "Veuillez cocher le CAPTCHA.";
+formError.classList.remove('hidden');
+return;
+}
       // Let the form submit to the Google Form
       setTimeout(() => {
         formSuccess?.classList.remove('hidden');
