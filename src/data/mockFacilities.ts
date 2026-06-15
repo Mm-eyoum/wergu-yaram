@@ -1,0 +1,93 @@
+import type { Facility } from "@/types/domain";
+
+const img = (id: string) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1200&q=70`;
+
+export const facilities: Facility[] = [
+  {
+    slug: "chn-fann",
+    name: "Centre Hospitalier National de Fann",
+    type: "Hôpital public",
+    region: "Dakar",
+    city: "Dakar",
+    address: "Avenue Cheikh Anta Diop, Fann Résidence, Dakar",
+    phone: "+221 33 869 18 18",
+    email: "contact@chnfann.sn",
+    cover: img("photo-1519494026892-80bbd2d6fd0d"),
+    description:
+      "Le Centre Hospitalier National de Fann est un établissement public de référence à Dakar. Il propose des soins spécialisés, un plateau technique complet et accueille de nombreux patients chaque jour.",
+    specialties: ["Cardiologie", "Neurologie", "Pneumologie", "Endocrinologie", "Maladies infectieuses", "Psychiatrie"],
+    services: ["Urgences 24h/24", "Hospitalisation", "Consultations spécialisées", "Imagerie médicale", "Laboratoire d'analyses", "Pharmacie"],
+    capacity: "Plus de 500 lits",
+    hours: "Urgences 24h/24 · Consultations 8h-17h",
+    rating: 4.2,
+    reviewsCount: 248,
+    doctors: [
+      { name: "Dr Aminata Fall", specialty: "Cardiologue" },
+      { name: "Dr Cheikh Mbaye", specialty: "Neurologue" },
+      { name: "Dr Mariama Sy", specialty: "Endocrinologue" },
+    ],
+    reviews: [
+      { author: "Ousmane D.", rating: 5, comment: "Personnel attentif et soins de qualité.", date: "2026-05-02" },
+      { author: "Khady N.", rating: 4, comment: "Bonne prise en charge mais attente un peu longue.", date: "2026-04-18" },
+    ],
+    coords: { lat: 14.6928, lng: -17.4607 },
+    equipmentNeeds: ["bloc-operatoire-fann", "echographe-pediatrie"],
+    verified: true,
+  },
+  {
+    slug: "hopital-principal-dakar",
+    name: "Hôpital Principal de Dakar",
+    type: "Hôpital public",
+    region: "Dakar",
+    city: "Dakar",
+    address: "1 Avenue Nelson Mandela, Dakar",
+    phone: "+221 33 839 50 50",
+    email: "contact@hpd.sn",
+    cover: img("photo-1586773860418-d37222d8fce3"),
+    description:
+      "Établissement hospitalier majeur de Dakar offrant une large gamme de services médicaux et chirurgicaux.",
+    specialties: ["Chirurgie", "Cardiologie", "Pédiatrie", "Maternité", "Pneumologie"],
+    services: ["Urgences", "Bloc opératoire", "Maternité", "Imagerie", "Laboratoire"],
+    capacity: "Environ 450 lits",
+    hours: "Urgences 24h/24 · Consultations 8h-16h",
+    rating: 4.4,
+    reviewsCount: 312,
+    doctors: [
+      { name: "Dr Ibrahima Sow", specialty: "Chirurgien" },
+      { name: "Dr Ndèye Diop", specialty: "Pédiatre" },
+    ],
+    reviews: [
+      { author: "Fatou B.", rating: 5, comment: "Excellente maternité.", date: "2026-05-10" },
+    ],
+    coords: { lat: 14.6644, lng: -17.4357 },
+    equipmentNeeds: ["lits-medicalises"],
+    verified: true,
+  },
+  {
+    slug: "centre-sante-thies",
+    name: "Centre de Santé de Thiès",
+    type: "Centre de santé",
+    region: "Thiès",
+    city: "Thiès",
+    address: "Quartier Médina Fall, Thiès",
+    phone: "+221 33 951 12 34",
+    email: "contact@cs-thies.sn",
+    cover: img("photo-1538108149393-fbbd81895907"),
+    description:
+      "Centre de santé de proximité offrant consultations générales, suivi maternel et vaccination.",
+    specialties: ["Médecine générale", "Santé maternelle", "Vaccination"],
+    services: ["Consultations", "Vaccination", "Suivi de grossesse", "Pharmacie"],
+    capacity: "60 lits",
+    hours: "8h-18h",
+    rating: 4.0,
+    reviewsCount: 96,
+    doctors: [{ name: "Dr Sokhna Diagne", specialty: "Médecin généraliste" }],
+    reviews: [{ author: "Modou F.", rating: 4, comment: "Accueil chaleureux.", date: "2026-04-01" }],
+    coords: { lat: 14.7886, lng: -16.9246 },
+    equipmentNeeds: ["concentrateur-oxygene"],
+    verified: true,
+  },
+];
+
+export const facilityBySlug = (slug: string) => facilities.find((f) => f.slug === slug);

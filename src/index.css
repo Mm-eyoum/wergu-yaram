@@ -1,0 +1,60 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-page text-text-primary font-sans antialiased;
+  }
+
+  /* Visible focus for keyboard users (a11y) */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-teal ring-offset-2 ring-offset-white;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-text-primary font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  }
+
+  .card-surface {
+    @apply rounded-3xl border border-border-soft bg-surface-card shadow-soft;
+  }
+
+  .link-muted {
+    @apply text-text-secondary transition-colors hover:text-brand-green;
+  }
+}
+
+/* Thin, calm scrollbars for chat / message panes */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cdd9e0 transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: #cdd9e0;
+  border-radius: 999px;
+}

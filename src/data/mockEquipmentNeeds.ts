@@ -1,0 +1,127 @@
+import type { EquipmentNeed } from "@/types/domain";
+
+const img = (id: string) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
+
+export const equipmentNeeds: EquipmentNeed[] = [
+  {
+    id: "bloc-operatoire-fann",
+    title: "Construction d'un bloc opératoire",
+    facilitySlug: "chn-fann",
+    facilityName: "Centre Hospitalier de Sédhiou",
+    region: "Sédhiou",
+    category: "Infrastructure",
+    urgency: "urgent",
+    status: "en_cours",
+    cover: img("photo-1519494026892-80bbd2d6fd0d"),
+    shortDescription:
+      "Équiper un bloc opératoire moderne pour permettre les interventions chirurgicales d'urgence dans la région.",
+    description:
+      "Le Centre Hospitalier de Sédhiou ne dispose pas d'un bloc opératoire fonctionnel pour les urgences chirurgicales. Les patients doivent être évacués vers d'autres régions, ce qui retarde les soins et met des vies en danger. Ce projet vise à construire et équiper un bloc opératoire complet répondant aux normes de qualité.",
+    targetAmount: 30000000,
+    raisedAmount: 18500000,
+    donorsCount: 326,
+    daysLeft: 45,
+    impact: [
+      "Réaliser jusqu'à 200 interventions par an",
+      "Éviter les évacuations coûteuses vers Dakar",
+      "Réduire la mortalité chirurgicale de la région",
+      "Former le personnel local",
+    ],
+    budget: [
+      { label: "Gros œuvre et aménagement", amount: 12000000 },
+      { label: "Équipement chirurgical", amount: 10000000 },
+      { label: "Système de stérilisation", amount: 5000000 },
+      { label: "Formation du personnel", amount: 3000000 },
+    ],
+    updates: [
+      { date: "2026-05-30", title: "Démarrage des travaux", text: "Les fondations du bloc ont été posées." },
+      { date: "2026-05-01", title: "Objectif à 50 %", text: "Merci aux 200 premiers donateurs !" },
+    ],
+    documents: [
+      { label: "Devis détaillé", type: "PDF" },
+      { label: "Plan architectural", type: "PDF" },
+      { label: "Attestation de l'établissement", type: "PDF" },
+    ],
+    gallery: [
+      img("photo-1586773860418-d37222d8fce3"),
+      img("photo-1538108149393-fbbd81895907"),
+      img("photo-1504439468489-c8920d796a29"),
+    ],
+  },
+  {
+    id: "echographe-pediatrie",
+    title: "Échographe pour le service pédiatrie",
+    facilitySlug: "chn-fann",
+    facilityName: "Centre Hospitalier National de Fann",
+    region: "Dakar",
+    category: "Imagerie",
+    urgency: "eleve",
+    status: "en_cours",
+    cover: img("photo-1551076805-e1869033e561"),
+    shortDescription: "Acquérir un échographe moderne pour le diagnostic pédiatrique.",
+    description:
+      "Le service de pédiatrie a besoin d'un échographe portable pour améliorer le diagnostic des enfants. L'appareil actuel est vétuste et souvent en panne.",
+    targetAmount: 8000000,
+    raisedAmount: 5200000,
+    donorsCount: 142,
+    daysLeft: 30,
+    impact: ["Diagnostic plus rapide", "Réduction des transferts", "Meilleur suivi des nourrissons"],
+    budget: [
+      { label: "Échographe portable", amount: 6500000 },
+      { label: "Sonde pédiatrique", amount: 1000000 },
+      { label: "Maintenance 1 an", amount: 500000 },
+    ],
+    updates: [{ date: "2026-05-20", title: "Campagne lancée", text: "Premiers dons reçus." }],
+    documents: [{ label: "Devis fournisseur", type: "PDF" }],
+    gallery: [img("photo-1581595219315-a187dd40c322")],
+  },
+  {
+    id: "lits-medicalises",
+    title: "Lits médicalisés pour la maternité",
+    facilitySlug: "hopital-principal-dakar",
+    facilityName: "Hôpital Principal de Dakar",
+    region: "Dakar",
+    category: "Mobilier médical",
+    urgency: "modere",
+    status: "en_cours",
+    cover: img("photo-1578991624414-276ef23a534f"),
+    shortDescription: "Renouveler 20 lits médicalisés pour le confort et la sécurité des patientes.",
+    description:
+      "La maternité a besoin de lits médicalisés ajustables pour améliorer la prise en charge des femmes enceintes.",
+    targetAmount: 6000000,
+    raisedAmount: 1400000,
+    donorsCount: 58,
+    daysLeft: 60,
+    impact: ["Confort des patientes", "Sécurité accrue", "Meilleures conditions de travail"],
+    budget: [{ label: "20 lits médicalisés", amount: 6000000 }],
+    updates: [],
+    documents: [{ label: "Devis", type: "PDF" }],
+    gallery: [],
+  },
+  {
+    id: "concentrateur-oxygene",
+    title: "Concentrateurs d'oxygène",
+    facilitySlug: "centre-sante-thies",
+    facilityName: "Centre de Santé de Thiès",
+    region: "Thiès",
+    category: "Respiratoire",
+    urgency: "urgent",
+    status: "en_cours",
+    cover: img("photo-1583912267550-d6c2ac3196c0"),
+    shortDescription: "Fournir des concentrateurs d'oxygène pour les détresses respiratoires.",
+    description:
+      "Le centre manque de concentrateurs d'oxygène pour prendre en charge les patients en détresse respiratoire, notamment les enfants.",
+    targetAmount: 4500000,
+    raisedAmount: 3900000,
+    donorsCount: 210,
+    daysLeft: 12,
+    impact: ["Prise en charge des détresses respiratoires", "Sauver des vies d'enfants"],
+    budget: [{ label: "6 concentrateurs", amount: 4500000 }],
+    updates: [{ date: "2026-06-01", title: "Bientôt l'objectif", text: "Plus que quelques dons !" }],
+    documents: [{ label: "Devis", type: "PDF" }],
+    gallery: [],
+  },
+];
+
+export const equipmentNeedById = (id: string) => equipmentNeeds.find((n) => n.id === id);

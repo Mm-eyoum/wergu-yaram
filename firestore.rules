@@ -1,0 +1,81 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // --- User profiles ---
+    // A user can read & write only their own profile. Admins can read all.
+    // Role/status are locked after creation so a user cannot self-promote.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+        && request.resource.data.role in
+           ['patient_public', 'healthcare_facility', 'partner', 'partner_donor'];
+      allow update: if (isOwner(uid)
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == resource.data.status)
+        || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // --- Public verified content (read-only for clients) ---
+    // Writes go through trusted/admin tooling only.
+    match /medications/{doc}   { allow read: if true; allow write: if isAdmin(); }
+    match /pathologies/{doc}   { allow read: if true; allow write: if isAdmin(); }
+    match /articles/{doc}      { allow read: if true; allow write: if isAdmin(); }
+    match /facilities/{doc}    { allow read: if true; allow write: if isAdmin(); }
+    match /partners/{doc}      { allow read: if true; allow write: if isAdmin(); }
+    match /events/{doc}        { allow read: if true; allow write: if isAdmin(); }
+    match /equipmentNeeds/{doc} { allow read: if true; allow write: if isAdmin(); }
+
+    // --- Community content (signed-in members can contribute) ---
+    match /communities/{community} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /posts/{post} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if isOwner(resource.data.authorUid) || isAdmin();
+      }
+    }
+
+    match /forumThreads/{thread} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.authorUid) || isAdmin();
+    }
+
+    // --- Private messaging (participants only) ---
+    match /conversations/{conversation} {
+      allow read, write: if isSignedIn()
+        && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn()
+        && request.auth.uid in request.resource.data.participants;
+
+      match /messages/{message} {
+        allow read, create: if isSignedIn()
+          && request.auth.uid in
+             get(/databases/$(database)/documents/conversations/$(conversation)).data.participants;
+      }
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
