@@ -1,0 +1,43 @@
+{
+  "brand": "Wergu Yaram",
+  "style": "clean, welcoming, ultra-simple, health search portal",
+  "colors": {
+    "primary_teal": "#00B894",
+    "primary_green": "#00A878",
+    "navy": "#0B1F49",
+    "mint_background": "#EEFDF8",
+    "surface": "#FFFFFF",
+    "border": "#E6EEF2",
+    "text_muted": "#667085",
+    "danger": "#FF6B6B",
+    "warning": "#F6B44B"
+  },
+  "typography": {
+    "recommended": "Inter or similar sans-serif",
+    "heading_weight": 700,
+    "body_weight": 400
+  },
+  "radii": {
+    "cards": "20-28px",
+    "buttons": "12-18px",
+    "search_bar": "999px"
+  },
+  "layout": {
+    "desktop_width_reference": "1448x1086 PNG mockups",
+    "grid": "12-column flexible grid",
+    "spacing": "generous whitespace, 24-40px page gutters"
+  },
+  "core_components": [
+    "GlobalHeader",
+    "UniversalSearchBar",
+    "CategoryPills",
+    "ContentCard",
+    "ResultCard",
+    "FilterSidebar",
+    "RightContextSidebar",
+    "StatsStrip",
+    "DonationWidget",
+    "CommunityComposer",
+    "MessageThread"
+  ]
+}

@@ -1,0 +1,17 @@
+order,file,description
+1,01_home_portail_sante_recherche.png,Accueil avec recherche santé centrale
+2,02_resultats_recherche_universelle.png,Résultats multi-contenus
+3,03_detail_medicament.png,Fiche médicament
+4,04_detail_pathologie.png,Fiche pathologie
+5,05_detail_etablissement.png,Fiche établissement
+6,06_communaute_social.png,Communauté santé
+7,07_besoins_equipement_liste.png,Liste besoins équipement
+8,08_dashboard_profil_utilisateur.png,Dashboard utilisateur
+9,09_connexion.png,Connexion
+10,10_inscription.png,Inscription
+11,11_article_sante_detail.png,Article santé
+12,12_forum_sante.png,Forum santé
+13,13_messages_prives.png,Messagerie privée
+14,14_evenement_detail.png,Détail événement
+15,15_detail_besoin_donation.png,Campagne de soutien
+16,16_partenaires_annuaire.png,Annuaire partenaires
