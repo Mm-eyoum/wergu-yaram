@@ -110,10 +110,10 @@ export function ExploreMenu() {
         aria-haspopup="true"
         aria-expanded={open}
         className={cn(
-          "inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+          "inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors",
           open || activeType
-            ? "text-brand-green"
-            : "text-text-secondary hover:text-brand-green",
+            ? "bg-brand-mint text-brand-green"
+            : "text-text-secondary hover:bg-brand-soft hover:text-brand-green",
         )}
       >
         <Compass className="h-4 w-4" />
