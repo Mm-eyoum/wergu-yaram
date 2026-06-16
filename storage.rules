@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // Image uploads only, capped at 5 MB.
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    // Editorial media (CMS library): images / video / audio / pdf, capped at 25 MB.
+    function isValidMedia() {
+      return request.resource.size < 25 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType.matches('video/.*')
+            || request.resource.contentType.matches('audio/.*')
+            || request.resource.contentType == 'application/pdf');
+    }
+    // Content staff: 'editor' / 'admin' / 'super_admin' (role read from Firestore).
+    function isEditorStaff() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+            in ['editor', 'admin', 'super_admin'];
+    }
+    // The matching organization document (read cross-service from Firestore).
+    function orgData(orgId) {
+      return firestore.get(/databases/(default)/documents/organizations/$(orgId)).data;
+    }
+    // Only the page's owner or a listed manager may write its assets.
+    function canManageOrg(orgId) {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/organizations/$(orgId))
+        && (request.auth.uid == orgData(orgId).ownerUid
+            || request.auth.uid in orgData(orgId).managerUids);
+    }
+
+    // User avatars: only the owner writes, public read.
+    match /users/{uid}/avatar/{file} {
+      allow read: if true;
+      allow write: if isOwner(uid) && isValidImage();
+    }
+
+    // Organization (page) assets: only the page owner/managers write, public read.
+    match /organizations/{orgId}/{file=**} {
+      allow read: if true;
+      allow write: if canManageOrg(orgId) && isValidImage();
+    }
+
+    // CMS media library: editorial staff upload, public read.
+    match /media/{file=**} {
+      allow read: if true;
+      allow write: if isEditorStaff() && isValidMedia();
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

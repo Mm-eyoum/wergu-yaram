@@ -16,7 +16,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
     links: [
       { label: "Communautés santé", to: "/communautes" },
       { label: "Forum santé", to: "/forum" },
-      { label: "Événements", to: "/evenements/atelier-diabete" },
+      { label: "Événements", to: "/recherche?type=evenement" },
       { label: "Messagerie", to: "/messages" },
     ],
   },
@@ -58,11 +58,11 @@ export function AppFooter() {
         ))}
       </div>
       <div className="border-t border-border-soft">
-        <div className="container-page flex flex-col items-center justify-between gap-2 py-4 text-xs text-text-secondary sm:flex-row">
-          <p>© {new Date().getFullYear()} Wergu Yaram. Tous droits réservés.</p>
-          <p>
-            Information éducative — ne remplace pas un avis médical professionnel.
-          </p>
+        <div className="container-page flex flex-col items-center gap-2 py-4 text-center text-xs text-text-secondary sm:flex-row sm:justify-between sm:text-left">
+          <p>© {new Date().getFullYear()} Wergu Yaram · Information éducative — ne remplace pas un avis médical professionnel.</p>
+          <Link to="/conditions" className="link-muted whitespace-nowrap">
+            Conditions d'utilisation
+          </Link>
         </div>
       </div>
     </footer>

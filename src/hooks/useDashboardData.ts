@@ -1,0 +1,57 @@
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchFavorites,
+  fetchMemberships,
+  fetchReminders,
+  fetchSavedSearches,
+} from "@/services/userData";
+import { fetchUserOrganizations } from "@/services/organizations";
+
+/** Query keys for per-user dashboard data — invalidate these after mutations. */
+export const dashboardKeys = {
+  favorites: (uid: string) => ["favorites", uid] as const,
+  savedSearches: (uid: string) => ["savedSearches", uid] as const,
+  reminders: (uid: string) => ["reminders", uid] as const,
+  memberships: (uid: string) => ["memberships", uid] as const,
+  organizations: (uid: string) => ["organizations", uid] as const,
+};
+
+export function useFavorites(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.favorites(uid ?? ""),
+    queryFn: () => fetchFavorites(uid!),
+    enabled: !!uid,
+  });
+}
+
+export function useSavedSearches(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.savedSearches(uid ?? ""),
+    queryFn: () => fetchSavedSearches(uid!),
+    enabled: !!uid,
+  });
+}
+
+export function useReminders(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.reminders(uid ?? ""),
+    queryFn: () => fetchReminders(uid!),
+    enabled: !!uid,
+  });
+}
+
+export function useMemberships(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.memberships(uid ?? ""),
+    queryFn: () => fetchMemberships(uid!),
+    enabled: !!uid,
+  });
+}
+
+export function useUserOrganizations(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.organizations(uid ?? ""),
+    queryFn: () => fetchUserOrganizations(uid!),
+    enabled: !!uid,
+  });
+}

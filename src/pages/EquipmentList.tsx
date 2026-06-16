@@ -1,13 +1,21 @@
 import { useMemo, useState } from "react";
-import { HandHeart, Receipt, ShieldCheck, TrendingUp } from "lucide-react";
+import { HandHeart, LayoutGrid, Map as MapIcon, Receipt, ShieldCheck, TrendingUp } from "lucide-react";
 import { UniversalSearchHero } from "@/components/search/UniversalSearchHero";
 import { EquipmentNeedCard } from "@/components/cards/EquipmentNeedCard";
 import { CategoryPill } from "@/components/ui/CategoryPill";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { equipmentNeeds } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { LazyMapView } from "@/components/map/LazyMapView";
+import type { MapMarker } from "@/components/map/MapView";
+import { MarkerPopup } from "@/components/map/MarkerPopup";
+import { useEquipmentNeeds, useFacilities } from "@/hooks/useCatalog";
+import { usePagination } from "@/hooks/usePagination";
+import { Button } from "@/components/ui/Button";
 import { SENEGAL_REGIONS } from "@/lib/constants";
 import type { Urgency } from "@/types/domain";
+import { SEOHead } from "@/seo/SEOHead";
+import { breadcrumbJsonLd } from "@/seo/jsonld";
 
 const URGENCIES: { key: Urgency | "all"; label: string }[] = [
   { key: "all", label: "Toutes urgences" },
@@ -17,12 +25,15 @@ const URGENCIES: { key: Urgency | "all"; label: string }[] = [
 ];
 
 export default function EquipmentList() {
+  const { data: equipmentNeeds = [], isLoading } = useEquipmentNeeds();
+  const { data: facilities = [] } = useFacilities();
   const [region, setRegion] = useState("Toutes les régions");
   const [urgency, setUrgency] = useState<Urgency | "all">("all");
+  const [view, setView] = useState<"grid" | "map">("grid");
 
   const categories = useMemo(
     () => ["Toutes catégories", ...Array.from(new Set(equipmentNeeds.map((n) => n.category)))],
-    [],
+    [equipmentNeeds],
   );
   const [category, setCategory] = useState("Toutes catégories");
 
@@ -34,11 +45,47 @@ export default function EquipmentList() {
           (urgency === "all" || n.urgency === urgency) &&
           (category === "Toutes catégories" || n.category === category),
       ),
-    [region, urgency, category],
+    [equipmentNeeds, region, urgency, category],
   );
+
+  const { paged, hasMore, remaining, showMore } = usePagination(filtered);
+
+  // Resolve each need's coordinates via its beneficiary facility for the map view.
+  const needMarkers: MapMarker[] = useMemo(() => {
+    const bySlug = new Map(facilities.map((f) => [f.slug, f]));
+    return filtered.flatMap((n): MapMarker[] => {
+      const f = bySlug.get(n.facilitySlug);
+      if (!f) return [];
+      return [
+        {
+          id: n.id,
+          coords: f.coords,
+          color: n.urgency === "urgent" ? "amber" : "green",
+          title: n.title,
+          popup: (
+            <MarkerPopup
+              title={n.title}
+              subtitle={`${n.facilityName} · ${n.region}`}
+              href={`/besoins/${n.id}`}
+              coords={f.coords}
+            />
+          ),
+        },
+      ];
+    });
+  }, [facilities, filtered]);
 
   return (
     <div>
+      <SEOHead
+        title="Besoins d'équipement médical"
+        description="Soutenez les structures de santé du Sénégal en finançant des équipements médicaux essentiels. Chaque don a un impact concret."
+        canonicalPath="/besoins"
+        jsonLd={breadcrumbJsonLd([
+          { name: "Accueil", path: "/" },
+          { name: "Besoins", path: "/besoins" },
+        ])}
+      />
       <UniversalSearchHero
         compact
         showShortcuts={false}
@@ -80,14 +127,51 @@ export default function EquipmentList() {
             </div>
           </div>
 
-          {filtered.length === 0 ? (
-            <EmptyState title="Aucun besoin" message="Aucun besoin ne correspond à ces filtres." />
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {filtered.map((need) => (
-                <EquipmentNeedCard key={need.id} need={need} />
-              ))}
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-text-secondary">
+              {filtered.length} besoin{filtered.length > 1 ? "s" : ""}
+            </p>
+            <div className="inline-flex overflow-hidden rounded-xl border border-border-soft">
+              <button
+                type="button"
+                onClick={() => setView("grid")}
+                aria-pressed={view === "grid"}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold ${view === "grid" ? "bg-brand-green text-white" : "bg-white text-text-secondary hover:text-brand-green"}`}
+              >
+                <LayoutGrid className="h-4 w-4" /> Liste
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("map")}
+                aria-pressed={view === "map"}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold ${view === "map" ? "bg-brand-green text-white" : "bg-white text-text-secondary hover:text-brand-green"}`}
+              >
+                <MapIcon className="h-4 w-4" /> Carte
+              </button>
             </div>
+          </div>
+
+          {isLoading ? (
+            <LoadingState label="Chargement des besoins…" />
+          ) : filtered.length === 0 ? (
+            <EmptyState title="Aucun besoin" message="Aucun besoin ne correspond à ces filtres." />
+          ) : view === "map" ? (
+            <LazyMapView className="h-[60vh] w-full" markers={needMarkers} clustering fitToMarkers />
+          ) : (
+            <>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {paged.map((need) => (
+                  <EquipmentNeedCard key={need.id} need={need} />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="mt-6 flex justify-center">
+                  <Button variant="outline" onClick={showMore}>
+                    Voir plus ({remaining})
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
 

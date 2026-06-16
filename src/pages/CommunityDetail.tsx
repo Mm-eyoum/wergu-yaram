@@ -1,32 +1,71 @@
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { BookOpen, CheckCircle2, ShieldCheck, Users } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { CommunityComposer } from "@/components/community/CommunityComposer";
+import { JoinCommunityButton } from "@/components/community/JoinCommunityButton";
 import { PostCard } from "@/components/community/PostCard";
 import { EventCard } from "@/components/cards/EventCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { communities, communityBySlug, eventById } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { useCommunities, useCommunity, useEvents } from "@/hooks/useCatalog";
+import { fetchCommunityPosts } from "@/services/communityPosts";
 import { formatCompact } from "@/lib/format";
+import { SEOHead } from "@/seo/SEOHead";
+import { communityJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
+import { ShareButtons } from "@/components/ShareButtons";
 
 export default function CommunityDetail() {
   const { slug } = useParams();
-  const community = slug ? communityBySlug(slug) : undefined;
+  const { data: community, isLoading } = useCommunity(slug);
+  const { data: communities = [] } = useCommunities();
+  const { data: allEvents = [] } = useEvents();
+
+  const realPosts = useQuery({
+    queryKey: ["communityPosts", slug],
+    queryFn: () => fetchCommunityPosts(slug!),
+    enabled: !!slug,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container-page py-16">
+        <LoadingState label="Chargement de la communauté…" />
+      </div>
+    );
+  }
 
   if (!community) {
     return (
       <div className="container-page py-16">
+        <SEOHead title="Communauté introuvable" noIndex />
         <EmptyState title="Communauté introuvable" message="Cette communauté n'existe pas ou a été retirée." />
       </div>
     );
   }
 
-  const events = community.upcomingEvents.map((id) => eventById(id)).filter(Boolean);
+  const events = community.upcomingEvents
+    .map((id) => allEvents.find((e) => e.id === id))
+    .filter(Boolean);
 
   return (
     <div className="container-page py-6">
+      <SEOHead
+        title={community.name}
+        description={community.description}
+        ogType="website"
+        ogImage={`/og/communaute-${community.slug}.png`}
+        jsonLd={[
+          communityJsonLd(community),
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Communautés", path: "/communautes" },
+            { name: community.name, path: `/communautes/${community.slug}` },
+          ]),
+        ]}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
@@ -79,19 +118,29 @@ export default function CommunityDetail() {
                   </p>
                 </div>
               </div>
-              <Button>Rejoindre</Button>
+              <JoinCommunityButton slug={community.slug} name={community.name} />
             </div>
             <p className="mt-3 text-sm text-text-secondary">{community.description}</p>
+            <ShareButtons
+              className="mt-3"
+              url={`/communautes/${community.slug}`}
+              title={community.name}
+              description={community.description}
+              hashtags={["WerguYaram", "Communauté"]}
+            />
           </div>
 
-          <CommunityComposer />
+          <CommunityComposer communitySlug={community.slug} />
 
           <div className="space-y-4">
-            {community.posts.length ? (
-              community.posts.map((post) => <PostCard key={post.id} post={post} />)
-            ) : (
-              <EmptyState title="Aucune publication" message="Soyez le premier à partager dans cette communauté." />
-            )}
+            {(() => {
+              const posts = [...(realPosts.data ?? []), ...community.posts];
+              return posts.length ? (
+                posts.map((post) => <PostCard key={post.id} post={post} />)
+              ) : (
+                <EmptyState title="Aucune publication" message="Soyez le premier à partager dans cette communauté." />
+              );
+            })()}
           </div>
         </div>
 

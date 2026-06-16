@@ -3,6 +3,7 @@ import {
   BadgeCheck,
   Building2,
   Clock,
+  LocateFixed,
   Mail,
   MapPin,
   Phone,
@@ -16,24 +17,60 @@ import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { EquipmentNeedCard } from "@/components/cards/EquipmentNeedCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { equipmentNeedById, facilityBySlug } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { LazyMapView } from "@/components/map/LazyMapView";
+import { DirectionsButton } from "@/components/map/DirectionsButton";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { haversineKm, formatDistance } from "@/lib/geo";
+import { useEquipmentNeeds, useFacility } from "@/hooks/useCatalog";
+import { SEOHead } from "@/seo/SEOHead";
+import { facilityJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
+import { ShareButtons } from "@/components/ShareButtons";
+import { FavoriteButton } from "@/components/content/FavoriteButton";
 
 export default function FacilityDetail() {
   const { slug } = useParams();
-  const facility = slug ? facilityBySlug(slug) : undefined;
+  const { data: facility, isLoading } = useFacility(slug);
+  const { data: equipmentNeeds = [] } = useEquipmentNeeds();
+  const geo = useGeolocation();
+
+  if (isLoading) {
+    return (
+      <div className="container-page py-16">
+        <LoadingState label="Chargement de l'établissement…" />
+      </div>
+    );
+  }
 
   if (!facility) {
     return (
       <div className="container-page py-16">
+        <SEOHead title="Établissement introuvable" noIndex />
         <EmptyState title="Établissement introuvable" message="Cette fiche n'existe pas ou a été déplacée." />
       </div>
     );
   }
 
-  const needs = facility.equipmentNeeds.map((id) => equipmentNeedById(id)).filter(Boolean);
+  const needs = facility.equipmentNeeds
+    .map((id) => equipmentNeeds.find((n) => n.id === id))
+    .filter(Boolean);
 
   return (
     <div className="container-page py-6">
+      <SEOHead
+        title={facility.name}
+        description={facility.description}
+        ogType="website"
+        ogImage={facility.cover}
+        jsonLd={[
+          facilityJsonLd(facility),
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Établissements", path: "/recherche?type=etablissement" },
+            { name: facility.name, path: `/etablissements/${facility.slug}` },
+          ]),
+        ]}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
@@ -45,7 +82,7 @@ export default function FacilityDetail() {
       {/* Hero */}
       <div className="mt-4 overflow-hidden rounded-3xl border border-border-soft bg-white shadow-soft">
         <div className="h-48 w-full sm:h-60">
-          <img src={facility.cover} alt={facility.name} className="h-full w-full object-cover" />
+          <img src={facility.cover} alt={facility.name} className="h-full w-full object-cover" decoding="async" fetchPriority="high" />
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4 p-6">
           <div>
@@ -66,14 +103,30 @@ export default function FacilityDetail() {
               <span className="font-bold text-text-primary">{facility.rating.toFixed(1)}</span>
               <span className="text-text-secondary">({facility.reviewsCount} avis)</span>
             </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <FavoriteButton
+                type="etablissement"
+                refId={facility.slug}
+                title={facility.name}
+                href={`/etablissements/${facility.slug}`}
+              />
+              <ShareButtons
+                url={`/etablissements/${facility.slug}`}
+                title={facility.name}
+                description={facility.description}
+                hashtags={["WerguYaram", "Santé"]}
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button>
+            <Button
+              onClick={() => {
+                window.location.href = `tel:${facility.phone.replace(/\s/g, "")}`;
+              }}
+            >
               <Phone className="h-4 w-4" /> Appeler
             </Button>
-            <Button variant="outline">
-              <MapPin className="h-4 w-4" /> Itinéraire
-            </Button>
+            <DirectionsButton to={facility.coords} className="sm:w-auto" />
           </div>
         </div>
       </div>
@@ -145,18 +198,35 @@ export default function FacilityDetail() {
 
         <aside className="space-y-5">
           <SectionCard title="Localisation">
-            <div className="overflow-hidden rounded-2xl border border-border-soft">
-              <iframe
-                title={`Carte ${facility.name}`}
-                className="h-48 w-full"
-                loading="lazy"
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${facility.coords.lng - 0.02}%2C${facility.coords.lat - 0.02}%2C${facility.coords.lng + 0.02}%2C${facility.coords.lat + 0.02}&layer=mapnik&marker=${facility.coords.lat}%2C${facility.coords.lng}`}
-              />
-            </div>
-            <p className="mt-2 text-sm text-text-secondary">{facility.address}</p>
+            <LazyMapView
+              className="h-48 w-full"
+              markers={[{ id: facility.slug, coords: facility.coords, title: facility.name }]}
+              userCoords={geo.position}
+              zoom={15}
+            />
+            <p className="mt-2 inline-flex items-start gap-1.5 text-sm text-text-secondary">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {facility.address}
+            </p>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-text-secondary">
               <Phone className="h-4 w-4" /> {facility.phone}
             </p>
+            {geo.position ? (
+              <p className="mt-2 text-sm font-semibold text-brand-green">
+                À {formatDistance(haversineKm(geo.position, facility.coords))} de vous
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={geo.request}
+                className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-green hover:underline"
+              >
+                <LocateFixed className="h-4 w-4" /> Voir la distance depuis ma position
+              </button>
+            )}
+            {geo.error && <p className="mt-1 text-xs text-text-secondary">{geo.error}</p>}
+            <div className="mt-3">
+              <DirectionsButton to={facility.coords} />
+            </div>
           </SectionCard>
 
           {needs.length > 0 && (

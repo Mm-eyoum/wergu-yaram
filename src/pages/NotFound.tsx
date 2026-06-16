@@ -1,9 +1,11 @@
 import { ButtonLink } from "@/components/ui/Button";
 import { UniversalSearchBar } from "@/components/search/UniversalSearchBar";
+import { SEOHead } from "@/seo/SEOHead";
 
 export default function NotFound() {
   return (
     <div className="container-page flex flex-col items-center py-24 text-center">
+      <SEOHead title="Page introuvable" noIndex />
       <span className="text-6xl font-extrabold text-brand-green">404</span>
       <h1 className="mt-3 text-2xl font-bold">Page introuvable</h1>
       <p className="mt-2 max-w-md text-sm text-text-secondary">

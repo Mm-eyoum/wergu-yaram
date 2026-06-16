@@ -9,26 +9,62 @@ import { EventCard } from "@/components/cards/EventCard";
 import { CommunityCard } from "@/components/cards/CommunityCard";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { communityBySlug, eventById } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { LazyMapView } from "@/components/map/LazyMapView";
+import { DirectionsButton } from "@/components/map/DirectionsButton";
+import { useCommunities, useEvent, useEvents } from "@/hooks/useCatalog";
 import { formatDate } from "@/lib/format";
+import { useComingSoon } from "@/hooks/useToast";
+import { SEOHead } from "@/seo/SEOHead";
+import { eventJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
+import { ShareButtons } from "@/components/ShareButtons";
+import { FavoriteButton } from "@/components/content/FavoriteButton";
 
 export default function EventDetail() {
   const { id } = useParams();
-  const event = id ? eventById(id) : undefined;
+  const { data: event, isLoading } = useEvent(id);
+  const { data: allEvents = [] } = useEvents();
+  const { data: communities = [] } = useCommunities();
+  const comingSoon = useComingSoon();
+
+  if (isLoading) {
+    return (
+      <div className="container-page py-16">
+        <LoadingState label="Chargement de l'événement…" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
       <div className="container-page py-16">
+        <SEOHead title="Événement introuvable" noIndex />
         <EmptyState title="Événement introuvable" message="Cet événement n'existe pas ou a été retiré." />
       </div>
     );
   }
 
-  const related = event.relatedEvents.map((e) => eventById(e)).filter(Boolean);
-  const community = event.communitySlug ? communityBySlug(event.communitySlug) : undefined;
+  const related = event.relatedEvents.map((e) => allEvents.find((x) => x.id === e)).filter(Boolean);
+  const community = event.communitySlug
+    ? communities.find((c) => c.slug === event.communitySlug)
+    : undefined;
 
   return (
     <div className="container-page py-6">
+      <SEOHead
+        title={event.title}
+        description={event.summary}
+        ogType="event"
+        ogImage={event.cover}
+        jsonLd={[
+          eventJsonLd(event),
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Événements", path: "/" },
+            { name: event.title, path: `/evenements/${event.id}` },
+          ]),
+        ]}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
@@ -39,7 +75,7 @@ export default function EventDetail() {
 
       <div className="mt-4 overflow-hidden rounded-3xl border border-border-soft bg-white shadow-soft">
         <div className="h-52 sm:h-64">
-          <img src={event.cover} alt={event.title} className="h-full w-full object-cover" />
+          <img src={event.cover} alt={event.title} className="h-full w-full object-cover" decoding="async" fetchPriority="high" />
         </div>
         <div className="p-6">
           <Badge tone="green">{event.mode}</Badge>
@@ -50,6 +86,20 @@ export default function EventDetail() {
             <Meta icon={<Clock className="h-4 w-4" />} value={event.timeLabel} />
             <Meta icon={<MapPin className="h-4 w-4" />} value={`${event.location}, ${event.city}`} />
             <Meta icon={<Users className="h-4 w-4" />} value={event.organizer} />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <FavoriteButton
+              type="evenement"
+              refId={event.id}
+              title={event.title}
+              href={`/evenements/${event.id}`}
+            />
+            <ShareButtons
+              url={`/evenements/${event.id}`}
+              title={event.title}
+              description={event.summary}
+              hashtags={["WerguYaram", "Événement"]}
+            />
           </div>
         </div>
       </div>
@@ -102,6 +152,22 @@ export default function EventDetail() {
               ))}
             </dl>
           </SectionCard>
+
+          {event.mode !== "En ligne" && (
+            <SectionCard title="Lieu">
+              <p className="mb-3 inline-flex items-start gap-1.5 text-sm text-text-secondary">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {event.location}, {event.city}
+              </p>
+              <LazyMapView
+                className="h-56 w-full"
+                markers={[{ id: event.id, coords: event.coords, color: "teal", title: event.location }]}
+                zoom={15}
+              />
+              <div className="mt-3">
+                <DirectionsButton to={event.coords} />
+              </div>
+            </SectionCard>
+          )}
         </div>
 
         <aside className="space-y-5">
@@ -111,7 +177,12 @@ export default function EventDetail() {
               <Row icon={<Ticket className="h-4 w-4" />} label="Tarif" value={event.price} />
               <Row icon={<UserRound className="h-4 w-4" />} label="Places restantes" value={`${event.seatsLeft}`} />
             </dl>
-            <Button fullWidth size="lg" className="mt-4">
+            <Button
+              fullWidth
+              size="lg"
+              className="mt-4"
+              onClick={() => comingSoon("Les inscriptions en ligne arrivent bientôt.")}
+            >
               S'inscrire à l'événement
             </Button>
             <p className="mt-2 text-center text-xs text-text-secondary">Confirmation immédiate par email</p>

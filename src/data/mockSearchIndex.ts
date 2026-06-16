@@ -16,13 +16,23 @@ export function buildSearchIndex(): SearchHit[] {
     hits.push({
       id: `medicament-${m.slug}`,
       type: "medicament",
-      title: `${m.name} ${m.dosage}`,
+      title: m.dosage ? `${m.name} ${m.dosage}` : m.name,
       description: m.summary,
       href: `/medicaments/${m.slug}`,
       meta: m.family,
       verified: m.trust.verified,
-      badge: m.withoutPrescription ? "Sans ordonnance" : undefined,
-      keywords: `${m.name} ${m.dosage} ${m.family} ${m.summary}`.toLowerCase(),
+      badge: m.withoutPrescription
+        ? "Sans ordonnance"
+        : m.awareCategory
+          ? `AWaRe ${m.awareCategory}`
+          : undefined,
+      keywords: `${m.dci ?? m.name} ${m.name} ${m.dosage} ${m.family} ${m.pharmacoTherapeuticGroup ?? ""} ${(m.forms ?? []).join(" ")} ${m.summary}`.toLowerCase(),
+      facets: {
+        family: m.family,
+        awareCategory: m.awareCategory,
+        withoutPrescription: m.withoutPrescription,
+        essentialMedicine: m.essentialMedicine,
+      },
     });
   }
 
@@ -36,6 +46,7 @@ export function buildSearchIndex(): SearchHit[] {
       meta: p.category,
       verified: p.trust.verified,
       keywords: `${p.name} ${p.category} ${p.summary} ${p.symptoms.join(" ")}`.toLowerCase(),
+      facets: { category: p.category },
     });
     // Symptoms surface as their own "symptome" hits pointing to the pathology.
     for (const s of p.symptoms.slice(0, 3)) {
@@ -63,6 +74,12 @@ export function buildSearchIndex(): SearchHit[] {
       thumbnail: a.cover,
       badge: a.type === "video" ? a.videoDurationLabel : undefined,
       keywords: `${a.title} ${a.category} ${a.excerpt}`.toLowerCase(),
+      facets: {
+        category: a.category,
+        articleType: a.type,
+        readingMinutes: a.readingMinutes,
+        publishedAt: a.publishedAt,
+      },
     });
   }
 
@@ -77,6 +94,13 @@ export function buildSearchIndex(): SearchHit[] {
       verified: f.verified,
       thumbnail: f.cover,
       keywords: `${f.name} ${f.type} ${f.city} ${f.region} ${f.specialties.join(" ")}`.toLowerCase(),
+      facets: {
+        facilityType: f.type,
+        region: f.region,
+        city: f.city,
+        specialties: f.specialties,
+        rating: f.rating,
+      },
     });
   }
 
@@ -89,6 +113,11 @@ export function buildSearchIndex(): SearchHit[] {
       href: `/communautes/${c.slug}`,
       meta: `${c.membersCount} membres`,
       keywords: `${c.name} ${c.topic} ${c.description}`.toLowerCase(),
+      facets: {
+        topic: c.topic,
+        isPublic: c.isPublic,
+        membersCount: c.membersCount,
+      },
     });
   }
 
@@ -102,6 +131,11 @@ export function buildSearchIndex(): SearchHit[] {
       meta: `${e.city} · ${e.mode}`,
       thumbnail: e.cover,
       keywords: `${e.title} ${e.summary} ${e.city}`.toLowerCase(),
+      facets: {
+        mode: e.mode,
+        city: e.city,
+        startAt: e.startAt,
+      },
     });
   }
 
@@ -116,6 +150,13 @@ export function buildSearchIndex(): SearchHit[] {
       thumbnail: n.cover,
       badge: n.urgency === "urgent" ? "Urgent" : undefined,
       keywords: `${n.title} ${n.shortDescription} ${n.facilityName} ${n.region}`.toLowerCase(),
+      facets: {
+        category: n.category,
+        region: n.region,
+        urgency: n.urgency,
+        needStatus: n.status,
+        daysLeft: n.daysLeft,
+      },
     });
   }
 
@@ -128,6 +169,10 @@ export function buildSearchIndex(): SearchHit[] {
       href: `/partenaires`,
       meta: p.categoryLabel,
       keywords: `${p.name} ${p.categoryLabel} ${p.description}`.toLowerCase(),
+      facets: {
+        partnerCategory: p.category,
+        zone: p.zone,
+      },
     });
   }
 

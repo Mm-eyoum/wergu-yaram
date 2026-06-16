@@ -2,11 +2,18 @@ import type { Config } from "tailwindcss";
 
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  // Class-based dark mode — toggled on <html> by the admin theme switch.
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
         brand: {
-          green: "#00A878",
+          // Action/text green — darkened to meet WCAG AA (white-on-green ≈ 5.3:1).
+          green: "#007A5E",
+          // Hover for primary actions (slightly darker, ≈ 6.5:1).
+          greenDark: "#006B52",
+          // Bright green reserved for DECORATIVE fills/tints only (no text constraint).
+          greenLight: "#00A878",
           teal: "#00B894",
           navy: "#0B1F49",
           mint: "#EEFDF8",
@@ -24,7 +31,8 @@ export default {
           primary: "#0B1F49",
           secondary: "#667085",
         },
-        danger: "#FF6B6B",
+        // Darkened so error text/borders meet WCAG AA on white & light tints (≈ 5.7:1).
+        danger: "#C81E1E",
         warning: "#F6B44B",
       },
       fontFamily: {

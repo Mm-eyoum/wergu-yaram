@@ -20,7 +20,7 @@ const TYPE_META: Record<ContentType, { label: string; icon: React.ReactNode }> =
 export function ResultCard({ hit }: { hit: SearchHit }) {
   const meta = TYPE_META[hit.type];
   return (
-    <article className="card-surface flex gap-4 p-4 transition-all hover:-translate-y-0.5 hover:shadow-card sm:p-5">
+    <article className="card-surface flex gap-4 p-4 transition-all hover:-translate-y-0.5 hover:shadow-card motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-5">
       {hit.thumbnail ? (
         <Link to={hit.href} className="hidden shrink-0 sm:block">
           <img

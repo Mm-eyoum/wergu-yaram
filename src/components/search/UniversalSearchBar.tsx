@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { searchContent } from "@/services/content";
 import type { SearchHit } from "@/types/domain";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useSearch } from "@/hooks/useSearch";
 
 interface UniversalSearchBarProps {
   size?: "hero" | "compact";
@@ -42,7 +42,10 @@ export function UniversalSearchBar({
   const wrapRef = useRef<HTMLDivElement>(null);
   const debounced = useDebounce(query, 180);
 
-  const suggestions: SearchHit[] = debounced.trim().length >= 2 ? searchContent(debounced).slice(0, 6) : [];
+  // Live autocomplete via Typesense (mock fallback), gated to ≥2 chars.
+  const longEnough = debounced.trim().length >= 2;
+  const { data: hits } = useSearch(debounced, longEnough);
+  const suggestions: SearchHit[] = longEnough ? (hits ?? []).slice(0, 6) : [];
 
   useEffect(() => {
     function onClick(e: MouseEvent) {

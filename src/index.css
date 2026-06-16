@@ -18,9 +18,9 @@
     @apply bg-surface-page text-text-primary font-sans antialiased;
   }
 
-  /* Visible focus for keyboard users (a11y) */
+  /* Visible focus for keyboard users (a11y) — deep green meets ≥3:1 on white */
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-teal ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-brand-green ring-offset-2 ring-offset-white;
   }
 
   h1,

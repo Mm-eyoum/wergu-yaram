@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /messages
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /recherche
+
+Sitemap: https://werguyaram.org/sitemap.xml

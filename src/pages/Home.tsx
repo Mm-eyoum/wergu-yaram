@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -7,6 +9,7 @@ import {
   HandHeart,
   Heart,
   Hospital,
+  LocateFixed,
   Pill,
   Salad,
   ShieldCheck,
@@ -22,11 +25,17 @@ import { EquipmentNeedCard } from "@/components/cards/EquipmentNeedCard";
 import { TrustStatsBar } from "@/components/ui/TrustStatsBar";
 import { ButtonLink } from "@/components/ui/Button";
 import {
-  articles,
-  communities,
-  equipmentNeeds,
-  facilities,
-} from "@/services/content";
+  useArticles,
+  useCommunities,
+  useEquipmentNeeds,
+  useFacilities,
+} from "@/hooks/useCatalog";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { haversineKm } from "@/lib/geo";
+import { fetchActiveFacilityOrganizations } from "@/services/organizations";
+import { orgToFacilityCard } from "@/lib/orgAdapters";
+import { SEOHead } from "@/seo/SEOHead";
+import { organizationJsonLd, websiteJsonLd } from "@/seo/jsonld";
 
 const CATEGORIES = [
   { label: "Cardiologie", icon: <Heart className="h-6 w-6" />, to: "/pathologies/hypertension-arterielle" },
@@ -58,10 +67,52 @@ const WHY = [
 ];
 
 export default function Home() {
+  const { data: articles = [] } = useArticles();
+  const { data: communities = [] } = useCommunities();
+  const { data: equipmentNeeds = [] } = useEquipmentNeeds();
+  const { data: facilities = [] } = useFacilities();
+  const { data: orgFacilities = [] } = useQuery({
+    queryKey: ["mapFacilityOrgs"],
+    queryFn: fetchActiveFacilityOrganizations,
+  });
+  const geo = useGeolocation();
   const urgentNeeds = equipmentNeeds.filter((n) => n.urgency === "urgent").slice(0, 3);
+
+  // Curated catalog facilities + directory orgs (imported/created), unified.
+  const facilityEntries = useMemo(
+    () => [
+      ...facilities.map((f) => ({
+        facility: f,
+        coords: f.coords,
+        href: undefined as string | undefined,
+        badge: undefined as string | undefined,
+      })),
+      ...orgFacilities.map((o) => {
+        const { facility, href, badge } = orgToFacilityCard(o);
+        return { facility, coords: o.coords!, href, badge };
+      }),
+    ],
+    [facilities, orgFacilities],
+  );
+
+  // When the user shares their position, surface the closest facilities first.
+  const nearbyFacilities = useMemo(() => {
+    const withD = facilityEntries.map((e) => ({
+      ...e,
+      d: geo.position ? haversineKm(geo.position, e.coords) : undefined,
+    }));
+    if (geo.position) withD.sort((a, b) => (a.d ?? 0) - (b.d ?? 0));
+    return withD.slice(0, 2);
+  }, [facilityEntries, geo.position]);
 
   return (
     <>
+      <SEOHead
+        title="Wergu Yaram — Portail santé du Sénégal"
+        bareTitle
+        canonicalPath="/"
+        jsonLd={[organizationJsonLd(), websiteJsonLd()]}
+      />
       <UniversalSearchHero />
 
       <div className="container-page space-y-14 py-14">
@@ -86,10 +137,19 @@ export default function Home() {
           </div>
 
           <div>
-            <SectionHeading title="Structures à proximité" to="/recherche?type=etablissement" />
+            <SectionHeading title="Structures à proximité" to="/carte" />
+            {!geo.position && (
+              <button
+                type="button"
+                onClick={geo.request}
+                className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-green hover:underline"
+              >
+                <LocateFixed className="h-4 w-4" /> Trier autour de moi
+              </button>
+            )}
             <div className="space-y-4">
-              {facilities.slice(0, 2).map((facility) => (
-                <FacilityCard key={facility.slug} facility={facility} />
+              {nearbyFacilities.map(({ facility, d, href, badge }) => (
+                <FacilityCard key={href ?? facility.slug} facility={facility} distanceKm={d} href={href} badge={badge} />
               ))}
             </div>
           </div>

@@ -30,7 +30,7 @@ export function ProfileSummaryCard({ user }: { user: AppUser }) {
       </dl>
 
       <Link
-        to="/dashboard"
+        to="/dashboard/profile"
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border-soft py-2.5 text-sm font-semibold text-text-primary hover:border-brand-teal hover:text-brand-green"
       >
         <Settings className="h-4 w-4" />

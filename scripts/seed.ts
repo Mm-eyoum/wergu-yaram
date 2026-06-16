@@ -1,18 +1,31 @@
 /**
- * Optional Firestore seed script — pushes the local mock content into Firestore
- * so the app can progressively switch from mock data to live data.
+ * Firestore seed — pushes the bundled catalog content into Firestore so the app
+ * serves live data (services/catalog.ts reads Firestore, falling back to the
+ * bundled mock only while a collection is empty).
  *
- * Usage (config is read from .env.local — same VITE_FIREBASE_* keys):
+ * Run it with:
  *
- *   node --env-file=.env.local --import tsx scripts/seed.ts
- *   # or:  npx -y tsx scripts/seed.ts   (after `export $(grep -v '^#' .env.local | xargs)`)
+ *   npm run seed
  *
- * Requires Firestore to be enabled and rules that allow the writes (run while
- * temporarily authenticated as an admin, or relax rules locally with the emulator).
+ * which loads .env.local (VITE_FIREBASE_* keys) and executes this file via tsx.
  *
- * Note: this script is intentionally outside `src/` and excluded from the build.
+ * Auth & security rules:
+ *   The content collections are admin-only for writes (firestore.rules). Two
+ *   supported ways to seed:
+ *
+ *   1. BEFORE deploying the strict rules — create the Firestore database in
+ *      "test mode" (open for 30 days), run `npm run seed`, THEN
+ *      `npm run deploy:rules`. No credentials needed.
+ *
+ *   2. AFTER rules are live — provide an admin account in .env.local:
+ *        SEED_ADMIN_EMAIL=...        # account whose users/{uid}.role is admin|super_admin
+ *        SEED_ADMIN_PASSWORD=...
+ *      The script signs in first so the writes satisfy isAdmin().
+ *
+ * Idempotent: documents use the entity slug/id as id, so re-running overwrites.
  */
 import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getFirestore, writeBatch } from "firebase/firestore";
 
 import { medications } from "../src/data/mockMedications";
@@ -24,16 +37,34 @@ import { equipmentNeeds } from "../src/data/mockEquipmentNeeds";
 import { events } from "../src/data/mockEvents";
 import { partners } from "../src/data/mockPartners";
 
-const app = initializeApp({
+const config = {
   apiKey: process.env.VITE_FIREBASE_API_KEY,
   authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.VITE_FIREBASE_APP_ID,
-});
+};
 
+if (!config.apiKey || !config.projectId) {
+  console.error("✖ Config Firebase manquante. Vérifiez .env.local (VITE_FIREBASE_*).");
+  process.exit(1);
+}
+
+const app = initializeApp(config);
 const db = getFirestore(app);
+
+async function maybeSignIn() {
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log("ℹ Aucun SEED_ADMIN_EMAIL fourni — écriture non authentifiée");
+    console.log("  (OK uniquement si la base est en « test mode » ou avant le déploiement des règles).\n");
+    return;
+  }
+  await signInWithEmailAndPassword(getAuth(app), email, password);
+  console.log(`✓ Authentifié en tant qu'admin : ${email}\n`);
+}
 
 async function seedCollection<T extends Record<string, unknown>>(
   name: string,
@@ -49,6 +80,9 @@ async function seedCollection<T extends Record<string, unknown>>(
 }
 
 async function main() {
+  console.log(`Seed Firestore → projet ${config.projectId}\n`);
+  await maybeSignIn();
+
   await seedCollection("medications", medications, "slug");
   await seedCollection("pathologies", pathologies, "slug");
   await seedCollection("articles", articles, "slug");
@@ -57,10 +91,18 @@ async function main() {
   await seedCollection("equipmentNeeds", equipmentNeeds, "id");
   await seedCollection("events", events, "id");
   await seedCollection("partners", partners, "slug");
-  console.log("\nSeed terminé.");
+
+  console.log("\n✅ Seed terminé.");
+  process.exit(0);
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error("\n✖ Échec du seed :", err?.message ?? err);
+  if (String(err?.code).includes("permission-denied")) {
+    console.error(
+      "  → Les règles bloquent l'écriture. Seedez en « test mode » avant deploy:rules,\n" +
+        "    ou définissez SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD (compte admin).",
+    );
+  }
   process.exit(1);
 });

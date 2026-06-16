@@ -10,67 +10,202 @@ service cloud.firestore {
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
-    function isAdmin() {
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function hasProfile() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function isSuperAdmin() {
+      return hasProfile() && userDoc().role == 'super_admin';
+    }
+    // Admin powers are granted to both 'admin' and 'super_admin'.
+    function isAdmin() {
+      return hasProfile() && userDoc().role in ['admin', 'super_admin'];
+    }
+    // Content-staff powers: 'editor' manages editorial content (medications,
+    // articles, …) via the admin CMS but not users, roles or settings.
+    // Admins and super_admins also satisfy this.
+    function isEditor() {
+      return hasProfile() && userDoc().role in ['editor', 'admin', 'super_admin'];
+    }
+    // An account in good standing (not suspended) may contribute content.
+    function isActiveUser() {
+      return hasProfile() && userDoc().status == 'active';
+    }
+
+    // A required free-text field: a string within [min, max] characters.
+    // Guards against oversized documents (cost/DoS) and empty submissions.
+    function isText(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    // Guards which role transitions an admin may perform on a user profile.
+    function roleChangeAuthorized(oldRole, newRole) {
+      return
+        // No role change → a plain admin may still update other fields (e.g. status).
+        (oldRole == newRole && isAdmin())
+        // Granting/revoking 'admin' is super_admin-only…
+        || (oldRole != newRole
+            && isSuperAdmin()
+            // …and a super_admin account can never be granted/demoted via rules.
+            && oldRole != 'super_admin'
+            && newRole != 'super_admin');
     }
 
     // --- User profiles ---
-    // A user can read & write only their own profile. Admins can read all.
-    // Role/status are locked after creation so a user cannot self-promote.
+    // A user reads/writes only their own profile. Admins read all.
+    // Self-signup is always a patient_public; role/status are locked after
+    // creation so a user can never self-promote or self-validate.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
+
       allow create: if isOwner(uid)
-        && request.resource.data.role in
-           ['patient_public', 'healthcare_facility', 'partner', 'partner_donor'];
-      allow update: if (isOwner(uid)
+        && request.resource.data.role == 'patient_public'
+        && request.resource.data.status == 'active'
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 120;
+
+      // Owner may edit profile fields but NOT role/status.
+      // Admins may change status (e.g. suspend) and grant/revoke 'admin',
+      // but only a super_admin may create or remove an 'admin'/'super_admin',
+      // and a super_admin can never be demoted here.
+      allow update: if
+        (isOwner(uid)
           && request.resource.data.role == resource.data.role
           && request.resource.data.status == resource.data.status)
-        || isAdmin();
-      allow delete: if isAdmin();
+        || (isAdmin()
+          && roleChangeAuthorized(resource.data.role, request.resource.data.role));
+
+      allow delete: if isSuperAdmin();
     }
 
     // --- Public verified content (read-only for clients) ---
-    // Writes go through trusted/admin tooling only.
-    match /medications/{doc}   { allow read: if true; allow write: if isAdmin(); }
-    match /pathologies/{doc}   { allow read: if true; allow write: if isAdmin(); }
-    match /articles/{doc}      { allow read: if true; allow write: if isAdmin(); }
-    match /facilities/{doc}    { allow read: if true; allow write: if isAdmin(); }
-    match /partners/{doc}      { allow read: if true; allow write: if isAdmin(); }
-    match /events/{doc}        { allow read: if true; allow write: if isAdmin(); }
-    match /equipmentNeeds/{doc} { allow read: if true; allow write: if isAdmin(); }
+    // Writes go through the admin CMS: editors + admins may manage content.
+    match /medications/{doc}    { allow read: if true; allow write: if isEditor(); }
+    match /pathologies/{doc}    { allow read: if true; allow write: if isEditor(); }
+    match /articles/{doc}       { allow read: if true; allow write: if isEditor(); }
+    match /facilities/{doc}     { allow read: if true; allow write: if isEditor(); }
+    match /partners/{doc}       { allow read: if true; allow write: if isEditor(); }
+    match /events/{doc}         { allow read: if true; allow write: if isEditor(); }
+    match /equipmentNeeds/{doc} { allow read: if true; allow write: if isEditor(); }
 
-    // --- Community content (signed-in members can contribute) ---
+    // --- Organizations / "pages" (Facebook/LinkedIn model) ---
+    // Any active user creates a page they own; it starts 'pending' and only an
+    // admin can flip its status. Owner/managers edit the profile but never the
+    // status/owner. Public reads are limited to validated (active) pages.
+    match /organizations/{org} {
+      function orgData() { return resource.data; }
+      function isManager() {
+        return isSignedIn()
+          && (request.auth.uid == orgData().ownerUid
+              || request.auth.uid in orgData().managerUids);
+      }
+
+      allow read: if resource.data.status == 'active' || isManager() || isAdmin();
+
+      allow create: if
+        (isActiveUser()
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.type in ['healthcare_facility', 'partner', 'partner_donor']
+          && isText(request.resource.data.name, 2, 150))
+        // Admins import directory listings (source:"imported", unowned, active).
+        || (isAdmin()
+          && request.resource.data.source == 'imported'
+          && request.resource.data.type == 'healthcare_facility'
+          && isText(request.resource.data.name, 2, 150));
+
+      // Managers update profile fields but cannot self-validate or change owner.
+      allow update: if
+        (isManager()
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.ownerUid == resource.data.ownerUid)
+        || isAdmin();
+
+      allow delete: if request.auth.uid == resource.data.ownerUid || isAdmin();
+    }
+
+    // --- Directory claim requests ---
+    // An active user submits a claim for themselves on an imported page. Only an
+    // admin reads the full queue / approves / rejects. The page's ownerUid and
+    // claimStatus are changed via the organizations rules (admin-only), never here.
+    match /claimRequests/{claim} {
+      allow read: if isAdmin() || isOwner(resource.data.requesterUid);
+      allow create: if isActiveUser()
+        && request.resource.data.requesterUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && isText(request.resource.data.justification, 1, 2000);
+      allow update, delete: if isAdmin();
+    }
+
+    // --- Community content (active members can contribute) ---
     match /communities/{community} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isEditor();
 
       match /posts/{post} {
         allow read: if true;
-        allow create: if isSignedIn();
+        // Anti-impersonation: the author must be the signed-in active user.
+        allow create: if isActiveUser()
+          && request.resource.data.authorUid == request.auth.uid
+          && isText(request.resource.data.content, 1, 5000);
         allow update, delete: if isOwner(resource.data.authorUid) || isAdmin();
       }
     }
 
     match /forumThreads/{thread} {
       allow read: if true;
-      allow create: if isSignedIn();
+      allow create: if isActiveUser()
+        && request.resource.data.authorUid == request.auth.uid
+        && isText(request.resource.data.title, 1, 200)
+        && isText(request.resource.data.excerpt, 1, 5000)
+        && request.resource.data.kind in ['question', 'discussion', 'conseil'];
       allow update, delete: if isOwner(resource.data.authorUid) || isAdmin();
+    }
+
+    // --- Private per-user collections (owner-only) ---
+    // Dashboard data: favorites, saved searches, reminders, memberships.
+    match /users/{uid}/{sub=**} {
+      allow read, write: if isOwner(uid);
     }
 
     // --- Private messaging (participants only) ---
     match /conversations/{conversation} {
-      allow read, write: if isSignedIn()
+      allow read, update, delete: if isSignedIn()
         && request.auth.uid in resource.data.participants;
       allow create: if isSignedIn()
         && request.auth.uid in request.resource.data.participants;
 
       match /messages/{message} {
-        allow read, create: if isSignedIn()
-          && request.auth.uid in
-             get(/databases/$(database)/documents/conversations/$(conversation)).data.participants;
+        function convParticipants() {
+          return get(/databases/$(database)/documents/conversations/$(conversation)).data.participants;
+        }
+        allow read: if isSignedIn() && request.auth.uid in convParticipants();
+        allow create: if isSignedIn()
+          && request.auth.uid in convParticipants()
+          && request.resource.data.senderUid == request.auth.uid
+          && isText(request.resource.data.text, 1, 5000);
       }
+    }
+
+    // --- Media library index (Firebase Storage holds the bytes) ---
+    // Public read (URLs are surfaced on the site); editors/admins manage.
+    match /media/{item} {
+      allow read: if true;
+      allow create: if isEditor()
+        && request.resource.data.uploadedBy == request.auth.uid;
+      allow update, delete: if isEditor();
+    }
+
+    // --- Audit log (append-only, never mutated or deleted) ---
+    // Any content/admin actor records an entry; only admins read the trail.
+    match /auditLogs/{entry} {
+      allow read: if isAdmin();
+      allow create: if isEditor()
+        && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
     }
 
     // Deny everything else by default.

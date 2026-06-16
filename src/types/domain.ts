@@ -1,13 +1,21 @@
 /** Domain models for Wergu Yaram. */
 
-export type Role =
-  | "patient_public"
-  | "healthcare_facility"
-  | "partner"
-  | "partner_donor"
-  | "admin";
+/**
+ * Account roles (a person). Facility/partner/donor are NOT account roles —
+ * they are "pages" (see {@link Organization}) created by a `patient_public` user.
+ *
+ * `editor` is a content-staff role: it manages editorial content (medications,
+ * articles, …) via the admin CMS but cannot manage users, roles or settings.
+ */
+export type Role = "patient_public" | "editor" | "admin" | "super_admin";
 
 export type UserStatus = "pending" | "active" | "suspended";
+
+/** Geographic point used across facilities, events and organization pages. */
+export interface Coords {
+  lat: number;
+  lng: number;
+}
 
 export interface AppUser {
   uid: string;
@@ -18,6 +26,72 @@ export interface AppUser {
   status: UserStatus;
   region?: string;
   interests?: string[];
+  createdAt?: string;
+  /** Optional reference location for "near me" sorting without re-prompting GPS. */
+  homeCoords?: Coords;
+}
+
+/** A "page"/organization type a base user can create (Facebook/LinkedIn model). */
+export type OrganizationType = "healthcare_facility" | "partner" | "partner_donor";
+
+/** Lifecycle of a page: created `pending` → validated by an admin → `active`. */
+export type OrgStatus = "pending" | "active" | "suspended";
+
+/** Where a page came from: created by a user, or imported into the directory. */
+export type OrgSource = "user" | "imported";
+
+/**
+ * Claim lifecycle for directory listings (imported pages):
+ * `unclaimed` → a user requests it (`claim_pending`) → admin approves (`claimed`).
+ * User-created pages are implicitly owned and carry no claim status.
+ */
+export type ClaimStatus = "unclaimed" | "claim_pending" | "claimed";
+
+/**
+ * A page created and managed by users. Public listings only show `active` ones.
+ * Owner/managers may edit the profile but never change `status` (admin-only).
+ */
+export interface Organization {
+  id: string;
+  type: OrganizationType;
+  name: string;
+  ownerUid: string;
+  managerUids: string[];
+  status: OrgStatus;
+  region?: string;
+  description?: string;
+  logo?: string | null;
+  /** Free-form profile payload specific to the org type (facility/partner fields). */
+  profile?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+  // --- Geolocation ---
+  address?: string;
+  city?: string;
+  coords?: Coords;
+  // --- Directory / claim (admin import via Google Places) ---
+  source?: OrgSource;
+  /** Google Places `place_id`, used to dedupe imports. */
+  placeId?: string;
+  claimStatus?: ClaimStatus;
+  // --- Enriched data from Places imports ---
+  phone?: string;
+  hours?: string;
+  rating?: number;
+  photoUrl?: string | null;
+}
+
+/** A request by a user to take ownership of an imported directory listing. */
+export type ClaimRequestStatus = "pending" | "approved" | "rejected";
+
+export interface ClaimRequest {
+  id: string;
+  orgId: string;
+  orgName: string;
+  requesterUid: string;
+  requesterName: string;
+  justification: string;
+  status: ClaimRequestStatus;
   createdAt?: string;
 }
 
@@ -40,21 +114,90 @@ export interface TrustMeta {
   updatedAt?: string;
 }
 
+/**
+ * Niveaux de soins du système sanitaire (LME Burkina / UEMOA) :
+ * CSPS (Centre de Santé et de Promotion Sociale), CM (Centre Médical),
+ * CMA (Centre Médical avec Antenne chirurgicale), CH (Centre Hospitalier).
+ * `true` = produit disponible/autorisé à ce niveau.
+ */
+export interface CareLevels {
+  csps: boolean;
+  cm: boolean;
+  cma: boolean;
+  ch: boolean;
+}
+
+/**
+ * Une présentation = un couple forme galénique + dosage avec sa disponibilité
+ * par niveau de soins. Le Règlement UEMOA N°04/2020 (art. 24) traite chaque
+ * dosage / forme / présentation comme une AMM distincte ; on les regroupe donc
+ * sous un même DCI mais on conserve le détail par présentation.
+ */
+export interface Presentation {
+  form: string; // "Comprimé", "Injectable", "Sirop"…
+  dosage?: string; // "500 mg", "10 mg/ml ; 1 ml"
+  careLevels: CareLevels;
+  populations: ("adulte" | "enfant")[];
+  note?: string; // restriction de bas de tableau (ex. "Limité à l'enfant de plus de 3 mois")
+}
+
+/** Catégorie AWaRe (OMS) de bon usage des antibiotiques. */
+export type AwareCategory = "Access" | "Watch" | "Reserve";
+
+/**
+ * Métadonnées réglementaires (conformité Règlement UEMOA N°04/2020).
+ * Le référentiel est informationnel et non promotionnel : pas de marque
+ * commerciale ni de prix, nommage en DCI, attribution de source obligatoire.
+ */
+export interface RegulatoryMeta {
+  /** Autorité de réglementation pharmaceutique source des données. */
+  authority: string;
+  /** Liste / édition de référence (ex. "LME Burkina Faso 2023"). */
+  listEdition: string;
+  /** Une AMM est requise avant toute commercialisation (art. 7). */
+  ammRequired: boolean;
+  /** Durée de validité d'une AMM en années (art. 16 : 5 ans). */
+  ammValidityYears?: number;
+}
+
 export interface Medication {
   slug: string;
+  /** CMS publish state. Absent ⇒ treated as published (back-compat with seed). */
+  published?: boolean;
+  /** Dénomination Commune Internationale (INN) — nom canonique de la fiche. */
+  dci?: string;
   name: string;
+  /** Dosage résumé (dérivé de `presentations` pour rétro-compat / affichage). */
   dosage: string;
   family: string;
+  /** Formes résumées (dérivées de `presentations` pour rétro-compat / affichage). */
   forms: string[];
+  /** Présentations détaillées (forme + dosage + niveaux de soins). */
+  presentations?: Presentation[];
+  /** Groupe pharmaco-thérapeutique de la LME (ex. "Anti-infectieux"). */
+  pharmacoTherapeuticGroup?: string;
+  subgroup?: string;
+  /** Catégorie AWaRe pour les antibiotiques. */
+  awareCategory?: AwareCategory;
+  /** Médicament essentiel (présent sur une liste nationale). */
+  essentialMedicine?: boolean;
+  /** Nature du produit : générique (DCI) par défaut, ou spécialité. */
+  productNature?: "generique" | "specialite";
+  regulatory?: RegulatoryMeta;
   summary: string;
-  usage: string;
-  posology: string;
-  contraindications: string[];
-  sideEffects: string[];
-  precautions: string[];
-  interactions: string[];
-  professionalAdvice: string;
-  relatedPathologies: string[]; // pathology slugs
+  // --- Contenu clinique (enrichi hors PDF : optionnel + sourcé + étiqueté) ---
+  usage?: string;
+  posology?: string;
+  contraindications?: string[];
+  sideEffects?: string[];
+  precautions?: string[];
+  interactions?: string[];
+  professionalAdvice?: string;
+  /** Sources du contenu clinique (OMS, RCP…). */
+  clinicalSources?: string[];
+  /** Statut de revue du contenu clinique enrichi. */
+  clinicalReviewStatus?: "draft" | "reviewed";
+  relatedPathologies?: string[]; // pathology slugs
   withoutPrescription: boolean;
   trust: TrustMeta;
 }
@@ -66,6 +209,7 @@ export interface FaqItem {
 
 export interface Pathology {
   slug: string;
+  published?: boolean;
   name: string;
   category: string;
   summary: string;
@@ -85,6 +229,7 @@ export interface Pathology {
 
 export interface Article {
   slug: string;
+  published?: boolean;
   title: string;
   excerpt: string;
   category: string;
@@ -104,6 +249,7 @@ export interface Article {
 
 export interface Facility {
   slug: string;
+  published?: boolean;
   name: string;
   type: string; // "Hôpital public", "Clinique privée"…
   region: string;
@@ -128,6 +274,8 @@ export interface Facility {
 
 export interface CommunityPost {
   id: string;
+  /** Firestore owner — REQUIRED on real writes (rules enforce authorUid == auth.uid). */
+  authorUid?: string;
   author: { name: string; role?: string };
   timeAgo: string;
   content: string;
@@ -139,6 +287,7 @@ export interface CommunityPost {
 
 export interface Community {
   slug: string;
+  published?: boolean;
   name: string;
   topic: string;
   description: string;
@@ -156,6 +305,8 @@ export type NeedStatus = "en_cours" | "finance" | "valide";
 
 export interface EquipmentNeed {
   id: string;
+  /** CMS publish state (distinct from `status`, which is the funding state). */
+  published?: boolean;
   title: string;
   facilitySlug: string;
   facilityName: string;
@@ -179,6 +330,7 @@ export interface EquipmentNeed {
 
 export interface HealthEvent {
   id: string;
+  published?: boolean;
   title: string;
   cover: string;
   summary: string;
@@ -210,6 +362,7 @@ export type PartnerCategory =
 
 export interface Partner {
   slug: string;
+  published?: boolean;
   name: string;
   category: PartnerCategory;
   categoryLabel: string;
@@ -225,6 +378,8 @@ export type ForumKind = "question" | "discussion" | "conseil";
 
 export interface ForumThread {
   id: string;
+  /** Firestore owner — REQUIRED on real writes (rules enforce authorUid == auth.uid). */
+  authorUid?: string;
   title: string;
   excerpt: string;
   kind: ForumKind;
@@ -239,6 +394,8 @@ export interface ForumThread {
 
 export interface Conversation {
   id: string;
+  /** Member UIDs — REQUIRED on real writes (rules gate read/write on participants). */
+  participants?: string[];
   name: string;
   role?: string;
   lastMessage: string;
@@ -248,6 +405,37 @@ export interface Conversation {
   verified?: boolean;
   messages: { id: string; fromMe: boolean; text: string; time: string }[];
   sharedFiles: { name: string; size: string; type: string }[];
+}
+
+/**
+ * Per-type filterable attributes carried on each search hit so the results page
+ * can build faceted filters without re-joining the original entity collections.
+ * All fields optional — a hit only sets the facets relevant to its type.
+ */
+export interface SearchFacets {
+  category?: string; // pathologie, article/video, besoin
+  family?: string; // medicament
+  awareCategory?: AwareCategory; // medicament
+  withoutPrescription?: boolean; // medicament
+  essentialMedicine?: boolean; // medicament
+  facilityType?: string; // etablissement (Facility.type)
+  region?: string; // etablissement, besoin
+  city?: string; // etablissement, evenement
+  specialties?: string[]; // etablissement
+  rating?: number; // etablissement (tri)
+  topic?: string; // communaute
+  isPublic?: boolean; // communaute
+  membersCount?: number; // communaute (tri)
+  mode?: HealthEvent["mode"]; // evenement
+  startAt?: string; // evenement (tri/date)
+  urgency?: Urgency; // besoin
+  needStatus?: NeedStatus; // besoin
+  daysLeft?: number; // besoin (tri)
+  partnerCategory?: PartnerCategory; // partenaire
+  zone?: string; // partenaire
+  readingMinutes?: number; // article (tri)
+  publishedAt?: string; // article (tri date)
+  articleType?: Article["type"]; // article vs video
 }
 
 /** Unified search hit produced by the federated mock index. */
@@ -262,4 +450,6 @@ export interface SearchHit {
   badge?: string;
   thumbnail?: string;
   keywords: string;
+  /** Structured filterable attributes (drive the per-type faceted filters). */
+  facets?: SearchFacets;
 }

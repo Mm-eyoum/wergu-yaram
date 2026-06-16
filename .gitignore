@@ -9,3 +9,14 @@ dist-ssr
 *.log
 .vscode/*
 !.vscode/extensions.json
+
+# Generated QA artifacts
+screenshots
+test-results
+playwright-report
+playwright/.cache
+coverage
+
+# Firebase / build caches
+.firebase
+*.tsbuildinfo

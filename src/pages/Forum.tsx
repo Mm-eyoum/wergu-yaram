@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, MessageSquare, Plus, Search, ShieldCheck, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -7,8 +8,13 @@ import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { FormInput } from "@/components/ui/FormInput";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FORUM_CONTRIBUTORS, FORUM_TOPICS, forumThreads } from "@/services/content";
+import { NewThreadDialog } from "@/components/forum/NewThreadDialog";
+import { FORUM_CONTRIBUTORS, FORUM_TOPICS, forumThreads as seedThreads } from "@/services/content";
+import { fetchForumThreads } from "@/services/forum";
+import { usePagination } from "@/hooks/usePagination";
 import type { ForumKind } from "@/types/domain";
+import { SEOHead } from "@/seo/SEOHead";
+import { breadcrumbJsonLd } from "@/seo/jsonld";
 
 const KIND_LABEL: Record<ForumKind, string> = {
   question: "Question",
@@ -33,9 +39,13 @@ const RULES = [
 export default function Forum() {
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
+
+  const realThreads = useQuery({ queryKey: ["forumThreads"], queryFn: fetchForumThreads });
 
   const threads = useMemo(() => {
-    return forumThreads.filter((t) => {
+    const all = [...(realThreads.data ?? []), ...seedThreads];
+    return all.filter((t) => {
       const matchTab = tab === "all" || t.kind === tab;
       const matchQuery =
         !query.trim() ||
@@ -43,10 +53,21 @@ export default function Forum() {
         t.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase()));
       return matchTab && matchQuery;
     });
-  }, [tab, query]);
+  }, [tab, query, realThreads.data]);
+
+  const { paged, hasMore, remaining, showMore } = usePagination(threads, 10);
 
   return (
     <div>
+      <SEOHead
+        title="Forum santé"
+        description="Posez vos questions, partagez vos expériences et obtenez des réponses de la communauté et de professionnels de santé sur Wergu Yaram."
+        canonicalPath="/forum"
+        jsonLd={breadcrumbJsonLd([
+          { name: "Accueil", path: "/" },
+          { name: "Forum", path: "/forum" },
+        ])}
+      />
       <section className="bg-mint-fade">
         <div className="container-page py-12 text-center">
           <h1 className="text-3xl font-extrabold sm:text-4xl">
@@ -65,7 +86,7 @@ export default function Forum() {
                 leftIcon={<Search className="h-4 w-4" />}
               />
             </div>
-            <Button size="lg">
+            <Button size="lg" onClick={() => setShowDialog(true)}>
               <Plus className="h-4 w-4" /> Poser une question
             </Button>
           </div>
@@ -80,7 +101,7 @@ export default function Forum() {
             <EmptyState title="Aucune question" message="Essayez un autre mot-clé ou posez votre question." />
           ) : (
             <div className="space-y-4">
-              {threads.map((thread) => (
+              {paged.map((thread) => (
                 <article key={thread.id} className="card-surface flex gap-4 p-5">
                   <div className="hidden flex-col items-center gap-1 text-center sm:flex">
                     <span className="text-lg font-extrabold text-text-primary">{thread.votes}</span>
@@ -114,6 +135,13 @@ export default function Forum() {
                   </div>
                 </article>
               ))}
+              {hasMore && (
+                <div className="flex justify-center pt-2">
+                  <Button variant="outline" onClick={showMore}>
+                    Voir plus ({remaining})
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -156,6 +184,8 @@ export default function Forum() {
           </SidebarPanel>
         </aside>
       </div>
+
+      {showDialog && <NewThreadDialog onClose={() => setShowDialog(false)} />}
     </div>
   );
 }

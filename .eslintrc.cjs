@@ -5,7 +5,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs", "vite.config.ts", "scripts"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "vite.config.ts", "functions", "coverage"],
   parser: "@typescript-eslint/parser",
   plugins: ["react-refresh", "react-hooks"],
   rules: {
@@ -20,4 +20,14 @@ module.exports = {
       { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
     ],
   },
+  overrides: [
+    {
+      // Node-run maintenance scripts (tsx): allow Node globals & console.
+      files: ["scripts/**/*.ts"],
+      env: { browser: false, node: true },
+      rules: {
+        "no-console": "off",
+      },
+    },
+  ],
 };

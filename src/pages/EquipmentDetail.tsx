@@ -14,27 +14,57 @@ import { SectionCard } from "@/components/ui/Card";
 import { DonationWidget } from "@/components/equipment/DonationWidget";
 import { EquipmentNeedCard } from "@/components/cards/EquipmentNeedCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { equipmentNeedById, equipmentNeeds, facilityBySlug } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { LazyMapView } from "@/components/map/LazyMapView";
+import { DirectionsButton } from "@/components/map/DirectionsButton";
+import { useEquipmentNeed, useEquipmentNeeds, useFacility } from "@/hooks/useCatalog";
 import { formatDate, formatFcfa } from "@/lib/format";
+import { SEOHead } from "@/seo/SEOHead";
+import { equipmentNeedJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
+import { ShareButtons } from "@/components/ShareButtons";
 
 export default function EquipmentDetail() {
   const { id } = useParams();
-  const need = id ? equipmentNeedById(id) : undefined;
+  const { data: need, isLoading } = useEquipmentNeed(id);
+  const { data: allNeeds = [] } = useEquipmentNeeds();
+  const { data: facility } = useFacility(need?.facilitySlug);
+
+  if (isLoading) {
+    return (
+      <div className="container-page py-16">
+        <LoadingState label="Chargement de la campagne…" />
+      </div>
+    );
+  }
 
   if (!need) {
     return (
       <div className="container-page py-16">
+        <SEOHead title="Besoin introuvable" noIndex />
         <EmptyState title="Besoin introuvable" message="Cette campagne n'existe pas ou est terminée." />
       </div>
     );
   }
 
-  const facility = facilityBySlug(need.facilitySlug);
-  const others = equipmentNeeds.filter((n) => n.id !== need.id).slice(0, 2);
+  const others = allNeeds.filter((n) => n.id !== need.id).slice(0, 2);
   const budgetTotal = need.budget.reduce((sum, b) => sum + b.amount, 0);
 
   return (
     <div className="container-page py-6">
+      <SEOHead
+        title={need.title}
+        description={need.shortDescription}
+        ogType="website"
+        ogImage={need.cover}
+        jsonLd={[
+          equipmentNeedJsonLd(need),
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Besoins", path: "/besoins" },
+            { name: need.title, path: `/besoins/${need.id}` },
+          ]),
+        ]}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
@@ -48,7 +78,7 @@ export default function EquipmentDetail() {
           {/* Hero */}
           <div className="overflow-hidden rounded-3xl border border-border-soft bg-white shadow-soft">
             <div className="h-52 sm:h-64">
-              <img src={need.cover} alt={need.title} className="h-full w-full object-cover" />
+              <img src={need.cover} alt={need.title} className="h-full w-full object-cover" decoding="async" fetchPriority="high" />
             </div>
             <div className="p-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -69,6 +99,13 @@ export default function EquipmentDetail() {
                   <Clock className="h-4 w-4 text-brand-green" /> {need.daysLeft} jours restants
                 </span>
               </div>
+              <ShareButtons
+                className="mt-4"
+                url={`/besoins/${need.id}`}
+                title={need.title}
+                description={need.shortDescription}
+                hashtags={["WerguYaram", "Solidarité"]}
+              />
             </div>
           </div>
 
@@ -163,6 +200,16 @@ export default function EquipmentDetail() {
                     <p className="text-xs text-text-secondary">{facility.city}, {facility.region}</p>
                   </div>
                 </Link>
+                <div className="mt-3 overflow-hidden rounded-2xl">
+                  <LazyMapView
+                    className="h-40 w-full"
+                    markers={[{ id: facility.slug, coords: facility.coords, title: facility.name }]}
+                    zoom={14}
+                  />
+                </div>
+                <div className="mt-3">
+                  <DirectionsButton to={facility.coords} />
+                </div>
               </SectionCard>
             )}
           </div>

@@ -1,5 +1,7 @@
 import { useParams } from "react-router-dom";
-import { BadgeCheck, Bookmark, Clock, PlayCircle, Share2 } from "lucide-react";
+import { BadgeCheck, Clock, PlayCircle } from "lucide-react";
+import { ShareButtons } from "@/components/ShareButtons";
+import { FavoriteButton } from "@/components/content/FavoriteButton";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -7,26 +9,58 @@ import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { MedicationCard } from "@/components/cards/MedicationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { articleBySlug, medicationBySlug } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { useArticle, useArticles, useMedications } from "@/hooks/useCatalog";
 import { formatDate } from "@/lib/format";
+import { SEOHead } from "@/seo/SEOHead";
+import { articleJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
 
 export default function ArticleDetail() {
   const { slug } = useParams();
-  const article = slug ? articleBySlug(slug) : undefined;
+  const { data: article, isLoading } = useArticle(slug);
+  const { data: articles = [] } = useArticles();
+  const { data: medications = [] } = useMedications();
+
+  if (isLoading) {
+    return (
+      <div className="container-page py-16">
+        <LoadingState label="Chargement de l'article…" />
+      </div>
+    );
+  }
 
   if (!article) {
     return (
       <div className="container-page py-16">
+        <SEOHead title="Article introuvable" noIndex />
         <EmptyState title="Article introuvable" message="Ce contenu n'existe pas ou a été déplacé." />
       </div>
     );
   }
 
-  const related = article.relatedArticles.map((s) => articleBySlug(s)).filter(Boolean);
-  const meds = article.relatedMedications.map((s) => medicationBySlug(s)).filter(Boolean);
+  const related = article.relatedArticles.map((s) => articles.find((a) => a.slug === s)).filter(Boolean);
+  const meds = article.relatedMedications.map((s) => medications.find((m) => m.slug === s)).filter(Boolean);
 
   return (
     <div className="container-page py-6">
+      <SEOHead
+        title={article.title}
+        description={article.excerpt}
+        ogType={article.type === "video" ? "video.other" : "article"}
+        ogImage={article.cover}
+        publishedTime={article.publishedAt}
+        modifiedTime={article.trust.updatedAt}
+        author={article.author.name}
+        section={article.category}
+        jsonLd={[
+          articleJsonLd(article),
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Articles", path: "/recherche?type=article" },
+            { name: article.title, path: `/articles/${article.slug}` },
+          ]),
+        ]}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
@@ -82,7 +116,7 @@ export default function ArticleDetail() {
           </div>
 
           <div className="relative mt-5 overflow-hidden rounded-3xl">
-            <img src={article.cover} alt="" className="h-56 w-full object-cover sm:h-72" />
+            <img src={article.cover} alt="" className="h-56 w-full object-cover sm:h-72" decoding="async" fetchPriority="high" />
             {article.type === "video" && (
               <span className="absolute inset-0 grid place-items-center bg-black/25">
                 <PlayCircle className="h-16 w-16 text-white" />
@@ -90,13 +124,19 @@ export default function ArticleDetail() {
             )}
           </div>
 
-          <div className="mt-4 flex gap-2">
-            <button className="inline-flex items-center gap-1.5 rounded-xl border border-border-soft px-3 py-1.5 text-sm text-text-secondary hover:border-brand-teal hover:text-brand-green">
-              <Share2 className="h-4 w-4" /> Partager
-            </button>
-            <button className="inline-flex items-center gap-1.5 rounded-xl border border-border-soft px-3 py-1.5 text-sm text-text-secondary hover:border-brand-teal hover:text-brand-green">
-              <Bookmark className="h-4 w-4" /> Enregistrer
-            </button>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <FavoriteButton
+              type={article.type === "video" ? "video" : "article"}
+              refId={article.slug}
+              title={article.title}
+              href={`/articles/${article.slug}`}
+            />
+            <ShareButtons
+              url={`/articles/${article.slug}`}
+              title={article.title}
+              description={article.excerpt}
+              hashtags={["WerguYaram", "Santé"]}
+            />
           </div>
 
           <div className="mt-6 space-y-8">

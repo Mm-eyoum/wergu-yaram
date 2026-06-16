@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Building2, Globe, HandHeart, Users } from "lucide-react";
 import { UniversalSearchHero } from "@/components/search/UniversalSearchHero";
 import { PartnerCard } from "@/components/cards/PartnerCard";
@@ -7,8 +8,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { TrustStatsBar } from "@/components/ui/TrustStatsBar";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { partners } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { usePartners } from "@/hooks/useCatalog";
+import { useComingSoon } from "@/hooks/useToast";
+import { fetchActiveOrganizations } from "@/services/organizations";
+import { orgToPartnerCard } from "@/lib/orgAdapters";
 import type { PartnerCategory } from "@/types/domain";
+import { SEOHead } from "@/seo/SEOHead";
+import { breadcrumbJsonLd } from "@/seo/jsonld";
 
 const CATEGORIES: { key: PartnerCategory | "all"; label: string }[] = [
   { key: "all", label: "Tous" },
@@ -20,16 +27,42 @@ const CATEGORIES: { key: PartnerCategory | "all"; label: string }[] = [
 ];
 
 export default function Partners() {
+  const { data: partners = [], isLoading } = usePartners();
+  const { data: activeOrgs = [] } = useQuery({
+    queryKey: ["activeOrgs"],
+    queryFn: fetchActiveOrganizations,
+  });
   const [category, setCategory] = useState<PartnerCategory | "all">("all");
   const featured = partners.find((p) => p.featured);
+  const comingSoon = useComingSoon();
 
   const filtered = useMemo(
     () => partners.filter((p) => category === "all" || p.category === category),
-    [category],
+    [partners, category],
+  );
+
+  // Partner/donor "pages" surface in the "Tous" tab (they have no catalog category).
+  const orgPartners = useMemo(
+    () =>
+      category === "all"
+        ? activeOrgs
+            .filter((o) => o.type === "partner" || o.type === "partner_donor")
+            .map(orgToPartnerCard)
+        : [],
+    [activeOrgs, category],
   );
 
   return (
     <div>
+      <SEOHead
+        title="Nos partenaires"
+        description="Institutions, ONG, fondations et entreprises qui soutiennent Wergu Yaram et la santé au Sénégal."
+        canonicalPath="/partenaires"
+        jsonLd={breadcrumbJsonLd([
+          { name: "Accueil", path: "/" },
+          { name: "Partenaires", path: "/partenaires" },
+        ])}
+      />
       <UniversalSearchHero
         compact
         showShortcuts={false}
@@ -89,12 +122,17 @@ export default function Partners() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <LoadingState label="Chargement des partenaires…" />
+        ) : filtered.length === 0 && orgPartners.length === 0 ? (
           <EmptyState title="Aucun partenaire" message="Aucun partenaire dans cette catégorie pour le moment." />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p) => (
               <PartnerCard key={p.slug} partner={p} />
+            ))}
+            {orgPartners.map(({ partner, href, badge }) => (
+              <PartnerCard key={partner.slug} partner={partner} href={href} badge={badge} />
             ))}
           </div>
         )}
@@ -107,7 +145,12 @@ export default function Partners() {
             Rejoignez l'écosystème Wergu Yaram et participez à l'amélioration de la santé des
             populations sénégalaises.
           </p>
-          <Button variant="primary" size="lg" className="mt-2">
+          <Button
+            variant="primary"
+            size="lg"
+            className="mt-2"
+            onClick={() => comingSoon("Le formulaire de partenariat arrive bientôt. Écrivez-nous en attendant.")}
+          >
             Proposer un partenariat <ArrowRight className="h-4 w-4" />
           </Button>
         </section>

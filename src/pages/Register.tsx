@@ -1,18 +1,36 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Leaf, Lock, Mail, MapPin, ShieldCheck, User } from "lucide-react";
+import { Check, Eye, EyeOff, Leaf, Lock, Mail, MapPin, ShieldCheck, User } from "lucide-react";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { FormInput } from "@/components/ui/FormInput";
 import { Button } from "@/components/ui/Button";
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import { RoleSelector } from "@/components/auth/RoleSelector";
 import { InterestSelector } from "@/components/auth/InterestSelector";
 import { cn } from "@/lib/cn";
 import { SENEGAL_REGIONS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
-import type { Role } from "@/types/domain";
+import { SEOHead } from "@/seo/SEOHead";
 
 const STEPS = ["Compte", "Profil santé", "Confirmation"];
+
+/** Lightweight password strength estimate → 0 (empty) … 4 (strong). */
+function passwordScore(pwd: string): number {
+  if (!pwd) return 0;
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (pwd.length >= 12) score++;
+  if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+  if (/\d/.test(pwd) || /[^A-Za-z0-9]/.test(pwd)) score++;
+  return Math.min(score, 4);
+}
+
+const STRENGTH_META = [
+  { label: "", color: "" },
+  { label: "Faible", color: "bg-danger" },
+  { label: "Moyen", color: "bg-warning" },
+  { label: "Bon", color: "bg-brand-teal" },
+  { label: "Fort", color: "bg-brand-green" },
+] as const;
 
 export default function Register() {
   const { register, loginWithGoogle, configured } = useAuth();
@@ -22,10 +40,9 @@ export default function Register() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [role, setRole] = useState<Role>("patient_public");
+  const [showPwd, setShowPwd] = useState(false);
   const [region, setRegion] = useState(SENEGAL_REGIONS[1]);
   const [interests, setInterests] = useState<string[]>([]);
   const [accept, setAccept] = useState(false);
@@ -39,8 +56,8 @@ export default function Register() {
         setError("Veuillez remplir tous les champs obligatoires.");
         return;
       }
-      if (password.length < 6) {
-        setError("Le mot de passe doit contenir au moins 6 caractères.");
+      if (password.length < 8) {
+        setError("Le mot de passe doit contenir au moins 8 caractères.");
         return;
       }
       if (password !== confirm) {
@@ -63,7 +80,6 @@ export default function Register() {
         email,
         password,
         displayName: `${firstName} ${lastName}`.trim(),
-        role,
         region,
         interests,
       });
@@ -80,7 +96,9 @@ export default function Register() {
   }
 
   return (
-    <AuthLayout
+    <>
+      <SEOHead title="Créer un compte" description="Rejoignez Wergu Yaram et accédez à une information santé fiable au Sénégal." noIndex />
+      <AuthLayout
       aside={
         <div className="flex h-full flex-col">
           <h2 className="text-2xl font-extrabold leading-tight">
@@ -109,7 +127,7 @@ export default function Register() {
                 <span
                   className={cn(
                     "grid h-8 w-8 place-items-center rounded-full text-sm font-bold",
-                    i <= step ? "bg-brand-green text-white" : "bg-slate-100 text-text-secondary",
+                    i <= step ? "bg-brand-green text-white" : "bg-border-soft text-text-secondary",
                   )}
                 >
                   {i < step ? <Check className="h-4 w-4" /> : i + 1}
@@ -141,11 +159,48 @@ export default function Register() {
               <FormInput label="Nom" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
             <FormInput label="Adresse email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} leftIcon={<Mail className="h-4 w-4" />} autoComplete="email" />
-            <FormInput label="Téléphone (optionnel)" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+221 …" />
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormInput label="Mot de passe" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} leftIcon={<Lock className="h-4 w-4" />} autoComplete="new-password" />
-              <FormInput label="Confirmer" type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+              <FormInput
+                label="Mot de passe"
+                type={showPwd ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={<Lock className="h-4 w-4" />}
+                autoComplete="new-password"
+                rightSlot={
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((v) => !v)}
+                    aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    className="grid h-7 w-7 place-items-center rounded-lg text-text-secondary hover:text-brand-green"
+                  >
+                    {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              />
+              <FormInput label="Confirmer" type={showPwd ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
             </div>
+            {password && (
+              <div aria-live="polite">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "h-1.5 flex-1 rounded-full transition-colors",
+                        i <= passwordScore(password)
+                          ? STRENGTH_META[passwordScore(password)].color
+                          : "bg-border-soft",
+                      )}
+                    />
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Robustesse : {STRENGTH_META[passwordScore(password)].label || "—"}
+                </p>
+              </div>
+            )}
             <Button fullWidth size="lg" onClick={next}>
               Continuer
             </Button>
@@ -156,10 +211,6 @@ export default function Register() {
         {/* Step 2 — Health profile */}
         {step === 1 && (
           <div className="space-y-5">
-            <div>
-              <p className="mb-2 text-sm font-medium text-text-primary">Vous vous inscrivez en tant que :</p>
-              <RoleSelector value={role} onChange={setRole} />
-            </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-text-primary">Région</label>
               <div className="relative">
@@ -206,7 +257,14 @@ export default function Register() {
               <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 accent-brand-green" />
               <span>
                 J'accepte les{" "}
-                <a href="#" className="font-semibold text-brand-green hover:underline">conditions d'utilisation</a>{" "}
+                <Link
+                  to="/conditions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-brand-green hover:underline"
+                >
+                  conditions d'utilisation
+                </Link>{" "}
                 et la politique de confidentialité de Wergu Yaram.
               </span>
             </label>
@@ -232,6 +290,7 @@ export default function Register() {
           Vos données sont protégées et confidentielles.
         </p>
       </div>
-    </AuthLayout>
+      </AuthLayout>
+    </>
   );
 }

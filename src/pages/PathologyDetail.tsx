@@ -19,16 +19,23 @@ import { MedicalDisclaimer } from "@/components/health/MedicalDisclaimer";
 import { MedicationCard } from "@/components/cards/MedicationCard";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { FacilityCard } from "@/components/cards/FacilityCard";
+import { LazyMapView } from "@/components/map/LazyMapView";
+import { MarkerPopup } from "@/components/map/MarkerPopup";
 import { CommunityCard } from "@/components/cards/CommunityCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import {
-  articleBySlug,
-  communityBySlug,
-  facilityBySlug,
-  medicationBySlug,
-  pathologyBySlug,
-} from "@/services/content";
+  useArticles,
+  useCommunities,
+  useFacilities,
+  useMedications,
+  usePathology,
+} from "@/hooks/useCatalog";
 import { formatDate } from "@/lib/format";
+import { SEOHead } from "@/seo/SEOHead";
+import { pathologyJsonLd, faqJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
+import { ShareButtons } from "@/components/ShareButtons";
+import { FavoriteButton } from "@/components/content/FavoriteButton";
 
 function BulletList({ items, danger }: { items: string[]; danger?: boolean }) {
   return (
@@ -47,23 +54,54 @@ function BulletList({ items, danger }: { items: string[]; danger?: boolean }) {
 
 export default function PathologyDetail() {
   const { slug } = useParams();
-  const patho = slug ? pathologyBySlug(slug) : undefined;
+  const { data: patho, isLoading } = usePathology(slug);
+  const { data: medications = [] } = useMedications();
+  const { data: articles = [] } = useArticles();
+  const { data: facilities = [] } = useFacilities();
+  const { data: communities = [] } = useCommunities();
+
+  if (isLoading) {
+    return (
+      <div className="container-page py-16">
+        <LoadingState label="Chargement de la fiche…" />
+      </div>
+    );
+  }
 
   if (!patho) {
     return (
       <div className="container-page py-16">
+        <SEOHead title="Pathologie introuvable" noIndex />
         <EmptyState title="Pathologie introuvable" message="Cette fiche n'existe pas ou a été déplacée." />
       </div>
     );
   }
 
-  const meds = patho.commonMedications.map((s) => medicationBySlug(s)).filter(Boolean);
-  const relatedArticles = patho.relatedArticles.map((s) => articleBySlug(s)).filter(Boolean);
-  const nearby = patho.nearbyFacilities.map((s) => facilityBySlug(s)).filter(Boolean);
-  const community = patho.communitySlug ? communityBySlug(patho.communitySlug) : undefined;
+  const meds = patho.commonMedications.map((s) => medications.find((m) => m.slug === s)).filter(Boolean);
+  const relatedArticles = patho.relatedArticles.map((s) => articles.find((a) => a.slug === s)).filter(Boolean);
+  const nearby = patho.nearbyFacilities.map((s) => facilities.find((f) => f.slug === s)).filter(Boolean);
+  const community = patho.communitySlug
+    ? communities.find((c) => c.slug === patho.communitySlug)
+    : undefined;
 
   return (
     <div className="container-page py-6">
+      <SEOHead
+        title={patho.name}
+        description={patho.summary}
+        ogType="article"
+        ogImage={`/og/pathologie-${patho.slug}.png`}
+        section={patho.category}
+        jsonLd={[
+          pathologyJsonLd(patho),
+          ...(patho.faq.length > 0 ? [faqJsonLd(patho.faq)] : []),
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Pathologies", path: "/recherche?type=pathologie" },
+            { name: patho.name, path: `/pathologies/${patho.slug}` },
+          ]),
+        ]}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
@@ -83,6 +121,20 @@ export default function PathologyDetail() {
           </div>
           <p className="mt-1 text-sm text-text-secondary">{patho.category}</p>
           <p className="mt-2 max-w-2xl text-sm text-text-secondary">{patho.summary}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <FavoriteButton
+              type="pathologie"
+              refId={patho.slug}
+              title={patho.name}
+              href={`/pathologies/${patho.slug}`}
+            />
+            <ShareButtons
+              url={`/pathologies/${patho.slug}`}
+              title={patho.name}
+              description={patho.summary}
+              hashtags={["WerguYaram", "Santé"]}
+            />
+          </div>
         </div>
       </header>
 
@@ -151,6 +203,29 @@ export default function PathologyDetail() {
 
           {nearby.length > 0 && (
             <SidebarPanel title="Structures à proximité" icon={<Hospital className="h-4 w-4" />}>
+              <div className="mb-3 overflow-hidden rounded-2xl">
+                <LazyMapView
+                  className="h-44 w-full"
+                  markers={nearby.flatMap((f) =>
+                    f
+                      ? [{
+                          id: f.slug,
+                          coords: f.coords,
+                          title: f.name,
+                          popup: (
+                            <MarkerPopup
+                              title={f.name}
+                              subtitle={`${f.type} · ${f.city}`}
+                              href={`/etablissements/${f.slug}`}
+                              coords={f.coords}
+                            />
+                          ),
+                        }]
+                      : [],
+                  )}
+                  fitToMarkers
+                />
+              </div>
               <div className="space-y-3">
                 {nearby.map((f) => f && <FacilityCard key={f.slug} facility={f} />)}
               </div>

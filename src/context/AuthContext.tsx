@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -17,29 +10,8 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "@/services/firebase";
 import { createUserProfile, fetchUserProfile } from "@/services/users";
-import type { AppUser, Role } from "@/types/domain";
-
-export interface RegisterInput {
-  email: string;
-  password: string;
-  displayName: string;
-  role: Role;
-  region?: string;
-  interests?: string[];
-}
-
-export interface AuthContextValue {
-  user: AppUser | null;
-  loading: boolean;
-  configured: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+import type { AppUser } from "@/types/domain";
+import { AuthContext, type AuthContextValue, type RegisterInput } from "./auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -84,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateProfile(cred.user, { displayName: input.displayName });
     }
     await createUserProfile(cred.user, {
-      role: input.role,
       displayName: input.displayName,
       region: input.region,
       interests: input.interests,
@@ -107,6 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth);
   }, []);
 
+  const refreshProfile = useCallback(async () => {
+    if (!auth?.currentUser) return;
+    setUser(await fetchUserProfile(auth.currentUser));
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -117,8 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithGoogle,
       resetPassword,
       logout,
+      refreshProfile,
     }),
-    [user, loading, login, register, loginWithGoogle, resetPassword, logout],
+    [user, loading, login, register, loginWithGoogle, resetPassword, logout, refreshProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

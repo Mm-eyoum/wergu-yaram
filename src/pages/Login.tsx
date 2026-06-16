@@ -6,6 +6,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { Button } from "@/components/ui/Button";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { useAuth } from "@/hooks/useAuth";
+import { SEOHead } from "@/seo/SEOHead";
 
 const PERKS = [
   { icon: <Bookmark className="h-5 w-5" />, title: "Vos recherches sauvegardées", text: "Retrouvez vos contenus et favoris en un clic." },
@@ -64,7 +65,9 @@ export default function Login() {
   }
 
   return (
-    <AuthLayout
+    <>
+      <SEOHead title="Connexion" description="Connectez-vous à votre espace santé Wergu Yaram." noIndex />
+      <AuthLayout
       aside={
         <div>
           <h2 className="text-2xl font-extrabold leading-tight">
@@ -156,6 +159,7 @@ export default function Login() {
           Connexion sécurisée et confidentielle
         </p>
       </div>
-    </AuthLayout>
+      </AuthLayout>
+    </>
   );
 }
