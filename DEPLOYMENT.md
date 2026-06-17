@@ -2,10 +2,20 @@
 
 Checklist de mise en production. Projet Firebase par défaut : `werguyaram` (`.firebaserc`).
 
+> **Lancement actuel** : tout SAUF les dons en ligne (CTA neutralisé « Bientôt »,
+> `VITE_BICTORYS_ENABLED=false`). Domaine de lancement : `https://werguyaram.web.app`
+> (domaine custom ultérieur). Branche de prod : `main` (= la plateforme React ;
+> l'ancien site vitrine Astro est conservé sur la branche `website-astro`).
+
 ## 1. Pré-requis
 - Node 20+, `npm ci`
 - Firebase CLI : `npx -y firebase-tools@latest --version`
+- Plan **Blaze** activé (requis pour les Cloud Functions)
 - `.env.local` rempli avec les clés `VITE_FIREBASE_*` (jamais commité — voir `.env.example`)
+- `VITE_APPCHECK_SITE_KEY` : clé reCAPTCHA v3 (console Firebase > App Check). Sans elle, App Check
+  est désactivé côté client — l'app fonctionne mais sans la protection anti-abus.
+- `VITE_SITE_URL=https://werguyaram.web.app` (origine canonique pour OG/sitemap)
+- `VITE_PLACES_API_KEY` (import annuaire admin) ; secret serveur `PLACES_API_KEY` côté Functions
 - Java 11+ **uniquement pour les tests de règles via l'émulateur** (l'app n'en a pas besoin)
 
 ## 2. Vérifications avant build
@@ -39,6 +49,15 @@ npx -y tsx scripts/seedAdmin.ts   # promeut max.eyoum@eyone.net en super_admin
 #   puis se reconnecter pour rafraîchir son token.
 ```
 
+## 4 bis. Déploiement des Cloud Functions
+Les Functions servent l'import d'annuaire admin (`searchPlaces`/`importPlaces`) ; `createBictorysCharge`/
+`bictorysWebhook` restent déployées mais dormantes tant que Bictorys n'est pas câblé.
+```bash
+# Secret requis pour l'import Places (les secrets Bictorys ne sont pas nécessaires au lancement) :
+npx firebase functions:secrets:set PLACES_API_KEY --project werguyaram
+npx firebase deploy --only functions --project werguyaram
+```
+
 ## 5. Déploiement du front
 ```bash
 npm run build
@@ -69,11 +88,15 @@ obligatoire). Renseigner les secrets requis (voir l'en-tête du workflow : `FIRE
 
 ## 7. Contrôles finaux
 - [ ] Règles + index + storage déployés et testés
+- [ ] Cloud Functions déployées (`searchPlaces`/`importPlaces` répondent)
 - [ ] `super_admin` provisionné (max.eyoum@eyone.net) et `/admin` accessible
 - [ ] Un parcours complet testé par rôle : inscription patient → création de page → validation admin → page publique
 - [ ] Messagerie : envoi réel persisté (conversation support)
-- [ ] Aucune clé secrète exposée côté client ; mode debug désactivé
-- [ ] Dépendances : `npm audit` (mettre à jour Firebase pour résorber les vulnérabilités transitoires)
+- [ ] **App Check** : enforcement activé en console (Firestore/Storage/Functions) une fois le client déployé et validé
+- [ ] CTA de don bien neutralisé (« Bientôt ») — aucun appel paiement
+- [ ] Aucune clé secrète exposée côté client ; mode debug désactivé (`VITE_APPCHECK_DEBUG_TOKEN` vide)
+- [ ] Dépendances : `npm audit --omit=dev` = **0 vulnérabilité** côté client. Résidus connus = outillage dev
+      (vite/vitest, non déployé) + transitives serveur `firebase-admin` (non corrigeables sans bump majeur cassant).
 
 ## En attente (hors périmètre actuel)
 - **Dons / paiement** : l'intégration Bictorys (Cloud Functions `createBictorysCharge` + `bictorysWebhook`)
