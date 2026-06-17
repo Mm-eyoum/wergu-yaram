@@ -7,11 +7,33 @@ import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { queryClient } from "./lib/queryClient";
-import { installGlobalErrorHandlers } from "./lib/errorReporting";
+import { installGlobalErrorHandlers, setErrorSink } from "./lib/errorReporting";
+import { app, isFirebaseConfigured } from "./services/firebase";
 import "./index.css";
 
 // Surface uncaught errors and unhandled promise rejections (no-op-safe).
 installGlobalErrorHandlers();
+
+// Route reported errors to Firebase Analytics (GA4) as `exception` events so
+// production failures are visible without adding a third-party SDK. Guarded:
+// only when Firebase is configured and Analytics is supported (browser only).
+if (isFirebaseConfigured && app) {
+  void import("firebase/analytics")
+    .then(async ({ getAnalytics, isSupported, logEvent }) => {
+      if (!(await isSupported())) return;
+      const analytics = getAnalytics(app);
+      setErrorSink((error, context) => {
+        const message = error instanceof Error ? error.message : String(error);
+        logEvent(analytics, "exception", {
+          description: `[${context.scope ?? "app"}] ${message}`.slice(0, 256),
+          fatal: false,
+        });
+      });
+    })
+    .catch(() => {
+      // Analytics unavailable (blocked, unsupported) — console logging remains.
+    });
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

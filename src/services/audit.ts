@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { reportError } from "@/lib/errorReporting";
 
 /** A create / update / delete / publish action recorded in the audit trail. */
 export type AuditAction =
@@ -67,8 +68,16 @@ export async function logAudit(input: LogAuditInput): Promise<void> {
       changes: input.changes ?? null,
       createdAt: serverTimestamp(),
     });
-  } catch {
-    // Auditing is non-blocking; never surface to the user.
+  } catch (e) {
+    // Auditing is non-blocking — never surface to the user — but the failure
+    // must not vanish: report it (console + sink) so a broken audit trail is
+    // visible in monitoring.
+    reportError(e, {
+      scope: "audit.logAudit",
+      action: input.action,
+      resourceType: input.resourceType,
+      resourceId: input.resourceId,
+    });
   }
 }
 
