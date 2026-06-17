@@ -45,15 +45,27 @@ npm run build
 npx firebase deploy --only hosting --project werguyaram
 # (ou `npm run build:seo` pour inclure OG images + sitemap + prerender)
 ```
+> ⚠️ **Seed avant `build:seo`.** Le prérendu SEO (`scripts/prerender.mjs`) lit le catalogue via
+> `src/services/catalog.ts`, qui retombe sur les **données mock** quand Firestore est vide. Lancer
+> `build:seo` sur un Firestore non seedé fige du contenu mock dans le HTML prérendu et le sitemap.
+> Toujours exécuter le seed (§4) **avant** un `build:seo` de production.
 
 ## 6. Tests de règles Firestore (CI, Java 11+)
 Les tests de règles par rôle (un user ne valide pas sa propre page ; un non-super-admin ne peut pas
-accorder `admin` ; un compte suspendu ne peut pas contribuer) tournent via l'émulateur :
+accorder `admin` ; un compte suspendu ne peut pas contribuer ; messages réservés aux participants ;
+audit append-only ; deny par défaut) sont dans [`firestore.rules.test.ts`](firestore.rules.test.ts) et
+tournent via l'émulateur :
 ```bash
-npm i -D @firebase/rules-unit-testing
-npx firebase emulators:exec --only firestore "vitest run firestore.rules.test"
+npm run test:rules   # = firebase emulators:exec --only firestore "vitest run --config vitest.rules.config.ts"
 ```
-> Non exécutable sur Java 8 — prévoir Java 11+ dans le pipeline CI.
+> Non exécutable sur Java 8 — prévoir **Java 11+**. Le job CI `rules` (`.github/workflows/ci.yml`)
+> installe Temurin 17 et exécute cette suite à chaque PR/push.
+
+## 6 bis. Déploiement automatisé (optionnel)
+Le workflow [`deploy.yml`](.github/workflows/deploy.yml) déploie règles+index+storage et/ou hosting,
+en `workflow_dispatch` manuel ou sur tag `v*`, derrière l'environnement GitHub `production` (revue
+obligatoire). Renseigner les secrets requis (voir l'en-tête du workflow : `FIREBASE_SERVICE_ACCOUNT`
++ les variables `VITE_*`). Sinon, le déploiement manuel des sections 3 et 5 reste valable.
 
 ## 7. Contrôles finaux
 - [ ] Règles + index + storage déployés et testés
@@ -64,7 +76,10 @@ npx firebase emulators:exec --only firestore "vitest run firestore.rules.test"
 - [ ] Dépendances : `npm audit` (mettre à jour Firebase pour résorber les vulnérabilités transitoires)
 
 ## En attente (hors périmètre actuel)
-- **Dons / paiement** : intégration d'un agrégateur (Wave + Orange Money + carte, ex. CinetPay/PayDunya)
-  nécessite un compte marchand + une Cloud Function (checkout + webhook de confirmation) + une collection
-  `donations`. À brancher une fois le compte agrégateur fourni — d'ici là, le CTA de don reste honnête
-  (pas de fausse promesse « 100 % reversé »).
+- **Dons / paiement** : l'intégration Bictorys (Cloud Functions `createBictorysCharge` + `bictorysWebhook`)
+  est en place côté code, et la couche données est **durcie** : règles `donations` (écriture serveur
+  uniquement ; lecture par le donateur propriétaire ou un admin), index `donations(donorUid, createdAt)`,
+  borne de montant (500 – 5 000 000 XOF) et rate-limit par donateur (20 charges/h) sur la création.
+  **Reste à fournir** : le compte marchand + les secrets (`BICTORYS_API_KEY`, `BICTORYS_WEBHOOK_SECRET`)
+  et la confirmation des noms de champs/événements de l'API Bictorys. D'ici là, le CTA de don reste
+  honnête (pas de fausse promesse « 100 % reversé »).

@@ -1,0 +1,81 @@
+name: Deploy (Firebase)
+
+# Controlled deployment of the rules/indexes/storage and the hosted site.
+# Triggered manually, or by pushing a v* tag. Gated by the `production`
+# GitHub Environment so a reviewer must approve before it runs.
+#
+# Required repository secrets:
+#   FIREBASE_SERVICE_ACCOUNT  — JSON key of a service account with deploy rights
+#   VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
+#   VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID,
+#   VITE_FIREBASE_APP_ID, VITE_FIREBASE_MEASUREMENT_ID, VITE_SITE_URL
+# Optional (search/support/import): VITE_TYPESENSE_*, VITE_CHATWOOT_*, VITE_PLACES_API_KEY
+#
+# ⚠️ Seed Firestore before deploying hosting (see DEPLOYMENT.md §4–§5): the SEO
+#    prerender embeds mock content when the catalog collections are empty.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        default: all
+        options: [all, rules, hosting]
+  push:
+    tags: ["v*"]
+
+jobs:
+  deploy:
+    name: Deploy to Firebase
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      FIREBASE_PROJECT: werguyaram
+      VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+      VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+      VITE_TYPESENSE_HOST: ${{ secrets.VITE_TYPESENSE_HOST }}
+      VITE_TYPESENSE_NEAREST_HOST: ${{ secrets.VITE_TYPESENSE_NEAREST_HOST }}
+      VITE_TYPESENSE_SEARCH_KEY: ${{ secrets.VITE_TYPESENSE_SEARCH_KEY }}
+      VITE_TYPESENSE_COLLECTION: ${{ secrets.VITE_TYPESENSE_COLLECTION }}
+      VITE_CHATWOOT_BASE_URL: ${{ secrets.VITE_CHATWOOT_BASE_URL }}
+      VITE_CHATWOOT_WEBSITE_TOKEN: ${{ secrets.VITE_CHATWOOT_WEBSITE_TOKEN }}
+      VITE_PLACES_API_KEY: ${{ secrets.VITE_PLACES_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@latest
+
+      - name: Authenticate to Firebase
+        run: |
+          printf '%s' "$FIREBASE_SA" > "$RUNNER_TEMP/sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy rules, indexes & storage
+        if: ${{ github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'rules' }}
+        run: firebase deploy --only firestore:rules,firestore:indexes,storage --project "$FIREBASE_PROJECT" --non-interactive
+
+      - name: Build site (with SEO assets)
+        if: ${{ github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'hosting' }}
+        run: npm run build:seo
+
+      - name: Deploy hosting
+        if: ${{ github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'hosting' }}
+        run: firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive

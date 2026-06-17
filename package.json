@@ -16,6 +16,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "e2e": "playwright test",
     "seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
     "seed:admin": "node --env-file=.env.local --import tsx scripts/seedContentAdmin.ts",
@@ -40,6 +41,7 @@
     "typesense": "^3.0.6"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@playwright/test": "^1.61.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

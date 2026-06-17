@@ -58,3 +58,30 @@ jobs:
 
       - name: Run e2e smoke suite
         run: npm run e2e
+
+  rules:
+    name: Firestore security rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # The Firestore emulator requires a JDK (11+); Java 8 cannot run it.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools@latest
+
+      # Boots the Firestore emulator, runs the rules regression suite, tears down.
+      - name: Run Firestore rules tests
+        run: npm run test:rules
