@@ -16,7 +16,7 @@ import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Request } from "firebase-functions/v2/https";
 import type { Response } from "express";
@@ -31,6 +31,12 @@ const BICTORYS_API_URL = defineString("BICTORYS_API_URL", { default: "https://ap
 const APP_PUBLIC_URL = defineString("APP_PUBLIC_URL", { default: "https://werguyaram.org" });
 
 const MIN_AMOUNT = 500; // XOF
+const MAX_AMOUNT = 5_000_000; // XOF — sanity ceiling for a single donation.
+
+// Per-user rate limit on charge creation: bounds abuse (spamming Bictorys /
+// flooding `donations`) without blocking a genuine repeat donor.
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_MAX = 20;
 
 // Restrict callable functions to the app's own origins (defense in depth on top
 // of the per-call auth token). Set CORS_ORIGINS (comma-separated) to override
@@ -55,8 +61,36 @@ export const createBictorysCharge = onCall(
       paymentType?: PaymentType;
     };
 
-    if (!needId || typeof amount !== "number" || amount < MIN_AMOUNT) {
-      throw new HttpsError("invalid-argument", "needId et un montant valide (≥ 500 XOF) sont requis.");
+    if (
+      !needId ||
+      typeof amount !== "number" ||
+      !Number.isFinite(amount) ||
+      amount < MIN_AMOUNT ||
+      amount > MAX_AMOUNT
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        "needId et un montant valide (entre 500 et 5 000 000 XOF) sont requis.",
+      );
+    }
+
+    // Rate limit per authenticated donor (rolling window). Guests (no uid) are
+    // bounded by the hosted-checkout / Bictorys side; we can't key them safely.
+    const uid = request.auth?.uid;
+    if (uid) {
+      const since = Timestamp.fromMillis(Date.now() - RATE_WINDOW_MS);
+      const recent = await db
+        .collection("donations")
+        .where("donorUid", "==", uid)
+        .where("createdAt", ">=", since)
+        .count()
+        .get();
+      if (recent.data().count >= RATE_MAX) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Trop de tentatives de don récentes. Réessayez dans un moment.",
+        );
+      }
     }
 
     // Server-side source of truth: the need must exist (and prevents arbitrary refs).
