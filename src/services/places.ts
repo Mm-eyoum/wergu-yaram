@@ -21,10 +21,18 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { logAudit } from "./audit";
 
 const PLACES_KEY = import.meta.env.VITE_PLACES_API_KEY as string | undefined;
 const PLACES_BASE = "https://places.googleapis.com/v1";
 const ORGS = "organizations";
+
+/**
+ * Hard cap on a single bulk import. Bounds how much an admin can inject into the
+ * public directory in one action (quality control + Places API cost). Larger
+ * imports must be split into batches so each is reviewed.
+ */
+export const IMPORT_CAP = 20;
 
 export interface PlaceCandidate {
   placeId: string;
@@ -109,9 +117,14 @@ export async function importPlaces(
   region?: string,
 ): Promise<{ imported: number; skipped: number }> {
   assertConfigured();
+  if (placeIds.length > IMPORT_CAP) {
+    throw new Error(
+      `Import limité à ${IMPORT_CAP} structures par lot (${placeIds.length} sélectionnées). Réduisez la sélection.`,
+    );
+  }
   let imported = 0;
   let skipped = 0;
-  for (const placeId of placeIds.slice(0, 50)) {
+  for (const placeId of placeIds) {
     if (await alreadyImported(placeId)) {
       skipped++;
       continue;
@@ -144,6 +157,21 @@ export async function importPlaces(
       updatedAt: serverTimestamp(),
     });
     imported++;
+  }
+  // Record the batch in the audit trail so directory pollution is traceable.
+  if (imported > 0) {
+    await logAudit({
+      action: "create",
+      resourceType: "directory_import",
+      resourceId: region || "places",
+      resourceTitle: `${imported} structure(s) importée(s)${region ? ` — ${region}` : ""}`,
+      changes: {
+        import: {
+          old: null,
+          new: { region: region ?? "", requested: placeIds.length, imported, skipped, placeIds },
+        },
+      },
+    });
   }
   return { imported, skipped };
 }

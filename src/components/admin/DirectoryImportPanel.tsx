@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/hooks/useToast";
-import { searchPlaces, importPlaces, type PlaceCandidate } from "@/services/places";
+import { searchPlaces, importPlaces, IMPORT_CAP, type PlaceCandidate } from "@/services/places";
 import { SENEGAL_REGIONS } from "@/lib/constants";
 
 /** Health-structure categories used to scope the Places search. */
@@ -123,8 +123,16 @@ export function DirectoryImportPanel() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-text-secondary">
               {selected.size} sélectionnée(s) sur {candidates.length}
+              {selected.size > IMPORT_CAP && (
+                <span className="ml-1 font-semibold text-amber-700">
+                  · max {IMPORT_CAP} par lot
+                </span>
+              )}
             </p>
-            <Button onClick={() => doImport.mutate()} disabled={doImport.isPending || selected.size === 0}>
+            <Button
+              onClick={() => doImport.mutate()}
+              disabled={doImport.isPending || selected.size === 0 || selected.size > IMPORT_CAP}
+            >
               {doImport.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               Importer la sélection
             </Button>
