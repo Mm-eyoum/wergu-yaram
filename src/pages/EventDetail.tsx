@@ -60,7 +60,7 @@ export default function EventDetail() {
           eventJsonLd(event),
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
-            { name: "Événements", path: "/" },
+            { name: "Événements", path: "/recherche?type=evenement" },
             { name: event.title, path: `/evenements/${event.id}` },
           ]),
         ]}
@@ -68,7 +68,7 @@ export default function EventDetail() {
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
-          { label: "Événements", to: "/" },
+          { label: "Événements", to: "/recherche?type=evenement" },
           { label: event.title },
         ]}
       />

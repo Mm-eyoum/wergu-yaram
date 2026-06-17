@@ -3,8 +3,13 @@ import { cn } from "@/lib/cn";
 
 export function LoadingState({ label = "Chargement…" }: { label?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-12 text-text-secondary">
-      <Loader2 className="h-7 w-7 animate-spin text-brand-green" />
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="flex flex-col items-center justify-center gap-3 py-12 text-text-secondary"
+    >
+      <Loader2 className="h-7 w-7 animate-spin text-brand-green" aria-hidden="true" />
       <p className="text-sm">{label}</p>
     </div>
   );

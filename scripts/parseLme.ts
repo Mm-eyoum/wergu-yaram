@@ -305,7 +305,7 @@ interface ParsedPresentation extends RawRow {
 }
 
 function isGroupHeading(line: string): { num: number; text: string } | null {
-  const m = /^\s*(\d{1,2})\.\s+([\wÀ-ÿ/'’ ,().\-]+?)\s*$/.exec(line);
+  const m = /^\s*(\d{1,2})\.\s+([\wÀ-ÿ/'’ ,().-]+?)\s*$/.exec(line);
   if (!m) return null;
   if (countCareTokens(line) >= 2) return null;
   const text = m[2];

@@ -41,7 +41,7 @@ const TYPES = [
 /** Discovery: synced list + map of all health structures, with filters & "near me". */
 export default function Carte() {
   const { data: facilities = [], isLoading } = useFacilities();
-  const { data: orgs = [] } = useQuery({
+  const { data: orgs = [], isError: orgsError } = useQuery({
     queryKey: ["mapFacilityOrgs"],
     queryFn: fetchActiveFacilityOrganizations,
   });
@@ -202,6 +202,11 @@ export default function Carte() {
           </div>
 
           {geo.error && <p className="mt-2 text-xs text-text-secondary">{geo.error}</p>}
+          {orgsError && (
+            <p role="alert" className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              L'annuaire des structures n'a pas pu être chargé. Les établissements vérifiés restent affichés.
+            </p>
+          )}
 
           <div className="mt-3 max-h-[64vh] space-y-2 overflow-y-auto scroll-thin pr-1">
             {isLoading ? (
