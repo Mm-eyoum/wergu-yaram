@@ -101,10 +101,11 @@ export default function CreatePage() {
         />
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-text-primary">Région</label>
+          <label htmlFor="org-region" className="mb-1.5 block text-sm font-medium text-text-primary">Région</label>
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
             <select
+              id="org-region"
               value={region}
               onChange={(e) => setRegion(e.target.value)}
               className="h-11 w-full rounded-xl border border-border-soft bg-white pl-10 pr-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
@@ -125,8 +126,9 @@ export default function CreatePage() {
         )}
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-text-primary">Description</label>
+          <label htmlFor="org-description" className="mb-1.5 block text-sm font-medium text-text-primary">Description</label>
           <textarea
+            id="org-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}

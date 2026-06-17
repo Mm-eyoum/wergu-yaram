@@ -9,6 +9,8 @@ import {
   Heart,
   LayoutGrid,
   LifeBuoy,
+  MapPin,
+  Pill,
   Plus,
   Search,
   ShieldQuestion,
@@ -18,7 +20,7 @@ import { ProfileSummaryCard } from "@/components/dashboard/ProfileSummaryCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { Badge } from "@/components/ui/Badge";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/LoadingState";
 import { useAuth } from "@/hooks/useAuth";
 import { useSupport } from "@/hooks/useSupport";
@@ -29,6 +31,7 @@ import {
   useSavedSearches,
   useUserOrganizations,
 } from "@/hooks/useDashboardData";
+import { useFacilities } from "@/hooks/useCatalog";
 import { fetchUserClaims } from "@/services/claims";
 import { HEALTH_INTERESTS, ORG_TYPE_LABELS } from "@/lib/constants";
 import type { OrgStatus } from "@/types/domain";
@@ -111,6 +114,8 @@ export default function Dashboard() {
   const memberships = useMemberships(uid);
   const reminders = useReminders(uid);
   const organizations = useUserOrganizations(uid);
+  const { data: facilities = [] } = useFacilities();
+  const nearbyFacilities = facilities.slice(0, 4);
   const claims = useQuery({
     queryKey: ["userClaims", uid],
     queryFn: () => fetchUserClaims(uid!),
@@ -149,13 +154,16 @@ export default function Dashboard() {
             </div>
           </SidebarPanel>
 
-          <div className="card-surface bg-brand-navy p-5 text-white">
-            <LifeBuoy className="h-7 w-7 text-brand-teal" />
+          <div className="rounded-3xl bg-brand-gradient p-5 text-white">
+            <LifeBuoy className="h-7 w-7" />
             <h3 className="mt-2 font-bold">Besoin d'aide ?</h3>
-            <p className="mt-1 text-sm text-white/80">Notre équipe est là pour vous accompagner.</p>
-            <Button variant="primary" size="sm" className="mt-3" onClick={openSupport}>
+            <p className="mt-1 text-sm text-white/85">Notre équipe est là pour vous accompagner.</p>
+            <button
+              onClick={openSupport}
+              className="mt-3 inline-flex rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-brand-green"
+            >
               Contacter le support
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -169,11 +177,16 @@ export default function Dashboard() {
           >
             <AsyncList
               query={organizations}
-              emptyText="Vous ne gérez aucune page pour l'instant. Créez une page pour représenter une structure de santé, un partenaire ou un donateur."
+              emptyText="Vous ne gérez aucune page pour l'instant. Créez une page pour votre structure, partenaire ou donateur — ou réclamez une structure de santé déjà référencée."
               emptyCta={
-                <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
-                  <Plus className="h-4 w-4" /> Créer une page
-                </ButtonLink>
+                <div className="flex flex-wrap gap-2">
+                  <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                    <Plus className="h-4 w-4" /> Créer une page
+                  </ButtonLink>
+                  <ButtonLink to="/structures/revendiquer" size="sm" variant="outline">
+                    <ShieldQuestion className="h-4 w-4" /> Réclamer une structure
+                  </ButtonLink>
+                </div>
               }
             >
               {(orgs) => (
@@ -196,9 +209,14 @@ export default function Dashboard() {
                       </Link>
                     ))}
                   </div>
-                  <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
-                    <Plus className="h-4 w-4" /> Créer une page
-                  </ButtonLink>
+                  <div className="flex flex-wrap gap-2">
+                    <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                      <Plus className="h-4 w-4" /> Créer une page
+                    </ButtonLink>
+                    <ButtonLink to="/structures/revendiquer" size="sm" variant="outline">
+                      <ShieldQuestion className="h-4 w-4" /> Réclamer une structure
+                    </ButtonLink>
+                  </div>
                 </div>
               )}
             </AsyncList>
@@ -258,19 +276,69 @@ export default function Dashboard() {
             </AsyncList>
           </SidebarPanel>
 
+          <SidebarPanel title="Médicaments & articles enregistrés" icon={<Pill className="h-4 w-4" />} action={{ label: "Explorer", to: "/recherche?type=medicament" }}>
+            <AsyncList
+              query={favorites}
+              emptyText="Aucun médicament ni article enregistré pour l'instant."
+            >
+              {(items) => {
+                const saved = items.filter((f) => f.type === "medicament" || f.type === "article");
+                return saved.length ? (
+                  <ul className="space-y-2">
+                    {saved.map((f) => (
+                      <li key={f.id}>{rowLink(f.href, <Pill className="h-4 w-4 shrink-0" />, f.title)}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-text-secondary">Aucun médicament ni article enregistré pour l'instant.</p>
+                );
+              }}
+            </AsyncList>
+          </SidebarPanel>
+
           <SidebarPanel title="Mes favoris" icon={<Bookmark className="h-4 w-4" />} action={{ label: "Explorer", to: "/recherche" }}>
             <AsyncList
               query={favorites}
-              emptyText="Aucun favori. Ajoutez des médicaments, établissements ou articles à vos favoris."
+              emptyText="Aucun favori. Ajoutez des établissements, pathologies ou communautés à vos favoris."
             >
-              {(items) => (
-                <ul className="space-y-2">
-                  {items.map((f) => (
-                    <li key={f.id}>{rowLink(f.href, <Heart className="h-4 w-4 shrink-0" />, f.title)}</li>
-                  ))}
-                </ul>
-              )}
+              {(items) => {
+                const others = items.filter((f) => f.type !== "medicament" && f.type !== "article");
+                return others.length ? (
+                  <ul className="space-y-2">
+                    {others.map((f) => (
+                      <li key={f.id}>{rowLink(f.href, <Heart className="h-4 w-4 shrink-0" />, f.title)}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-text-secondary">Aucun autre favori pour l'instant.</p>
+                );
+              }}
             </AsyncList>
+          </SidebarPanel>
+
+          <SidebarPanel title="Établissements à proximité" icon={<MapPin className="h-4 w-4" />} action={{ label: "Carte", to: "/carte" }}>
+            {nearbyFacilities.length ? (
+              <ul className="space-y-2">
+                {nearbyFacilities.map((f) => (
+                  <li key={f.slug}>
+                    <Link
+                      to={`/etablissements/${f.slug}`}
+                      className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2 transition-colors hover:border-brand-teal"
+                    >
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
+                        <Building2 className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-text-primary">{f.name}</p>
+                        <p className="truncate text-xs text-text-secondary">{f.region}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-text-secondary">Aucun établissement à afficher.</p>
+            )}
           </SidebarPanel>
 
           <SidebarPanel title="Communautés rejointes" icon={<Users className="h-4 w-4" />} action={{ label: "Découvrir", to: "/communautes" }}>
@@ -289,7 +357,7 @@ export default function Dashboard() {
             </AsyncList>
           </SidebarPanel>
 
-          <SidebarPanel title="Rappels & événements" icon={<CalendarDays className="h-4 w-4" />} action={{ label: "Événements", to: "/recherche?type=evenement" }}>
+          <SidebarPanel title="Rappels & événements" icon={<CalendarDays className="h-4 w-4" />} action={{ label: "Événements", to: "/evenements" }}>
             <AsyncList
               query={reminders}
               emptyText="Aucun rappel programmé."

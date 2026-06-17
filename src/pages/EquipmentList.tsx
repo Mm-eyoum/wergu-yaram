@@ -1,5 +1,17 @@
 import { useMemo, useState } from "react";
-import { HandHeart, LayoutGrid, Map as MapIcon, Receipt, ShieldCheck, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  CheckCircle2,
+  HandHeart,
+  Hospital,
+  LayoutGrid,
+  Map as MapIcon,
+  Megaphone,
+  Receipt,
+  ScrollText,
+  ShieldCheck,
+  TrendingUp,
+} from "lucide-react";
 import { UniversalSearchHero } from "@/components/search/UniversalSearchHero";
 import { EquipmentNeedCard } from "@/components/cards/EquipmentNeedCard";
 import { CategoryPill } from "@/components/ui/CategoryPill";
@@ -11,7 +23,7 @@ import type { MapMarker } from "@/components/map/MapView";
 import { MarkerPopup } from "@/components/map/MarkerPopup";
 import { useEquipmentNeeds, useFacilities } from "@/hooks/useCatalog";
 import { usePagination } from "@/hooks/usePagination";
-import { Button } from "@/components/ui/Button";
+import { Pagination } from "@/components/ui/Pagination";
 import { SENEGAL_REGIONS } from "@/lib/constants";
 import type { Urgency } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
@@ -48,7 +60,7 @@ export default function EquipmentList() {
     [equipmentNeeds, region, urgency, category],
   );
 
-  const { paged, hasMore, remaining, showMore } = usePagination(filtered);
+  const { pageItems, page, pageCount, setPage } = usePagination(filtered);
 
   // Resolve each need's coordinates via its beneficiary facility for the map view.
   const needMarkers: MapMarker[] = useMemo(() => {
@@ -159,31 +171,56 @@ export default function EquipmentList() {
             <LazyMapView className="h-[60vh] w-full" markers={needMarkers} clustering fitToMarkers />
           ) : (
             <>
-              <div className="grid gap-5 sm:grid-cols-2">
-                {paged.map((need) => (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {pageItems.map((need) => (
                   <EquipmentNeedCard key={need.id} need={need} />
                 ))}
               </div>
-              {hasMore && (
-                <div className="mt-6 flex justify-center">
-                  <Button variant="outline" onClick={showMore}>
-                    Voir plus ({remaining})
-                  </Button>
-                </div>
-              )}
+              <Pagination className="mt-6" page={page} pageCount={pageCount} onChange={setPage} />
             </>
           )}
         </div>
 
-        {/* Impact sidebar */}
+        {/* Acquisition sidebar */}
         <aside className="space-y-5">
-          <div className="card-surface bg-brand-navy p-5 text-white">
-            <HandHeart className="h-8 w-8 text-brand-teal" />
-            <h2 className="mt-2 text-lg font-bold">Pourquoi soutenir ?</h2>
-            <p className="mt-1 text-sm text-white/80">
-              Chaque contribution, même modeste, aide une structure à mieux soigner sa communauté.
+          <div className="rounded-3xl bg-brand-gradient p-5 text-white">
+            <Hospital className="h-8 w-8" />
+            <h2 className="mt-2 text-lg font-bold">Pour les structures de santé</h2>
+            <p className="mt-1 text-sm text-white/85">
+              Publiez vos besoins en équipement et recevez le soutien de la communauté.
             </p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {[
+                "Inscription gratuite",
+                "Suivi des dons en temps réel",
+                "Espace dédié à votre structure",
+                "Reçus et transparence garantis",
+              ].map((item) => (
+                <li key={item} className="flex gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-white" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/dashboard/pages/new"
+              className="mt-4 inline-flex rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-brand-green"
+            >
+              Inscrire ma structure
+            </Link>
           </div>
+
+          <SidebarPanel title="Campagne de visibilité" icon={<Megaphone className="h-4 w-4" />}>
+            <p className="text-sm text-text-secondary">
+              Mettez en avant un besoin prioritaire auprès de nos partenaires et donateurs.
+            </p>
+            <Link
+              to="/partenaires"
+              className="mt-3 inline-flex text-sm font-semibold text-brand-green hover:underline"
+            >
+              En savoir plus →
+            </Link>
+          </SidebarPanel>
 
           <SidebarPanel title="Notre impact">
             <ul className="space-y-3 text-sm">
@@ -192,15 +229,47 @@ export default function EquipmentList() {
               <Impact icon={<ShieldCheck className="h-4 w-4" />} label="Transparence" value="100 %" />
             </ul>
           </SidebarPanel>
-
-          <SidebarPanel title="Nos engagements" icon={<Receipt className="h-4 w-4" />}>
-            <ul className="space-y-2 text-sm text-text-secondary">
-              <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" /> Paiement 100 % sécurisé</li>
-              <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" /> Reçu de don transparent</li>
-              <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" /> Suivi de l'utilisation des fonds</li>
-            </ul>
-          </SidebarPanel>
         </aside>
+      </div>
+
+      {/* Trust strip */}
+      <div className="border-t border-border-soft bg-brand-mint/40">
+        <div className="container-page grid gap-6 py-8 sm:grid-cols-2 lg:grid-cols-4">
+          <TrustItem
+            icon={<HandHeart className="h-5 w-5" />}
+            title="Chaque contribution compte"
+            text="Même un petit don aide une structure à mieux soigner."
+          />
+          <TrustItem
+            icon={<ShieldCheck className="h-5 w-5" />}
+            title="Paiement 100 % sécurisé"
+            text="Vos transactions sont chiffrées et protégées."
+          />
+          <TrustItem
+            icon={<Receipt className="h-5 w-5" />}
+            title="Reçu de transparence"
+            text="Un reçu et un suivi de l'utilisation des fonds."
+          />
+          <TrustItem
+            icon={<ScrollText className="h-5 w-5" />}
+            title="Déduction fiscale"
+            text="Vos dons peuvent être déductibles selon la législation."
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TrustItem({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div className="flex gap-3">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-mint text-brand-green">
+        {icon}
+      </span>
+      <div>
+        <p className="text-sm font-bold text-text-primary">{title}</p>
+        <p className="text-xs text-text-secondary">{text}</p>
       </div>
     </div>
   );

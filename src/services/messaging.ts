@@ -23,6 +23,8 @@ export interface LiveConversation {
   name: string;
   lastMessage: string;
   updatedAt?: string;
+  /** Author of the most recent message — used to compute "unread" state. */
+  lastSenderUid?: string;
 }
 
 export interface LiveMessage {
@@ -66,6 +68,7 @@ export function subscribeConversations(
             name: (data.name as string) ?? "Conversation",
             lastMessage: (data.lastMessage as string) ?? "",
             updatedAt: isoOf(data.updatedAt),
+            lastSenderUid: (data.lastSenderUid as string) ?? undefined,
           };
         }),
       ),
@@ -136,8 +139,47 @@ export async function sendMessage(
   });
   await updateDoc(doc(db, "conversations", conversationId), {
     lastMessage: body,
+    lastSenderUid: fbUser.uid,
     updatedAt: serverTimestamp(),
   });
+}
+
+/**
+ * Per-user read markers, stored under the owner's private subcollection
+ * `users/{uid}/conversationReads/{conversationId}` (owner-only by rules). A
+ * conversation is "unread" when its `updatedAt` is newer than the user's
+ * marker AND the last message was sent by someone else.
+ */
+export function subscribeConversationReads(
+  uid: string,
+  onData: (reads: Record<string, string>) => void,
+): () => void {
+  if (!db) {
+    onData({});
+    return () => {};
+  }
+  return onSnapshot(
+    collection(db, "users", uid, "conversationReads"),
+    (snap) => {
+      const reads: Record<string, string> = {};
+      snap.docs.forEach((d) => {
+        const at = isoOf(d.data().lastReadAt);
+        if (at) reads[d.id] = at;
+      });
+      onData(reads);
+    },
+    () => onData({}),
+  );
+}
+
+/** Mark a conversation as read up to now for the given user. */
+export async function markConversationRead(uid: string, conversationId: string): Promise<void> {
+  if (!db) return;
+  await setDoc(
+    doc(db, "users", uid, "conversationReads", conversationId),
+    { lastReadAt: serverTimestamp() },
+    { merge: true },
+  );
 }
 
 /**
@@ -157,6 +199,7 @@ export async function getOrCreateSupportConversation(
       name: "Support Wergu Yaram",
       startedBy: profile.uid,
       lastMessage: "",
+      lastSenderUid: "",
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp(),
     },

@@ -16,6 +16,8 @@ const ArticleDetail = lazy(() => import("@/pages/ArticleDetail"));
 const FacilityDetail = lazy(() => import("@/pages/FacilityDetail"));
 const Carte = lazy(() => import("@/pages/Carte"));
 const OrganizationDetail = lazy(() => import("@/pages/OrganizationDetail"));
+const Structures = lazy(() => import("@/pages/Structures"));
+const ClaimStructure = lazy(() => import("@/pages/ClaimStructure"));
 const Communities = lazy(() => import("@/pages/Communities"));
 const CommunityDetail = lazy(() => import("@/pages/CommunityDetail"));
 const Forum = lazy(() => import("@/pages/Forum"));
@@ -23,7 +25,9 @@ const Messages = lazy(() => import("@/pages/Messages"));
 const EquipmentList = lazy(() => import("@/pages/EquipmentList"));
 const EquipmentDetail = lazy(() => import("@/pages/EquipmentDetail"));
 const EventDetail = lazy(() => import("@/pages/EventDetail"));
+const Evenements = lazy(() => import("@/pages/Evenements"));
 const Partners = lazy(() => import("@/pages/Partners"));
+const PartnerDetail = lazy(() => import("@/pages/PartnerDetail"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -76,14 +80,18 @@ export default function App() {
         <Route path="/articles/:slug" element={<ArticleDetail />} />
         <Route path="/etablissements/:slug" element={<FacilityDetail />} />
         <Route path="/carte" element={<Carte />} />
+        <Route path="/structures" element={<Structures />} />
+        <Route path="/structures/revendiquer" element={<ClaimStructure />} />
         <Route path="/structures/:id" element={<OrganizationDetail />} />
         <Route path="/communautes" element={<Communities />} />
         <Route path="/communautes/:slug" element={<CommunityDetail />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/besoins" element={<EquipmentList />} />
         <Route path="/besoins/:id" element={<EquipmentDetail />} />
+        <Route path="/evenements" element={<Evenements />} />
         <Route path="/evenements/:id" element={<EventDetail />} />
         <Route path="/partenaires" element={<Partners />} />
+        <Route path="/partenaires/:slug" element={<PartnerDetail />} />
         <Route path="/connexion" element={<Login />} />
         <Route path="/inscription" element={<Register />} />
         <Route path="/conditions" element={<Terms />} />

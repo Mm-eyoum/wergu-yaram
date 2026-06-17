@@ -1,6 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Eye, EyeOff, Leaf, Lock, Mail, MapPin, ShieldCheck, User } from "lucide-react";
+import {
+  Check,
+  Eye,
+  EyeOff,
+  Languages,
+  Leaf,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { FormInput } from "@/components/ui/FormInput";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +24,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { SEOHead } from "@/seo/SEOHead";
 
 const STEPS = ["Compte", "Profil santé", "Confirmation"];
+
+const LANGUAGES = [
+  { value: "fr", label: "Français" },
+  { value: "wo", label: "Wolof" },
+  { value: "en", label: "English" },
+];
 
 /** Lightweight password strength estimate → 0 (empty) … 4 (strong). */
 function passwordScore(pwd: string): number {
@@ -40,6 +58,8 @@ export default function Register() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [language, setLanguage] = useState("fr");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -81,6 +101,8 @@ export default function Register() {
         password,
         displayName: `${firstName} ${lastName}`.trim(),
         region,
+        phone,
+        language,
         interests,
       });
       navigate("/dashboard");
@@ -161,6 +183,35 @@ export default function Register() {
             <FormInput label="Adresse email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} leftIcon={<Mail className="h-4 w-4" />} autoComplete="email" />
             <div className="grid gap-4 sm:grid-cols-2">
               <FormInput
+                label="Téléphone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                leftIcon={<Phone className="h-4 w-4" />}
+                autoComplete="tel"
+                placeholder="+221 …"
+              />
+              <div>
+                <label htmlFor="register-language" className="mb-1.5 block text-sm font-medium text-text-primary">
+                  Langue
+                </label>
+                <div className="relative">
+                  <Languages className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
+                  <select
+                    id="register-language"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-border-soft bg-white pl-10 pr-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+                  >
+                    {LANGUAGES.map((l) => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormInput
                 label="Mot de passe"
                 type={showPwd ? "text" : "password"}
                 required
@@ -212,10 +263,11 @@ export default function Register() {
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">Région</label>
+              <label htmlFor="register-region" className="mb-1.5 block text-sm font-medium text-text-primary">Région</label>
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                 <select
+                  id="register-region"
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
                   className="h-11 w-full rounded-xl border border-border-soft bg-white pl-10 pr-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
@@ -249,6 +301,7 @@ export default function Register() {
               <dl className="mt-2 space-y-1 text-text-secondary">
                 <div className="flex justify-between"><dt>Nom</dt><dd className="font-medium text-text-primary">{firstName} {lastName}</dd></div>
                 <div className="flex justify-between"><dt>Email</dt><dd className="font-medium text-text-primary">{email}</dd></div>
+                {phone && <div className="flex justify-between"><dt>Téléphone</dt><dd className="font-medium text-text-primary">{phone}</dd></div>}
                 <div className="flex justify-between"><dt>Région</dt><dd className="font-medium text-text-primary">{region}</dd></div>
                 <div className="flex justify-between"><dt>Intérêts</dt><dd className="font-medium text-text-primary">{interests.length || "—"}</dd></div>
               </dl>

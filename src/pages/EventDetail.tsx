@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { CalendarDays, Clock, MapPin, Ticket, UserRound, Users } from "lucide-react";
+import { BookOpen, CalendarDays, CalendarPlus, Clock, MapPin, Ticket, UserRound, Users } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
 import { SectionCard } from "@/components/ui/Card";
@@ -48,6 +48,7 @@ export default function EventDetail() {
   const community = event.communitySlug
     ? communities.find((c) => c.slug === event.communitySlug)
     : undefined;
+  const calendarUrl = buildGoogleCalendarUrl(event);
 
   return (
     <div className="container-page py-6">
@@ -60,7 +61,7 @@ export default function EventDetail() {
           eventJsonLd(event),
           breadcrumbJsonLd([
             { name: "Accueil", path: "/" },
-            { name: "Événements", path: "/recherche?type=evenement" },
+            { name: "Événements", path: "/evenements" },
             { name: event.title, path: `/evenements/${event.id}` },
           ]),
         ]}
@@ -68,7 +69,7 @@ export default function EventDetail() {
       <Breadcrumb
         items={[
           { label: "Accueil", to: "/" },
-          { label: "Événements", to: "/recherche?type=evenement" },
+          { label: "Événements", to: "/evenements" },
           { label: event.title },
         ]}
       />
@@ -168,6 +169,27 @@ export default function EventDetail() {
               </div>
             </SectionCard>
           )}
+
+          {community && community.resources.length > 0 && (
+            <SectionCard title="Ressources associées">
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {community.resources.map((r) => (
+                  <li
+                    key={r.title}
+                    className="flex items-center gap-3 rounded-2xl border border-border-soft p-3"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-mint text-brand-green">
+                      <BookOpen className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-text-primary">{r.title}</p>
+                      <p className="text-xs text-text-secondary">{r.type}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+          )}
         </div>
 
         <aside className="space-y-5">
@@ -185,6 +207,14 @@ export default function EventDetail() {
             >
               S'inscrire à l'événement
             </Button>
+            <a
+              href={calendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border-soft px-4 py-2.5 text-sm font-semibold text-text-secondary hover:border-brand-teal hover:text-brand-green"
+            >
+              <CalendarPlus className="h-4 w-4" /> Ajouter au calendrier
+            </a>
             <p className="mt-2 text-center text-xs text-text-secondary">Confirmation immédiate par email</p>
           </div>
 
@@ -205,6 +235,31 @@ export default function EventDetail() {
       </div>
     </div>
   );
+}
+
+/** Build a "Add to Google Calendar" template URL from an event. */
+function buildGoogleCalendarUrl(event: {
+  title: string;
+  about: string;
+  summary: string;
+  location: string;
+  city: string;
+  startAt: string;
+  endAt: string;
+}): string {
+  const fmt = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? "" : d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  };
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: event.title,
+    details: event.about || event.summary,
+    location: `${event.location}, ${event.city}`,
+  });
+  const dates = `${fmt(event.startAt)}/${fmt(event.endAt)}`;
+  if (!dates.startsWith("/") && !dates.endsWith("/")) params.set("dates", dates);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 function Meta({ icon, value }: { icon: React.ReactNode; value: string }) {

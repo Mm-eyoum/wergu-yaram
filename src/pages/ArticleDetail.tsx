@@ -1,16 +1,17 @@
-import { useParams } from "react-router-dom";
-import { BadgeCheck, Clock, PlayCircle } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { BadgeCheck, Clock, MapPin, MessageCircle, PlayCircle, ShieldCheck, Stethoscope, Users } from "lucide-react";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FavoriteButton } from "@/components/content/FavoriteButton";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
+import { TrustStatsBar } from "@/components/ui/TrustStatsBar";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { MedicationCard } from "@/components/cards/MedicationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { useArticle, useArticles, useMedications } from "@/hooks/useCatalog";
+import { useArticle, useArticles, useFacilities, useMedications } from "@/hooks/useCatalog";
 import { formatDate } from "@/lib/format";
 import { SEOHead } from "@/seo/SEOHead";
 import { articleJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
@@ -20,6 +21,7 @@ export default function ArticleDetail() {
   const { data: article, isLoading } = useArticle(slug);
   const { data: articles = [] } = useArticles();
   const { data: medications = [] } = useMedications();
+  const { data: facilities = [] } = useFacilities();
 
   if (isLoading) {
     return (
@@ -40,6 +42,7 @@ export default function ArticleDetail() {
 
   const related = article.relatedArticles.map((s) => articles.find((a) => a.slug === s)).filter(Boolean);
   const meds = article.relatedMedications.map((s) => medications.find((m) => m.slug === s)).filter(Boolean);
+  const specialists = facilities.slice(0, 2);
 
   return (
     <div className="container-page py-6">
@@ -193,8 +196,61 @@ export default function ArticleDetail() {
               </div>
             </SidebarPanel>
           )}
+
+          {specialists.length > 0 && (
+            <SidebarPanel title="Spécialistes à proximité" icon={<Stethoscope className="h-4 w-4" />} action={{ label: "Carte", to: "/carte" }}>
+              <ul className="space-y-2">
+                {specialists.map((f) => (
+                  <li key={f.slug}>
+                    <Link
+                      to={`/etablissements/${f.slug}`}
+                      className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2 transition-colors hover:border-brand-teal"
+                    >
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
+                        <MapPin className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-text-primary">{f.name}</p>
+                        <p className="truncate text-xs text-text-secondary">{f.region}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </SidebarPanel>
+          )}
+
+          <div className="rounded-3xl bg-brand-gradient p-5 text-white">
+            <Users className="h-7 w-7" />
+            <h3 className="mt-2 font-bold">Échangez avec la communauté</h3>
+            <p className="mt-1 text-sm text-white/85">
+              Posez vos questions et partagez votre expérience sur le forum santé.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link to="/forum" className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-brand-green">
+                <MessageCircle className="h-4 w-4" /> Forum
+              </Link>
+              <Link to="/communautes" className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3.5 py-2 text-sm font-semibold text-white">
+                Communautés
+              </Link>
+            </div>
+          </div>
         </aside>
       </div>
+
+      {/* Trust stats strip */}
+      <TrustStatsBar
+        className="mt-10"
+        variant="light"
+        title="Une plateforme de confiance"
+        subtitle="Des contenus vérifiés par des professionnels de santé."
+        stats={[
+          { value: "1,2M+", label: "Utilisateurs", icon: <Users className="h-5 w-5" /> },
+          { value: "15 000+", label: "Contenus vérifiés", icon: <BadgeCheck className="h-5 w-5" /> },
+          { value: "850+", label: "Établissements", icon: <MapPin className="h-5 w-5" /> },
+          { value: "100 %", label: "Sources fiables", icon: <ShieldCheck className="h-5 w-5" /> },
+        ]}
+      />
     </div>
   );
 }

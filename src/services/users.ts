@@ -17,6 +17,8 @@ import type { AppUser, Role, UserStatus } from "@/types/domain";
 interface ProfileInput {
   displayName: string;
   region?: string;
+  phone?: string;
+  language?: string;
   interests?: string[];
 }
 
@@ -36,6 +38,8 @@ export async function createUserProfile(user: User, input: ProfileInput): Promis
     role: "patient_public" satisfies Role,
     status: "active" satisfies UserStatus,
     region: input.region ?? "",
+    phone: input.phone ?? "",
+    language: input.language ?? "fr",
     interests: input.interests ?? [],
     createdAt: serverTimestamp(),
   });
@@ -71,6 +75,8 @@ export async function fetchUserProfile(user: User): Promise<AppUser> {
     role: (data.role as Role) ?? "patient_public",
     status: (data.status as UserStatus) ?? "active",
     region: data.region,
+    phone: data.phone as string | undefined,
+    language: data.language as string | undefined,
     interests: data.interests ?? [],
   };
 }

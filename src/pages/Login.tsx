@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bookmark, Heart, Lock, Mail, ShieldCheck, Users } from "lucide-react";
+import { Bookmark, Heart, LifeBuoy, Lock, Mail, ShieldCheck, Users } from "lucide-react";
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  setPersistence,
+} from "firebase/auth";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { FormInput } from "@/components/ui/FormInput";
 import { Button } from "@/components/ui/Button";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { useAuth } from "@/hooks/useAuth";
+import { auth } from "@/services/firebase";
 import { SEOHead } from "@/seo/SEOHead";
 
 const PERKS = [
@@ -22,6 +28,7 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,6 +39,13 @@ export default function Login() {
     setInfo("");
     setLoading(true);
     try {
+      // "Se souvenir de moi" → keep the session across browser restarts.
+      if (auth) {
+        await setPersistence(
+          auth,
+          remember ? browserLocalPersistence : browserSessionPersistence,
+        );
+      }
       await login(email, password);
       navigate(from);
     } catch {
@@ -127,13 +141,24 @@ export default function Login() {
               leftIcon={<Lock className="h-4 w-4" />}
               autoComplete="current-password"
             />
-            <button
-              type="button"
-              onClick={handleReset}
-              className="mt-1.5 text-xs font-semibold text-brand-green hover:underline"
-            >
-              Mot de passe oublié ?
-            </button>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-xs text-text-secondary">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="h-4 w-4 accent-brand-green"
+                />
+                Se souvenir de moi
+              </label>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-xs font-semibold text-brand-green hover:underline"
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
           </div>
 
           <Button type="submit" fullWidth size="lg" disabled={loading}>
@@ -157,6 +182,13 @@ export default function Login() {
         <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-text-secondary">
           <ShieldCheck className="h-4 w-4 text-brand-green" />
           Connexion sécurisée et confidentielle
+        </p>
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-text-secondary">
+          <LifeBuoy className="h-4 w-4 text-brand-green" />
+          Besoin d'aide ?{" "}
+          <a href="mailto:support@werguyaram.sn" className="font-semibold text-brand-green hover:underline">
+            Contactez le support
+          </a>
         </p>
       </div>
       </AuthLayout>

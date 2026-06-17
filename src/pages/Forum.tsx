@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, MessageSquare, Plus, Search, ShieldCheck, TrendingUp } from "lucide-react";
+import { CheckCircle2, HelpCircle, LifeBuoy, MessageSquare, Plus, Search, ShieldCheck, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
+import { Pagination } from "@/components/ui/Pagination";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { FormInput } from "@/components/ui/FormInput";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -43,9 +44,13 @@ export default function Forum() {
 
   const realThreads = useQuery({ queryKey: ["forumThreads"], queryFn: fetchForumThreads });
 
+  const allThreads = useMemo(
+    () => [...(realThreads.data ?? []), ...seedThreads],
+    [realThreads.data],
+  );
+
   const threads = useMemo(() => {
-    const all = [...(realThreads.data ?? []), ...seedThreads];
-    return all.filter((t) => {
+    return allThreads.filter((t) => {
       const matchTab = tab === "all" || t.kind === tab;
       const matchQuery =
         !query.trim() ||
@@ -53,9 +58,26 @@ export default function Forum() {
         t.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase()));
       return matchTab && matchQuery;
     });
-  }, [tab, query, realThreads.data]);
+  }, [allThreads, tab, query]);
 
-  const { paged, hasMore, remaining, showMore } = usePagination(threads, 10);
+  // Discussion categories with live counts (drives the left-rail filters).
+  const categories = useMemo(
+    () =>
+      (Object.keys(KIND_LABEL) as ForumKind[]).map((kind) => ({
+        kind,
+        label: KIND_LABEL[kind],
+        count: allThreads.filter((t) => t.kind === kind).length,
+      })),
+    [allThreads],
+  );
+
+  // Unanswered questions surfaced in the right rail.
+  const unanswered = useMemo(
+    () => allThreads.filter((t) => t.kind === "question" && t.answers === 0).slice(0, 5),
+    [allThreads],
+  );
+
+  const { pageItems, page, pageCount, setPage } = usePagination(threads, 10);
 
   return (
     <div>
@@ -93,7 +115,63 @@ export default function Forum() {
         </div>
       </section>
 
-      <div className="container-page grid gap-6 py-8 lg:grid-cols-[1fr_300px]">
+      <div className="container-page grid gap-6 py-8 lg:grid-cols-[260px_1fr_300px]">
+        {/* Left rail: topics + categories + help */}
+        <aside className="hidden space-y-5 lg:block">
+          <SidebarPanel title="Thèmes populaires" icon={<TrendingUp className="h-4 w-4" />}>
+            <div className="flex flex-wrap gap-2">
+              {FORUM_TOPICS.map((topic) => (
+                <Badge key={topic.label} tone="neutral">
+                  {topic.label} · {topic.count}
+                </Badge>
+              ))}
+            </div>
+          </SidebarPanel>
+
+          <SidebarPanel title="Catégories de discussion" icon={<MessageSquare className="h-4 w-4" />}>
+            <ul className="space-y-1">
+              <li>
+                <button
+                  onClick={() => setTab("all")}
+                  className={`flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm ${
+                    tab === "all" ? "bg-brand-mint font-semibold text-brand-green" : "text-text-secondary hover:bg-brand-soft"
+                  }`}
+                >
+                  <span>Tous les sujets</span>
+                  <span className="text-xs">{allThreads.length}</span>
+                </button>
+              </li>
+              {categories.map((c) => (
+                <li key={c.kind}>
+                  <button
+                    onClick={() => setTab(c.kind)}
+                    className={`flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm ${
+                      tab === c.kind ? "bg-brand-mint font-semibold text-brand-green" : "text-text-secondary hover:bg-brand-soft"
+                    }`}
+                  >
+                    <span>{c.label}s</span>
+                    <span className="text-xs">{c.count}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </SidebarPanel>
+
+          <div className="rounded-3xl bg-brand-gradient p-5 text-white">
+            <LifeBuoy className="h-6 w-6" />
+            <h3 className="mt-3 text-base font-bold">Besoin d'aide ?</h3>
+            <p className="mt-1 text-sm text-white/85">
+              Une question urgente ? Posez-la à la communauté et à nos professionnels de santé.
+            </p>
+            <button
+              onClick={() => setShowDialog(true)}
+              className="mt-3 inline-flex rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-brand-green"
+            >
+              Poser une question
+            </button>
+          </div>
+        </aside>
+
         <div>
           <Tabs items={TABS} active={tab} onChange={setTab} className="mb-5" />
 
@@ -101,7 +179,7 @@ export default function Forum() {
             <EmptyState title="Aucune question" message="Essayez un autre mot-clé ou posez votre question." />
           ) : (
             <div className="space-y-4">
-              {paged.map((thread) => (
+              {pageItems.map((thread) => (
                 <article key={thread.id} className="card-surface flex gap-4 p-5">
                   <div className="hidden flex-col items-center gap-1 text-center sm:flex">
                     <span className="text-lg font-extrabold text-text-primary">{thread.votes}</span>
@@ -135,28 +213,12 @@ export default function Forum() {
                   </div>
                 </article>
               ))}
-              {hasMore && (
-                <div className="flex justify-center pt-2">
-                  <Button variant="outline" onClick={showMore}>
-                    Voir plus ({remaining})
-                  </Button>
-                </div>
-              )}
+              <Pagination className="pt-2" page={page} pageCount={pageCount} onChange={setPage} />
             </div>
           )}
         </div>
 
         <aside className="space-y-5">
-          <SidebarPanel title="Thèmes populaires" icon={<TrendingUp className="h-4 w-4" />}>
-            <div className="flex flex-wrap gap-2">
-              {FORUM_TOPICS.map((topic) => (
-                <Badge key={topic.label} tone="neutral">
-                  {topic.label} · {topic.count}
-                </Badge>
-              ))}
-            </div>
-          </SidebarPanel>
-
           <SidebarPanel title="Top contributeurs">
             <ul className="space-y-3">
               {FORUM_CONTRIBUTORS.map((c) => (
@@ -170,6 +232,26 @@ export default function Forum() {
                 </li>
               ))}
             </ul>
+          </SidebarPanel>
+
+          <SidebarPanel title="Questions sans réponses" icon={<HelpCircle className="h-4 w-4" />}>
+            {unanswered.length ? (
+              <ul className="space-y-3">
+                {unanswered.map((t) => (
+                  <li key={t.id}>
+                    <button
+                      onClick={() => setQuery(t.title)}
+                      className="block w-full text-left text-sm font-medium text-text-primary hover:text-brand-green"
+                    >
+                      {t.title}
+                    </button>
+                    <p className="mt-0.5 text-xs text-text-secondary">{t.author.name} · {t.timeAgo}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-text-secondary">Toutes les questions ont une réponse 🎉</p>
+            )}
           </SidebarPanel>
 
           <SidebarPanel title="Règles de la communauté" icon={<ShieldCheck className="h-4 w-4" />}>

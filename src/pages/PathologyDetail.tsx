@@ -111,9 +111,18 @@ export default function PathologyDetail() {
       />
 
       <header className="mt-4 flex flex-wrap items-start gap-4">
-        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-brand-mint text-brand-green">
-          <Activity className="h-8 w-8" />
-        </span>
+        {patho.image ? (
+          <img
+            src={patho.image}
+            alt={patho.name}
+            className="h-16 w-16 shrink-0 rounded-2xl object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-brand-mint text-brand-green">
+            <Activity className="h-8 w-8" />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-extrabold sm:text-3xl">{patho.name}</h1>

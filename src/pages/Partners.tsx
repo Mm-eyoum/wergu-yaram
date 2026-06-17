@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Building2, Globe, HandHeart, Users } from "lucide-react";
 import { UniversalSearchHero } from "@/components/search/UniversalSearchHero";
@@ -106,6 +107,12 @@ export default function Partners() {
                     </Badge>
                   ))}
                 </div>
+                <Link
+                  to={`/partenaires/${featured.slug}`}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand-green px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Voir le profil <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
           </section>
@@ -129,7 +136,7 @@ export default function Partners() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((p) => (
-              <PartnerCard key={p.slug} partner={p} />
+              <PartnerCard key={p.slug} partner={p} href={`/partenaires/${p.slug}`} />
             ))}
             {orgPartners.map(({ partner, href, badge }) => (
               <PartnerCard key={partner.slug} partner={partner} href={href} badge={badge} />

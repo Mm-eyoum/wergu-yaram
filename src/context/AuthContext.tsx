@@ -58,6 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await createUserProfile(cred.user, {
       displayName: input.displayName,
       region: input.region,
+      phone: input.phone,
+      language: input.language,
       interests: input.interests,
     });
     setUser(await fetchUserProfile(cred.user));

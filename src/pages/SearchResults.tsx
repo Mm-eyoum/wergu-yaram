@@ -23,6 +23,7 @@ import { SEARCH_TYPES } from "@/lib/constants";
 import type { SearchScope } from "@/services/content";
 import { useSearch } from "@/hooks/useSearch";
 import { usePagination } from "@/hooks/usePagination";
+import { Pagination } from "@/components/ui/Pagination";
 import { useFacilities } from "@/hooks/useCatalog";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { haversineKm, formatDistance } from "@/lib/geo";
@@ -222,7 +223,7 @@ export default function SearchResults() {
     setParams(next);
   }
 
-  const { paged, hasMore, remaining, showMore } = usePagination(results);
+  const { pageItems, page, pageCount, setPage } = usePagination(results);
 
   const hasActiveFilters =
     typeParam !== "all" ||
@@ -340,16 +341,10 @@ export default function SearchResults() {
               )
             ) : (
               <div className="space-y-4">
-                {paged.map((hit) => (
+                {pageItems.map((hit) => (
                   <ResultCard key={hit.id} hit={hit} />
                 ))}
-                {hasMore && (
-                  <div className="flex justify-center pt-2">
-                    <Button variant="outline" onClick={showMore}>
-                      Voir plus ({remaining})
-                    </Button>
-                  </div>
-                )}
+                <Pagination className="pt-2" page={page} pageCount={pageCount} onChange={setPage} />
               </div>
             )}
           </div>

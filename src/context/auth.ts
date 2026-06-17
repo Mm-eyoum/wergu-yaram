@@ -6,6 +6,8 @@ export interface RegisterInput {
   password: string;
   displayName: string;
   region?: string;
+  phone?: string;
+  language?: string;
   interests?: string[];
 }
 

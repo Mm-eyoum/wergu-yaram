@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Building2, Clock, MapPin, Phone, ShieldQuestion, Star } from "lucide-react";
+import { BadgeCheck, Briefcase, Building2, Clock, Mail, MapPin, Phone, ShieldQuestion, Star } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { SectionCard } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { FormInput } from "@/components/ui/FormInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { LazyMapView } from "@/components/map/LazyMapView";
@@ -21,8 +22,22 @@ export default function OrganizationDetail() {
   const { user } = useAuth();
   const { notify } = useToast();
   const queryClient = useQueryClient();
-  const [justification, setJustification] = useState("");
+  const [role, setRole] = useState("");
+  const [proEmail, setProEmail] = useState("");
+  const [proPhone, setProPhone] = useState("");
+  const [details, setDetails] = useState("");
   const [showForm, setShowForm] = useState(false);
+
+  // A structured, admin-verifiable justification built from the guided fields.
+  const composedJustification = [
+    `Fonction : ${role.trim()}`,
+    proEmail.trim() && `Email professionnel : ${proEmail.trim()}`,
+    proPhone.trim() && `Téléphone : ${proPhone.trim()}`,
+    details.trim() && `Précisions : ${details.trim()}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const canSubmit = role.trim().length >= 2 && (proEmail.trim() !== "" || proPhone.trim() !== "");
 
   const orgQuery = useQuery({
     queryKey: ["organization", id],
@@ -45,13 +60,16 @@ export default function OrganizationDetail() {
         orgName: org!.name,
         requesterUid: user!.uid,
         requesterName: user!.displayName ?? user!.email ?? "Utilisateur",
-        justification: justification.trim(),
+        justification: composedJustification,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userClaims", user?.uid] });
       notify("Demande envoyée — en attente de validation par un administrateur.", "success");
       setShowForm(false);
-      setJustification("");
+      setRole("");
+      setProEmail("");
+      setProPhone("");
+      setDetails("");
     },
     onError: () => notify("Impossible d'envoyer la demande.", "error"),
   });
@@ -123,21 +141,58 @@ export default function OrganizationDetail() {
               ) : showForm ? (
                 <div className="space-y-3">
                   <p className="text-sm text-text-secondary">
-                    Expliquez votre fonction au sein de la structure. Un administrateur validera
-                    votre demande avant de vous attribuer la gestion de la page.
+                    Renseignez votre fonction et un moyen de vérification. Un administrateur
+                    validera votre demande avant de vous attribuer la gestion de la page.
                   </p>
-                  <textarea
-                    value={justification}
-                    onChange={(e) => setJustification(e.target.value)}
-                    rows={3}
-                    placeholder="Ex. Je suis le responsable administratif de cet établissement…"
-                    className="w-full rounded-xl border border-border-soft bg-white px-3.5 py-2.5 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+                  <FormInput
+                    label="Votre fonction au sein de la structure"
+                    required
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    placeholder="Ex. Directeur, responsable administratif…"
+                    leftIcon={<Briefcase className="h-4 w-4" />}
                   />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormInput
+                      label="Email professionnel"
+                      type="email"
+                      value={proEmail}
+                      onChange={(e) => setProEmail(e.target.value)}
+                      placeholder="vous@structure.sn"
+                      leftIcon={<Mail className="h-4 w-4" />}
+                      autoComplete="email"
+                    />
+                    <FormInput
+                      label="Téléphone"
+                      type="tel"
+                      value={proPhone}
+                      onChange={(e) => setProPhone(e.target.value)}
+                      placeholder="+221 …"
+                      leftIcon={<Phone className="h-4 w-4" />}
+                      autoComplete="tel"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="claim-details" className="mb-1.5 block text-sm font-medium text-text-primary">
+                      Précisions / justificatif <span className="text-text-secondary">(facultatif)</span>
+                    </label>
+                    <textarea
+                      id="claim-details"
+                      value={details}
+                      onChange={(e) => setDetails(e.target.value)}
+                      rows={3}
+                      placeholder="Tout élément utile pour vérifier votre rattachement à la structure."
+                      className="w-full rounded-xl border border-border-soft bg-white px-3.5 py-2.5 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+                    />
+                  </div>
+                  <p className="text-xs text-text-secondary">
+                    Indiquez au moins un email professionnel ou un téléphone pour la vérification.
+                  </p>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
                     <Button
                       onClick={() => claim.mutate()}
-                      disabled={claim.isPending || justification.trim().length < 10}
+                      disabled={claim.isPending || !canSubmit}
                     >
                       {claim.isPending ? "Envoi…" : "Envoyer la demande"}
                     </Button>

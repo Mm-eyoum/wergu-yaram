@@ -25,6 +25,9 @@ export interface AppUser {
   role: Role;
   status: UserStatus;
   region?: string;
+  phone?: string;
+  /** Preferred UI language (e.g. "fr", "wo", "en"). */
+  language?: string;
   interests?: string[];
   createdAt?: string;
   /** Optional reference location for "near me" sorting without re-prompting GPS. */
@@ -212,6 +215,8 @@ export interface Pathology {
   published?: boolean;
   name: string;
   category: string;
+  /** Optional illustrative header image; falls back to a generic icon. */
+  image?: string;
   summary: string;
   understanding: string;
   symptoms: string[];

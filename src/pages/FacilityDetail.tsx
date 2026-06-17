@@ -103,6 +103,27 @@ export default function FacilityDetail() {
               <span className="font-bold text-text-primary">{facility.rating.toFixed(1)}</span>
               <span className="text-text-secondary">({facility.reviewsCount} avis)</span>
             </div>
+            {/* Contact chips */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <a
+                href={`tel:${facility.phone.replace(/\s/g, "")}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-brand-teal hover:text-brand-green"
+              >
+                <Phone className="h-3.5 w-3.5" /> {facility.phone}
+              </a>
+              <a
+                href={`mailto:${facility.email}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-brand-teal hover:text-brand-green"
+              >
+                <Mail className="h-3.5 w-3.5" /> {facility.email}
+              </a>
+              <a
+                href="#localisation"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-brand-teal hover:text-brand-green"
+              >
+                <MapPin className="h-3.5 w-3.5" /> Voir sur la carte
+              </a>
+            </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <FavoriteButton
                 type="etablissement"
@@ -121,6 +142,14 @@ export default function FacilityDetail() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               onClick={() => {
+                window.location.href = `mailto:${facility.email}`;
+              }}
+            >
+              <Mail className="h-4 w-4" /> Contacter
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
                 window.location.href = `tel:${facility.phone.replace(/\s/g, "")}`;
               }}
             >
@@ -136,7 +165,7 @@ export default function FacilityDetail() {
         <Fact icon={<Stethoscope className="h-5 w-5" />} label="Spécialités" value={`${facility.specialties.length}`} />
         <Fact icon={<Building2 className="h-5 w-5" />} label="Capacité" value={facility.capacity} />
         <Fact icon={<Clock className="h-5 w-5" />} label="Horaires" value={facility.hours} />
-        <Fact icon={<Mail className="h-5 w-5" />} label="Contact" value={facility.email} />
+        <Fact icon={<Building2 className="h-5 w-5" />} label="Type d'établissement" value={facility.type} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -197,7 +226,7 @@ export default function FacilityDetail() {
         </div>
 
         <aside className="space-y-5">
-          <SectionCard title="Localisation">
+          <SectionCard title="Localisation" id="localisation" className="scroll-mt-24">
             <LazyMapView
               className="h-48 w-full"
               markers={[{ id: facility.slug, coords: facility.coords, title: facility.name }]}
