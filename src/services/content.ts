@@ -6,9 +6,8 @@
  * without touching the UI components that call them.
  */
 import type { ContentType, SearchHit } from "@/types/domain";
-import { SEARCH_INDEX } from "@/data/mockSearchIndex";
+import { getSearchIndex } from "@/data/mockSearchIndex";
 
-export { medications, medicationBySlug } from "@/data/mockMedications";
 export { pathologies, pathologyBySlug } from "@/data/mockPathologies";
 export { articles, articleBySlug } from "@/data/mockArticles";
 export { facilities, facilityBySlug } from "@/data/mockFacilities";
@@ -22,9 +21,10 @@ export { conversations } from "@/data/mockMessages";
 export type SearchScope = ContentType | "all";
 
 /** Federated search across all content types, ranked by simple relevance. */
-export function searchContent(query: string, scope: SearchScope = "all"): SearchHit[] {
+export async function searchContent(query: string, scope: SearchScope = "all"): Promise<SearchHit[]> {
   const q = query.trim().toLowerCase();
-  const pool = scope === "all" ? SEARCH_INDEX : SEARCH_INDEX.filter((h) => h.type === scope);
+  const index = await getSearchIndex();
+  const pool = scope === "all" ? index : index.filter((h) => h.type === scope);
   if (!q) return pool;
 
   const terms = q.split(/\s+/).filter(Boolean);
@@ -47,8 +47,8 @@ export function searchContent(query: string, scope: SearchScope = "all"): Search
 }
 
 /** Counts per content type for the given query (drives result tabs). */
-export function searchCounts(query: string): Record<string, number> {
-  const all = searchContent(query, "all");
+export async function searchCounts(query: string): Promise<Record<string, number>> {
+  const all = await searchContent(query, "all");
   const counts: Record<string, number> = { all: all.length };
   for (const hit of all) counts[hit.type] = (counts[hit.type] ?? 0) + 1;
   return counts;

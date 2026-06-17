@@ -26,7 +26,17 @@ import type {
   Pathology,
 } from "@/types/domain";
 
-// Bundled mock data (also still used synchronously by SEO/sitemap & search).
+// TRANSITIONAL — bundled mock data used as the offline/empty-Firestore fallback
+// below. ⚠️ Because the SEO prerender (scripts/prerender.mjs) reads the same
+// mock, running `npm run build:seo` against an UNSEEDED Firestore embeds mock
+// content into the prerendered HTML. Always seed Firestore (scripts/seed.ts)
+// BEFORE a production build:seo. Migration target: remove these once Firestore
+// is fully seeded and the SEO + search pipelines read live data. See
+// DEPLOYMENT.md §4–§5.
+//
+// NOTE: the medication dataset (848 KB) is loaded **lazily** via
+// `medicationsLazy` so it stays out of the initial bundle; it is only fetched
+// when this fallback actually runs (no/empty Firestore).
 import {
   articleBySlug,
   articles,
@@ -38,13 +48,18 @@ import {
   events,
   facilities,
   facilityBySlug,
-  medicationBySlug,
-  medications,
   partnerBySlug,
   partners,
   pathologies,
   pathologyBySlug,
 } from "./content";
+import { getMockMedications, getMockMedicationBySlug } from "@/data/medicationsLazy";
+
+/** A fallback may be an eager value or a lazily-loaded one (dynamic import). */
+type Lazy<T> = T | (() => T | Promise<T>);
+async function resolveLazy<T>(value: Lazy<T>): Promise<T> {
+  return typeof value === "function" ? await (value as () => T | Promise<T>)() : value;
+}
 
 // Hard cap on a single catalog read. Catalog collections are curated content;
 // this bounds reads/cost/memory and is large enough to cover the full catalog
@@ -57,18 +72,18 @@ function isPublic(data: unknown): boolean {
 }
 
 /** List a collection from Firestore, falling back to mock when empty/absent. */
-async function listOrMock<T>(collectionName: string, fallback: T[]): Promise<T[]> {
-  if (!db) return fallback;
+async function listOrMock<T>(collectionName: string, fallback: Lazy<T[]>): Promise<T[]> {
+  if (!db) return resolveLazy(fallback);
   try {
     const snap = await getDocs(query(collection(db, collectionName), limit(CATALOG_PAGE_SIZE)));
-    if (snap.empty) return fallback;
+    if (snap.empty) return resolveLazy(fallback);
     // Drafts (published === false) are hidden from the public site.
     return snap.docs.map((d) => d.data() as T).filter(isPublic);
   } catch (err) {
     // Network/permission error → degrade gracefully to mock, but surface the
     // cause so a misconfiguration (e.g. denied rules) is not silently masked.
     reportError(err, { scope: "catalog.listOrMock", collection: collectionName });
-    return fallback;
+    return resolveLazy(fallback);
   }
 }
 
@@ -76,25 +91,25 @@ async function listOrMock<T>(collectionName: string, fallback: T[]): Promise<T[]
 async function oneOrMock<T>(
   collectionName: string,
   id: string | undefined,
-  fallback: T | undefined,
+  fallback: Lazy<T | undefined>,
 ): Promise<T | null> {
   if (!id) return null;
-  if (!db) return fallback ?? null;
+  if (!db) return (await resolveLazy(fallback)) ?? null;
   try {
     const snap = await getDoc(doc(db, collectionName, id));
     if (snap.exists()) {
       // A draft document 404s on the public site (admins use the admin services).
       return isPublic(snap.data()) ? (snap.data() as T) : null;
     }
-    return fallback ?? null;
+    return (await resolveLazy(fallback)) ?? null;
   } catch (err) {
     reportError(err, { scope: "catalog.oneOrMock", collection: collectionName, id });
-    return fallback ?? null;
+    return (await resolveLazy(fallback)) ?? null;
   }
 }
 
 // --- Lists ---
-export const getMedications = () => listOrMock<Medication>("medications", medications);
+export const getMedications = () => listOrMock<Medication>("medications", getMockMedications);
 export const getPathologies = () => listOrMock<Pathology>("pathologies", pathologies);
 export const getArticles = () => listOrMock<Article>("articles", articles);
 export const getFacilities = () => listOrMock<Facility>("facilities", facilities);
@@ -105,7 +120,7 @@ export const getPartners = () => listOrMock<Partner>("partners", partners);
 
 // --- Single items ---
 export const getMedicationBySlug = (slug?: string) =>
-  oneOrMock<Medication>("medications", slug, slug ? medicationBySlug(slug) : undefined);
+  oneOrMock<Medication>("medications", slug, slug ? () => getMockMedicationBySlug(slug) : undefined);
 export const getPathologyBySlug = (slug?: string) =>
   oneOrMock<Pathology>("pathologies", slug, slug ? pathologyBySlug(slug) : undefined);
 export const getArticleBySlug = (slug?: string) =>

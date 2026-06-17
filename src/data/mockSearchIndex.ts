@@ -1,5 +1,5 @@
 import type { SearchHit } from "@/types/domain";
-import { medications } from "./mockMedications";
+import { getMockMedications } from "./medicationsLazy";
 import { pathologies } from "./mockPathologies";
 import { articles } from "./mockArticles";
 import { facilities } from "./mockFacilities";
@@ -9,9 +9,10 @@ import { events } from "./mockEvents";
 import { partners } from "./mockPartners";
 
 /** Build a flat, federated index of every searchable content object. */
-export function buildSearchIndex(): SearchHit[] {
+export async function buildSearchIndex(): Promise<SearchHit[]> {
   const hits: SearchHit[] = [];
 
+  const medications = await getMockMedications();
   for (const m of medications) {
     hits.push({
       id: `medicament-${m.slug}`,
@@ -179,4 +180,12 @@ export function buildSearchIndex(): SearchHit[] {
   return hits;
 }
 
-export const SEARCH_INDEX: SearchHit[] = buildSearchIndex();
+/**
+ * Cached, lazily-built federated index. The first call triggers the dynamic
+ * import of the medication dataset; subsequent calls reuse the same promise.
+ */
+let indexPromise: Promise<SearchHit[]> | null = null;
+export function getSearchIndex(): Promise<SearchHit[]> {
+  if (!indexPromise) indexPromise = buildSearchIndex();
+  return indexPromise;
+}

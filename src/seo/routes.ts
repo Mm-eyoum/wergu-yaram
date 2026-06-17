@@ -7,7 +7,6 @@
  * data the app renders, so the lists can never drift.
  */
 import {
-  medications,
   pathologies,
   articles,
   facilities,
@@ -15,6 +14,9 @@ import {
   equipmentNeeds,
   events,
 } from "@/services/content";
+// Build-only: the synchronous medication list (full LME dataset). Imported
+// directly from the mock module — the browser uses the lazy loader instead.
+import { medications } from "@/data/mockMedications";
 import { ogCrop } from "./siteUrl";
 
 /** Rich sitemap entry. `image`/`lastmod` are filled when the source has them. */
