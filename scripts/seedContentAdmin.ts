@@ -43,16 +43,23 @@ if (getApps().length === 0) {
 
 const db = getFirestore();
 
+// Firestore caps a batch at 500 operations; chunk below that so large
+// collections (e.g. the 560-entry LME medications) don't blow the limit.
+const BATCH_LIMIT = 450;
+
 async function seedCollection<T extends Record<string, unknown>>(
   name: string,
   items: T[],
   idKey: keyof T,
 ) {
-  const batch = db.batch();
-  for (const item of items) {
-    batch.set(db.collection(name).doc(String(item[idKey])), item);
+  for (let i = 0; i < items.length; i += BATCH_LIMIT) {
+    const slice = items.slice(i, i + BATCH_LIMIT);
+    const batch = db.batch();
+    for (const item of slice) {
+      batch.set(db.collection(name).doc(String(item[idKey])), item);
+    }
+    await batch.commit();
   }
-  await batch.commit();
   console.log(`✓ ${name}: ${items.length} documents`);
 }
 
