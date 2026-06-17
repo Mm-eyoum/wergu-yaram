@@ -51,6 +51,7 @@ export function DirectoryImportPanel() {
     onSuccess: (res) => {
       notify(`${res.imported} importée(s), ${res.skipped} ignorée(s).`, "success");
       queryClient.invalidateQueries({ queryKey: ["mapFacilityOrgs"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "directoryOrgs"] });
       // Refresh "already imported" flags.
       search.mutate();
     },
