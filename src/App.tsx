@@ -34,6 +34,7 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CreatePage = lazy(() => import("@/pages/CreatePage"));
 const ManagePage = lazy(() => import("@/pages/ManagePage"));
+const ManageFacility = lazy(() => import("@/pages/ManageFacility"));
 const AdminShell = lazy(() => import("@/components/admin/AdminShell").then((m) => ({ default: m.AdminShell })));
 const AdminHome = lazy(() => import("@/pages/admin/AdminHome"));
 const Moderation = lazy(() => import("@/pages/admin/Moderation"));
@@ -132,6 +133,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/facilities/:slug"
+          element={
+            <ProtectedRoute>
+              <ManageFacility />
             </ProtectedRoute>
           }
         />

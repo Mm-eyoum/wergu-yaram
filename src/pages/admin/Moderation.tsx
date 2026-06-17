@@ -7,13 +7,14 @@ import { useToast } from "@/hooks/useToast";
 import { usePendingOrganizations, adminKeys } from "@/hooks/useAdminData";
 import { setOrganizationStatus } from "@/services/organizations";
 import { fetchPendingClaims, approveClaim, rejectClaim } from "@/services/claims";
+import { fetchPendingFacilities, publishFacility } from "@/services/facilities";
 import { logAudit } from "@/services/audit";
 import { ORG_TYPE_LABELS } from "@/lib/constants";
 import { AdminSection } from "@/components/admin/AdminSection";
 import type { ClaimRequest } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
 
-type ModTab = "pages" | "claims";
+type ModTab = "pages" | "claims" | "facilities";
 
 export default function Moderation() {
   const { notify } = useToast();
@@ -25,6 +26,26 @@ export default function Moderation() {
     queryKey: adminKeys.pendingClaims,
     queryFn: fetchPendingClaims,
     enabled: tab === "claims",
+  });
+  const pendingFacilities = useQuery({
+    queryKey: ["admin", "pendingFacilities"],
+    queryFn: fetchPendingFacilities,
+    enabled: tab === "facilities",
+  });
+
+  const publish = useMutation({
+    mutationFn: ({ slug }: { slug: string; name: string }) => publishFacility(slug),
+    onSuccess: (_d, vars) => {
+      void logAudit({
+        action: "publish",
+        resourceType: "facility",
+        resourceId: vars.slug,
+        resourceTitle: vars.name,
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin", "pendingFacilities"] });
+      notify("Établissement publié ✓", "success");
+    },
+    onError: () => notify("Publication impossible.", "error"),
   });
 
   const orgStatus = useMutation({
@@ -63,6 +84,7 @@ export default function Moderation() {
   const tabs: TabItem[] = [
     { key: "pages", label: "Pages à valider", count: pendingOrgs.data?.length },
     { key: "claims", label: "Réclamations", count: claims.data?.length },
+    { key: "facilities", label: "Établissements à valider", count: pendingFacilities.data?.length },
   ];
 
   return (
@@ -163,6 +185,51 @@ export default function Moderation() {
                   <p className="mt-2 rounded-xl bg-brand-soft px-3 py-2 text-sm text-text-secondary">
                     {c.justification}
                   </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </AdminSection>
+      )}
+
+      {tab === "facilities" && (
+        <AdminSection
+          loading={pendingFacilities.isLoading}
+          error={pendingFacilities.isError}
+          refetch={pendingFacilities.refetch}
+          empty={pendingFacilities.data?.length === 0}
+          emptyTitle="Aucun établissement à valider"
+          emptyMessage="Les établissements revendiqués et complétés par leur propriétaire apparaîtront ici."
+        >
+          <div className="space-y-3">
+            {pendingFacilities.data?.map((f) => (
+              <div key={f.slug} className="card-surface p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-mint text-brand-green">
+                    <Building2 className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-text-primary">{f.name}</p>
+                    <p className="truncate text-xs text-text-secondary">
+                      {[f.type, f.city || f.address, f.region].filter(Boolean).join(" · ") ||
+                        "Localisation non renseignée"}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => publish.mutate({ slug: f.slug, name: f.name })}
+                    disabled={publish.isPending}
+                  >
+                    <CheckCircle2 className="h-4 w-4" /> Publier
+                  </Button>
+                </div>
+                {(f.description || f.specialties?.length || f.services?.length) && (
+                  <div className="mt-3 space-y-1 rounded-xl bg-brand-soft px-3 py-2 text-xs text-text-secondary">
+                    {f.description && <p className="line-clamp-2">{f.description}</p>}
+                    {f.specialties?.length > 0 && <p><b>Spécialités :</b> {f.specialties.join(", ")}</p>}
+                    {f.services?.length > 0 && <p><b>Services :</b> {f.services.join(", ")}</p>}
+                    {f.phone && <p><b>Tél :</b> {f.phone}</p>}
+                  </div>
                 )}
               </div>
             ))}

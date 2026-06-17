@@ -30,6 +30,7 @@ import {
   useReminders,
   useSavedSearches,
   useUserOrganizations,
+  useUserFacilities,
 } from "@/hooks/useDashboardData";
 import { useFacilities } from "@/hooks/useCatalog";
 import { fetchUserClaims } from "@/services/claims";
@@ -114,6 +115,7 @@ export default function Dashboard() {
   const memberships = useMemberships(uid);
   const reminders = useReminders(uid);
   const organizations = useUserOrganizations(uid);
+  const myFacilities = useUserFacilities(uid);
   const { data: facilities = [] } = useFacilities();
   const nearbyFacilities = facilities.slice(0, 4);
   const claims = useQuery({
@@ -221,6 +223,36 @@ export default function Dashboard() {
               )}
             </AsyncList>
           </SidebarPanel>
+
+          {(myFacilities.data?.length ?? 0) > 0 && (
+            <SidebarPanel
+              title="Mes établissements"
+              icon={<Building2 className="h-4 w-4" />}
+              className="md:col-span-2"
+            >
+              <ul className="space-y-2">
+                {myFacilities.data!.map((f) => (
+                  <li key={f.slug}>
+                    <Link
+                      to={`/dashboard/facilities/${f.slug}`}
+                      className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5 transition-colors hover:border-brand-teal"
+                    >
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
+                        <Building2 className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-text-primary">{f.name}</p>
+                        <p className="truncate text-xs text-text-secondary">{f.city || f.region}</p>
+                      </div>
+                      <Badge tone={f.published ? "green" : "warning"}>
+                        {f.published ? "Publié" : "En attente"}
+                      </Badge>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </SidebarPanel>
+          )}
 
           {(claims.data?.length ?? 0) > 0 && (
             <SidebarPanel

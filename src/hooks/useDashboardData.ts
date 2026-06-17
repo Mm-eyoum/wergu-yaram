@@ -6,6 +6,7 @@ import {
   fetchSavedSearches,
 } from "@/services/userData";
 import { fetchUserOrganizations } from "@/services/organizations";
+import { fetchUserFacilities } from "@/services/facilities";
 
 /** Query keys for per-user dashboard data — invalidate these after mutations. */
 export const dashboardKeys = {
@@ -14,6 +15,7 @@ export const dashboardKeys = {
   reminders: (uid: string) => ["reminders", uid] as const,
   memberships: (uid: string) => ["memberships", uid] as const,
   organizations: (uid: string) => ["organizations", uid] as const,
+  facilities: (uid: string) => ["userFacilities", uid] as const,
 };
 
 export function useFavorites(uid: string | undefined) {
@@ -52,6 +54,14 @@ export function useUserOrganizations(uid: string | undefined) {
   return useQuery({
     queryKey: dashboardKeys.organizations(uid ?? ""),
     queryFn: () => fetchUserOrganizations(uid!),
+    enabled: !!uid,
+  });
+}
+
+export function useUserFacilities(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.facilities(uid ?? ""),
+    queryFn: () => fetchUserFacilities(uid!),
     enabled: !!uid,
   });
 }

@@ -8,21 +8,40 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { fetchOrganization } from "./organizations";
+import { logAudit } from "./audit";
+import { slugify } from "@/lib/slug";
 import { validateText } from "@/lib/validation";
-import type { ClaimRequest, ClaimRequestStatus } from "@/types/domain";
+import type { ClaimRequest, ClaimRequestStatus, Facility } from "@/types/domain";
 
 const COLLECTION = "claimRequests";
 const ORGS = "organizations";
+const FACILITIES = "facilities";
+
+/** A facilities slug not already taken (suffixes -2, -3… on collision). */
+async function uniqueFacilitySlug(name: string): Promise<string> {
+  const base = slugify(name) || "etablissement";
+  let candidate = base;
+  for (let n = 2; n <= 50; n++) {
+    const snap = await getDoc(doc(db!, FACILITIES, candidate));
+    if (!snap.exists()) return candidate;
+    candidate = `${base}-${n}`;
+  }
+  return `${base}-${Date.now()}`;
+}
 
 function toClaim(id: string, data: Record<string, unknown>): ClaimRequest {
   const createdAt = data.createdAt as { toDate?: () => Date } | undefined;
@@ -78,16 +97,58 @@ export async function fetchPendingClaims(): Promise<ClaimRequest[]> {
   return snap.docs.map((d) => toClaim(d.id, d.data()));
 }
 
-/** Admin: approve a claim → transfer ownership of the page to the requester. */
+/**
+ * Admin: approve a claim → migrate the imported directory listing into a
+ * `facilities` entry owned by the requester, then remove the `organizations`
+ * doc so there is no duplicate. The new facility starts unpublished/unverified
+ * — the owner completes it and an admin validates it before it goes public.
+ */
 export async function approveClaim(claim: ClaimRequest): Promise<void> {
   if (!db) throw new Error("Firebase non configuré.");
-  await updateDoc(doc(db, ORGS, claim.orgId), {
+  const org = await fetchOrganization(claim.orgId);
+  if (!org) throw new Error("Établissement introuvable (déjà migré ?).");
+
+  const slug = await uniqueFacilitySlug(org.name);
+  const facility: Facility = {
+    slug,
+    published: false,
+    verified: false,
+    name: org.name,
+    type: "",
+    region: org.region ?? "",
+    city: org.city ?? "",
+    address: org.address ?? "",
+    phone: org.phone ?? "",
+    email: "",
+    cover: org.photoUrl ?? "",
+    description: org.description ?? "",
+    specialties: [],
+    services: [],
+    capacity: "",
+    hours: org.hours ?? "",
+    rating: org.rating ?? 0,
+    reviewsCount: 0,
+    doctors: [],
+    reviews: [],
+    coords: org.coords ?? { lat: 0, lng: 0 },
+    equipmentNeeds: [],
     ownerUid: claim.requesterUid,
     managerUids: [claim.requesterUid],
-    claimStatus: "claimed",
-    updatedAt: serverTimestamp(),
+    sourceOrgId: org.id,
+    // placeId omitted when absent — Firestore rejects undefined fields.
+    ...(org.placeId ? { placeId: org.placeId } : {}),
+  };
+
+  await setDoc(doc(db, FACILITIES, slug), { ...facility, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  await deleteDoc(doc(db, ORGS, claim.orgId));
+  await updateDoc(doc(db, COLLECTION, claim.id), { status: "approved", facilitySlug: slug });
+
+  void logAudit({
+    action: "approve",
+    resourceType: "facility",
+    resourceId: slug,
+    resourceTitle: org.name,
   });
-  await updateDoc(doc(db, COLLECTION, claim.id), { status: "approved" });
 }
 
 /** Admin: reject a claim → page stays unclaimed. */

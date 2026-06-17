@@ -90,7 +90,24 @@ service cloud.firestore {
     match /medications/{doc}    { allow read: if true; allow write: if isEditor(); }
     match /pathologies/{doc}    { allow read: if true; allow write: if isEditor(); }
     match /articles/{doc}       { allow read: if true; allow write: if isEditor(); }
-    match /facilities/{doc}     { allow read: if true; allow write: if isEditor(); }
+    // Facilities are editorial (editor-managed), BUT a facility migrated from a
+    // claimed directory listing carries an `ownerUid`: that owner may edit the
+    // content fields of their own facility, yet can never publish/verify it or
+    // change its owner/slug — admin validation gates public visibility.
+    match /facilities/{slug} {
+      function facOwner() { return resource.data.get('ownerUid', ''); }
+      allow read: if true;
+      allow create: if isEditor();
+      allow delete: if isEditor();
+      allow update: if isEditor()
+        || (isSignedIn()
+            && facOwner() != ''
+            && request.auth.uid == facOwner()
+            && request.resource.data.get('ownerUid', '') == facOwner()
+            && request.resource.data.get('slug', '') == resource.data.get('slug', '')
+            && request.resource.data.get('published', false) == false
+            && request.resource.data.get('verified', false) == false);
+    }
     match /partners/{doc}       { allow read: if true; allow write: if isEditor(); }
     match /events/{doc}         { allow read: if true; allow write: if isEditor(); }
     match /equipmentNeeds/{doc} { allow read: if true; allow write: if isEditor(); }

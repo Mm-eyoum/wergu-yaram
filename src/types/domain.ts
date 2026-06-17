@@ -275,6 +275,12 @@ export interface Facility {
   coords: { lat: number; lng: number };
   equipmentNeeds: string[]; // equipment need ids
   verified: boolean;
+  // Ownership (claimed facilities) — absent on editorial/admin-managed entries.
+  ownerUid?: string;
+  managerUids?: string[];
+  /** Set when this facility was migrated from a claimed directory `organizations` doc. */
+  sourceOrgId?: string;
+  placeId?: string;
 }
 
 export interface CommunityPost {
