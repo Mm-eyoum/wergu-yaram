@@ -13,3 +13,18 @@ export const TRUST: FieldDef = {
     { name: "updatedAt", label: "Mis à jour le", type: "text", placeholder: "2024-01-01" },
   ],
 };
+
+/**
+ * Sponsoring de contenu (Ligne 4). Étiquetage strict : jamais de marque de
+ * médicament (cf. RegulatoryMeta) — institutions / ONG / prévention uniquement.
+ */
+export const SPONSOR: FieldDef = {
+  name: "sponsor",
+  label: "Sponsoring",
+  type: "object",
+  fields: [
+    { name: "name", label: "Nom du sponsor", type: "text" },
+    { name: "logo", label: "Logo", type: "image" },
+    { name: "url", label: "Lien", type: "text" },
+  ],
+};

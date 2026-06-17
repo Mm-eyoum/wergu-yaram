@@ -142,11 +142,17 @@ service cloud.firestore {
           && request.resource.data.type == 'healthcare_facility'
           && isText(request.resource.data.name, 2, 150));
 
-      // Managers update profile fields but cannot self-validate or change owner.
+      // Managers update profile fields but cannot self-validate, change owner,
+      // nor grant themselves a paid tier — the monetization fields are written
+      // exclusively by the subscription webhook (Admin SDK).
       allow update: if
         (isManager()
           && request.resource.data.status == resource.data.status
-          && request.resource.data.ownerUid == resource.data.ownerUid)
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.get('planTier', '') == resource.data.get('planTier', '')
+          && request.resource.data.get('planId', '') == resource.data.get('planId', '')
+          && request.resource.data.get('featured', false) == resource.data.get('featured', false)
+          && request.resource.data.get('subscribedUntil', '') == resource.data.get('subscribedUntil', ''))
         || isAdmin();
 
       allow delete: if request.auth.uid == resource.data.ownerUid || isAdmin();
@@ -248,6 +254,67 @@ service cloud.firestore {
     match /donations/{donation} {
       allow read: if isAdmin() || isOwner(resource.data.donorUid);
       allow write: if false;
+    }
+
+    // --- Monétisation (scaffold) ---
+    // Plans tarifaires : grille publique (lecture), édition admin uniquement.
+    match /pricingPlans/{plan} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Registre transactionnel et reporting : écrits EXCLUSIVEMENT par les Cloud
+    // Functions (Admin SDK, qui contourne ces règles). Le payeur lit ses propres
+    // transactions ; les admins lisent tout pour la réconciliation/le dashboard.
+    match /transactions/{txn} {
+      allow read: if isAdmin() || isOwner(resource.data.payerUid);
+      allow write: if false;
+    }
+    match /commissions/{commission} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /revenueReports/{report} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Abonnements : l'abonné lit le sien, l'owner de la page lit celui de sa page,
+    // les admins lisent tout. Écriture serveur uniquement (Cloud Functions).
+    match /subscriptions/{sub} {
+      allow read: if isAdmin() || isOwner(resource.data.subscriberUid);
+      allow write: if false;
+    }
+
+    // Charges en attente (abonnements/billets) : créées et finalisées par les
+    // Cloud Functions uniquement ; le payeur peut relire la sienne.
+    match /pendingCharges/{charge} {
+      allow read: if isAdmin() || isOwner(resource.data.payerUid);
+      allow write: if false;
+    }
+
+    // Billets d'événement : l'acheteur lit les siens ; écriture Functions only.
+    match /tickets/{ticket} {
+      allow read: if isAdmin() || isOwner(resource.data.buyerUid);
+      allow write: if false;
+    }
+
+    // --- Capture d'engagement public (newsletter, intention de don) ---
+    // Création ouverte (visiteur non connecté) mais shape validée et taille
+    // bornée ; lecture réservée aux admins ; jamais de mutation/suppression.
+    match /newsletterSignups/{signup} {
+      allow read: if isAdmin();
+      allow create: if isText(request.resource.data.email, 5, 200)
+        && isText(request.resource.data.get('source', ''), 0, 60);
+      allow update, delete: if false;
+    }
+    match /supportIntents/{intent} {
+      allow read: if isAdmin();
+      allow create: if isText(request.resource.data.email, 5, 200)
+        && request.resource.data.monthlyAmount is number
+        && request.resource.data.monthlyAmount >= 500
+        && request.resource.data.monthlyAmount <= 5000000;
+      allow update, delete: if false;
     }
 
     // Deny everything else by default.

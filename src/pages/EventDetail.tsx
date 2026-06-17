@@ -1,12 +1,13 @@
-import { useParams } from "react-router-dom";
-import { BookOpen, CalendarDays, CalendarPlus, Clock, MapPin, Ticket, UserRound, Users } from "lucide-react";
+import { useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { BookOpen, CalendarDays, CalendarPlus, Clock, MapPin, Users } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
 import { SectionCard } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { EventCard } from "@/components/cards/EventCard";
 import { CommunityCard } from "@/components/cards/CommunityCard";
+import { TicketWidget } from "@/components/events/TicketWidget";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -14,7 +15,7 @@ import { LazyMapView } from "@/components/map/LazyMapView";
 import { DirectionsButton } from "@/components/map/DirectionsButton";
 import { useCommunities, useEvent, useEvents } from "@/hooks/useCatalog";
 import { formatDate } from "@/lib/format";
-import { useComingSoon } from "@/hooks/useToast";
+import { track } from "@/lib/analytics";
 import { SEOHead } from "@/seo/SEOHead";
 import { eventJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -22,10 +23,16 @@ import { FavoriteButton } from "@/components/content/FavoriteButton";
 
 export default function EventDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { data: event, isLoading } = useEvent(id);
   const { data: allEvents = [] } = useEvents();
   const { data: communities = [] } = useCommunities();
-  const comingSoon = useComingSoon();
+
+  // Bictorys returns to the event with ?paiement=succes after a ticket purchase.
+  const paymentOutcome = searchParams.get("paiement");
+  useEffect(() => {
+    if (paymentOutcome === "succes" && id) track("ticket_purchase_succeeded", { eventId: id });
+  }, [paymentOutcome, id]);
 
   if (isLoading) {
     return (
@@ -194,19 +201,7 @@ export default function EventDetail() {
 
         <aside className="space-y-5">
           <div className="card-surface p-6 lg:sticky lg:top-20">
-            <h2 className="text-lg font-bold text-text-primary">Inscription</h2>
-            <dl className="mt-3 space-y-2 text-sm">
-              <Row icon={<Ticket className="h-4 w-4" />} label="Tarif" value={event.price} />
-              <Row icon={<UserRound className="h-4 w-4" />} label="Places restantes" value={`${event.seatsLeft}`} />
-            </dl>
-            <Button
-              fullWidth
-              size="lg"
-              className="mt-4"
-              onClick={() => comingSoon("Les inscriptions en ligne arrivent bientôt.")}
-            >
-              S'inscrire à l'événement
-            </Button>
+            <TicketWidget event={event} />
             <a
               href={calendarUrl}
               target="_blank"
@@ -268,17 +263,5 @@ function Meta({ icon, value }: { icon: React.ReactNode; value: string }) {
       <span className="text-brand-green">{icon}</span>
       {value}
     </span>
-  );
-}
-
-function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="inline-flex items-center gap-2 text-text-secondary">
-        <span className="text-brand-green">{icon}</span>
-        {label}
-      </dt>
-      <dd className="font-semibold text-text-primary">{value}</dd>
-    </div>
   );
 }

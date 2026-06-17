@@ -16,6 +16,7 @@ import {
   updateFacilityAsOwner,
   type FacilityOwnerPatch,
 } from "@/services/facilities";
+import { CATEGORY_OPTIONS, SECTOR_OPTIONS, LEVEL_OPTIONS } from "@/lib/facilityTaxonomy";
 import { SEOHead } from "@/seo/SEOHead";
 
 /**
@@ -29,7 +30,9 @@ const OWNER_SCHEMA: ContentFormSchema = {
       title: "Général",
       fields: [
         { name: "name", label: "Nom", type: "text", required: true },
-        { name: "type", label: "Type", type: "text", placeholder: "Hôpital public, clinique privée…" },
+        { name: "category", label: "Catégorie", type: "select", options: CATEGORY_OPTIONS },
+        { name: "sector", label: "Secteur", type: "select", options: SECTOR_OPTIONS },
+        { name: "level", label: "Niveau (pyramide sanitaire)", type: "select", options: LEVEL_OPTIONS },
         { name: "region", label: "Région", type: "text" },
         { name: "city", label: "Ville", type: "text" },
         { name: "address", label: "Adresse", type: "text" },
@@ -76,7 +79,7 @@ const OWNER_SCHEMA: ContentFormSchema = {
 };
 
 const OWNER_FIELDS: (keyof FacilityOwnerPatch)[] = [
-  "name", "type", "region", "city", "address", "phone", "email",
+  "name", "category", "sector", "level", "region", "city", "address", "phone", "email",
   "cover", "description", "capacity", "hours", "specialties", "services", "doctors", "coords",
 ];
 

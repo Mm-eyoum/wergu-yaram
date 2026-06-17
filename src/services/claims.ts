@@ -135,7 +135,9 @@ export async function approveClaim(claim: ClaimRequest): Promise<void> {
     ownerUid: claim.requesterUid,
     managerUids: [claim.requesterUid],
     sourceOrgId: org.id,
-    // placeId omitted when absent — Firestore rejects undefined fields.
+    // Optional fields omitted when absent — Firestore rejects undefined values.
+    ...(org.category ? { category: org.category } : {}),
+    ...(org.sector ? { sector: org.sector } : {}),
     ...(org.placeId ? { placeId: org.placeId } : {}),
   };
 

@@ -1,7 +1,7 @@
 import { makeContentAdmin } from "@/services/admin/contentAdmin";
 import type { Article } from "@/types/domain";
 import type { ContentEntry } from "../registry";
-import { PUBLISHED, TRUST } from "./shared";
+import { PUBLISHED, TRUST, SPONSOR } from "./shared";
 
 export const articlesEntry: ContentEntry<Article> = {
   key: "articles",
@@ -56,6 +56,7 @@ export const articlesEntry: ContentEntry<Article> = {
         { name: "relatedArticles", label: "Articles liés (slugs)", type: "stringArray" },
         { name: "relatedMedications", label: "Médicaments liés (slugs)", type: "stringArray" },
       ] },
+      { title: "Sponsoring", fields: [SPONSOR] },
       { title: "Confiance", fields: [TRUST] },
     ],
   },

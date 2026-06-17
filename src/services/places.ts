@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { logAudit } from "./audit";
+import { placeTypesToCategory, inferCategoryFromName } from "@/lib/facilityTaxonomy";
 
 const PLACES_KEY = import.meta.env.VITE_PLACES_API_KEY as string | undefined;
 const PLACES_BASE = "https://places.googleapis.com/v1";
@@ -49,6 +50,8 @@ interface NewPlace {
   formattedAddress?: string;
   location?: { latitude: number; longitude: number };
   rating?: number;
+  /** Google Places type tags (e.g. "hospital", "pharmacy") — drives auto-category. */
+  types?: string[];
   internationalPhoneNumber?: string;
   regularOpeningHours?: { weekdayDescriptions?: string[] };
   addressComponents?: { longText: string; types?: string[] }[];
@@ -104,7 +107,7 @@ async function placeDetails(placeId: string): Promise<NewPlace | null> {
     headers: {
       "X-Goog-Api-Key": PLACES_KEY!,
       "X-Goog-FieldMask":
-        "id,displayName,formattedAddress,location,rating,internationalPhoneNumber,regularOpeningHours.weekdayDescriptions,addressComponents",
+        "id,displayName,formattedAddress,location,rating,types,internationalPhoneNumber,regularOpeningHours.weekdayDescriptions,addressComponents",
     },
   });
   if (!res.ok) return null;
@@ -136,9 +139,12 @@ export async function importPlaces(
     }
     const city =
       p.addressComponents?.find((c) => c.types?.includes("locality"))?.longText ?? "";
+    const name = p.displayName?.text ?? "Structure de santé";
+    const category = placeTypesToCategory(p.types) ?? inferCategoryFromName(name);
     await addDoc(collection(db!, ORGS), {
       type: "healthcare_facility",
-      name: p.displayName?.text ?? "Structure de santé",
+      category,
+      name,
       ownerUid: "",
       managerUids: [],
       status: "active",

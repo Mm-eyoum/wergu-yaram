@@ -36,6 +36,7 @@ import { communities } from "../src/data/mockCommunities";
 import { equipmentNeeds } from "../src/data/mockEquipmentNeeds";
 import { events } from "../src/data/mockEvents";
 import { partners } from "../src/data/mockPartners";
+import { pricingPlans } from "../src/data/pricingPlans";
 
 const config = {
   apiKey: process.env.VITE_FIREBASE_API_KEY,
@@ -98,6 +99,7 @@ async function main() {
   await seedCollection("equipmentNeeds", equipmentNeeds, "id");
   await seedCollection("events", events, "id");
   await seedCollection("partners", partners, "slug");
+  await seedCollection("pricingPlans", pricingPlans, "id");
 
   console.log("\n✅ Seed terminé.");
   process.exit(0);

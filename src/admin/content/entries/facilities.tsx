@@ -1,5 +1,6 @@
 import { makeContentAdmin } from "@/services/admin/contentAdmin";
 import type { Facility } from "@/types/domain";
+import { categoryLabel, CATEGORY_OPTIONS, SECTOR_OPTIONS, LEVEL_OPTIONS } from "@/lib/facilityTaxonomy";
 import type { ContentEntry } from "../registry";
 import { PUBLISHED } from "./shared";
 
@@ -10,7 +11,7 @@ export const facilitiesEntry: ContentEntry<Facility> = {
   icon: "building2",
   admin: makeContentAdmin<Facility>({ collection: "facilities", idField: "slug", titleField: "name", resourceType: "facility" }),
   columns: [
-    { key: "type", label: "Type", render: (f) => f.type },
+    { key: "category", label: "Catégorie", render: (f) => categoryLabel(f.category) || f.type },
     { key: "region", label: "Région", render: (f) => f.region },
     { key: "city", label: "Ville", render: (f) => f.city },
   ],
@@ -19,7 +20,9 @@ export const facilitiesEntry: ContentEntry<Facility> = {
       { title: "Général", fields: [
         { name: "name", label: "Nom", type: "text", required: true },
         { name: "slug", label: "Slug", type: "slug", slugFrom: "name", required: true },
-        { name: "type", label: "Type", type: "text", placeholder: "Hôpital public…" },
+        { name: "category", label: "Catégorie", type: "select", options: CATEGORY_OPTIONS },
+        { name: "sector", label: "Secteur", type: "select", options: SECTOR_OPTIONS },
+        { name: "level", label: "Niveau (pyramide sanitaire)", type: "select", options: LEVEL_OPTIONS },
         { name: "region", label: "Région", type: "text" },
         { name: "city", label: "Ville", type: "text" },
         { name: "address", label: "Adresse", type: "text" },

@@ -12,7 +12,7 @@ import type {
 export const PRIMARY_NAV: { label: string; to: string }[] = [
   { label: "Portail Santé", to: "/" },
   { label: "Carte", to: "/carte" },
-  { label: "Communautés", to: "/communautes" },
+  { label: "Événements", to: "/evenements" },
   { label: "Forum", to: "/forum" },
   { label: "Équipements", to: "/besoins" },
   { label: "Partenaires", to: "/partenaires" },

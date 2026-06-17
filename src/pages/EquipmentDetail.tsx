@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   CalendarClock,
   CheckCircle2,
@@ -22,12 +23,21 @@ import { formatDate, formatFcfa } from "@/lib/format";
 import { SEOHead } from "@/seo/SEOHead";
 import { equipmentNeedJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
 import { ShareButtons } from "@/components/ShareButtons";
+import { track } from "@/lib/analytics";
 
 export default function EquipmentDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { data: need, isLoading } = useEquipmentNeed(id);
   const { data: allNeeds = [] } = useEquipmentNeeds();
   const { data: facility } = useFacility(need?.facilitySlug);
+
+  // Bictorys redirects back with ?don=succes on a completed checkout — record the
+  // conversion once (the donation itself is credited server-side by the webhook).
+  const donationOutcome = searchParams.get("don");
+  useEffect(() => {
+    if (donationOutcome === "succes" && id) track("donation_succeeded", { needId: id });
+  }, [donationOutcome, id]);
 
   if (isLoading) {
     return (

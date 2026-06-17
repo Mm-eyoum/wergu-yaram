@@ -1,7 +1,12 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
-import { identifyChatwootUser, isChatwootConfigured, openChatwoot } from "@/services/chatwoot";
+import {
+  fetchChatwootIdentity,
+  identifyChatwootUser,
+  isChatwootConfigured,
+  openChatwoot,
+} from "@/services/chatwoot";
 
 /**
  * Opens the support channel: the Chatwoot widget when configured (identifying
@@ -18,7 +23,10 @@ export function useSupport() {
     }
     try {
       await openChatwoot();
-      if (user) identifyChatwootUser(user);
+      if (user) {
+        const hash = await fetchChatwootIdentity();
+        identifyChatwootUser(user, hash);
+      }
     } catch {
       navigate("/messages");
     }

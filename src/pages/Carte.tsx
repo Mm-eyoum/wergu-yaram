@@ -14,6 +14,7 @@ import { useFacilities } from "@/hooks/useCatalog";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { fetchActiveFacilityOrganizations } from "@/services/organizations";
 import { SENEGAL_REGIONS } from "@/lib/constants";
+import { categoryLabel, CATEGORY_OPTIONS } from "@/lib/facilityTaxonomy";
 import { haversineKm, formatDistance } from "@/lib/geo";
 import type { Coords } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
@@ -23,12 +24,16 @@ interface Entry {
   name: string;
   meta: string;
   color: PinColor;
+  category?: string;
+  amber?: boolean;
   badge?: string;
   href: string;
   coords: Coords;
   source: "catalog" | "org";
   region: string;
   city: string;
+  /** Paid Pro page — promoted to the top of the list. */
+  featured?: boolean;
   d?: number;
 }
 
@@ -49,6 +54,7 @@ export default function Carte() {
 
   const [region, setRegion] = useState(SENEGAL_REGIONS[0]);
   const [type, setType] = useState<(typeof TYPES)[number]["key"]>("all");
+  const [category, setCategory] = useState("");
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -58,8 +64,9 @@ export default function Carte() {
     const cat: Entry[] = facilities.map((f) => ({
       id: `f:${f.slug}`,
       name: f.name,
-      meta: `${f.type} · ${f.city}`,
+      meta: `${categoryLabel(f.category) || f.type || "Établissement"} · ${f.city}`,
       color: "green",
+      category: f.category,
       href: `/etablissements/${f.slug}`,
       coords: f.coords,
       source: "catalog",
@@ -69,9 +76,15 @@ export default function Carte() {
     const org: Entry[] = orgs.map((o) => ({
       id: `o:${o.id}`,
       name: o.name,
-      meta: o.claimStatus === "claimed" ? `Structure · ${o.city ?? o.region ?? ""}` : "Non réclamée",
+      meta:
+        o.claimStatus === "claimed"
+          ? `${categoryLabel(o.category) || "Structure"} · ${o.city ?? o.region ?? ""}`
+          : `${categoryLabel(o.category) || "Structure"} · Non réclamée`,
       color: o.claimStatus === "claimed" ? "green" : "amber",
-      badge: o.claimStatus === "claimed" ? undefined : "Annuaire",
+      category: o.category,
+      amber: o.claimStatus !== "claimed",
+      badge: o.planTier ? "Vérifié" : o.claimStatus === "claimed" ? undefined : "Annuaire",
+      featured: Boolean(o.featured),
       href: `/structures/${o.id}`,
       coords: o.coords!,
       source: "org",
@@ -86,16 +99,21 @@ export default function Carte() {
     let list = entriesAll.filter((e) => {
       if (region !== SENEGAL_REGIONS[0] && e.region !== region) return false;
       if (type !== "all" && e.source !== type) return false;
+      if (category && e.category !== category) return false;
       if (term && !`${e.name} ${e.city}`.toLowerCase().includes(term)) return false;
       return true;
     });
     if (geo.position) {
-      list = list
-        .map((e) => ({ ...e, d: haversineKm(geo.position!, e.coords) }))
-        .sort((a, b) => (a.d ?? 0) - (b.d ?? 0));
+      list = list.map((e) => ({ ...e, d: haversineKm(geo.position!, e.coords) }));
     }
+    // Featured (Pro) pages first, then by distance when geolocated.
+    list = [...list].sort((a, b) => {
+      const f = Number(Boolean(b.featured)) - Number(Boolean(a.featured));
+      if (f !== 0) return f;
+      return (a.d ?? 0) - (b.d ?? 0);
+    });
     return list;
-  }, [entriesAll, region, type, q, geo.position]);
+  }, [entriesAll, region, type, category, q, geo.position]);
 
   const markers: MapMarker[] = useMemo(
     () =>
@@ -103,6 +121,8 @@ export default function Carte() {
         id: e.id,
         coords: e.coords,
         color: e.color,
+        category: e.category,
+        amber: e.amber,
         glyph: "hospital",
         title: e.name,
         popup: (
@@ -180,6 +200,18 @@ export default function Carte() {
                 <CategoryPill key={t.key} label={t.label} active={type === t.key} onClick={() => setType(t.key)} />
               ))}
             </div>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="h-11 w-full rounded-xl border border-border-soft bg-white px-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+            >
+              <option value="">Toutes les catégories</option>
+              {CATEGORY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
             <div className="flex items-center gap-2">
               <select
                 value={region}

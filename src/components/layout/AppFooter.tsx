@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { NewsletterSignup } from "@/components/engagement/NewsletterSignup";
 import { useMenuConfig, useSiteSettings } from "@/hooks/useSiteConfig";
 
 const SOCIAL_ICONS: { key: keyof SocialMap; label: string; Icon: LucideIcon }[] = [
@@ -20,6 +21,17 @@ export function AppFooter() {
 
   return (
     <footer className="mt-16 border-t border-border-soft bg-white">
+      <div className="border-b border-border-soft bg-mint-fade">
+        <div className="container-page flex flex-col gap-4 py-8 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-md">
+            <h3 className="text-base font-bold text-text-primary">Restez informé·e</h3>
+            <p className="mt-1 text-sm text-text-secondary">
+              Conseils santé vérifiés, nouveaux contenus et campagnes à soutenir — une fois par mois, sans spam.
+            </p>
+          </div>
+          <NewsletterSignup source="footer" className="w-full md:max-w-sm" />
+        </div>
+      </div>
       <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div className="max-w-xs">
           <Logo />

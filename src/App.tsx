@@ -28,6 +28,7 @@ const EventDetail = lazy(() => import("@/pages/EventDetail"));
 const Evenements = lazy(() => import("@/pages/Evenements"));
 const Partners = lazy(() => import("@/pages/Partners"));
 const PartnerDetail = lazy(() => import("@/pages/PartnerDetail"));
+const Soutenir = lazy(() => import("@/pages/Soutenir"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -48,6 +49,7 @@ const Settings = lazy(() => import("@/pages/admin/Settings"));
 const Menus = lazy(() => import("@/pages/admin/Menus"));
 const Comments = lazy(() => import("@/pages/admin/Comments"));
 const AuditLog = lazy(() => import("@/pages/admin/AuditLog"));
+const Revenue = lazy(() => import("@/pages/admin/Revenue"));
 const Appearance = lazy(() => import("@/pages/admin/Appearance"));
 const Redirects = lazy(() => import("@/pages/admin/Redirects"));
 const Emails = lazy(() => import("@/pages/admin/Emails"));
@@ -93,6 +95,7 @@ export default function App() {
         <Route path="/evenements/:id" element={<EventDetail />} />
         <Route path="/partenaires" element={<Partners />} />
         <Route path="/partenaires/:slug" element={<PartnerDetail />} />
+        <Route path="/soutenir" element={<Soutenir />} />
         <Route path="/connexion" element={<Login />} />
         <Route path="/inscription" element={<Register />} />
         <Route path="/conditions" element={<Terms />} />
@@ -246,6 +249,14 @@ export default function App() {
             element={
               <RequirePermission permission="audit.read">
                 <AuditLog />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="revenue"
+            element={
+              <RequirePermission permission="revenue.read">
+                <Revenue />
               </RequirePermission>
             }
           />

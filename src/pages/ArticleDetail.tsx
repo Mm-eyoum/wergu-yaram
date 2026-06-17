@@ -127,6 +127,25 @@ export default function ArticleDetail() {
             )}
           </div>
 
+          {article.sponsor?.name && (
+            <a
+              href={article.sponsor.url || undefined}
+              target={article.sponsor.url ? "_blank" : undefined}
+              rel="noreferrer sponsored"
+              className="mt-4 flex items-center gap-3 rounded-2xl border border-border-soft bg-brand-soft px-4 py-3"
+            >
+              {article.sponsor.logo && (
+                <img src={article.sponsor.logo} alt="" className="h-9 w-9 rounded-lg object-contain" loading="lazy" />
+              )}
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
+                  Contenu sponsorisé
+                </p>
+                <p className="truncate text-sm font-bold text-text-primary">{article.sponsor.name}</p>
+              </div>
+            </a>
+          )}
+
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <FavoriteButton
               type={article.type === "video" ? "video" : "article"}

@@ -1,4 +1,5 @@
 /** Domain models for Wergu Yaram. */
+import type { FacilityCategory, FacilitySector, FacilityLevel } from "@/lib/facilityTaxonomy";
 
 /**
  * Account roles (a person). Facility/partner/donor are NOT account roles —
@@ -72,6 +73,9 @@ export interface Organization {
   address?: string;
   city?: string;
   coords?: Coords;
+  // --- Health-structure taxonomy (healthcare_facility orgs) ---
+  category?: FacilityCategory;
+  sector?: FacilitySector;
   // --- Directory / claim (admin import via Google Places) ---
   source?: OrgSource;
   /** Google Places `place_id`, used to dedupe imports. */
@@ -82,6 +86,15 @@ export interface Organization {
   hours?: string;
   rating?: number;
   photoUrl?: string | null;
+  // --- Monétisation (Functions-only : posés par le webhook d'abonnement) ---
+  /** Palier d'abonnement actif de la page. Absent = page gratuite. */
+  planTier?: "verified" | "pro";
+  /** Plan tarifaire en cours (cf. PricingPlan.id). */
+  planId?: string;
+  /** Mise en avant (tri prioritaire annuaire/carte) — réservé au palier Pro. */
+  featured?: boolean;
+  /** Fin de la période payée (ISO). Au-delà, l'entitlement est retiré. */
+  subscribedUntil?: string;
 }
 
 /** A request by a user to take ownership of an imported directory listing. */
@@ -249,6 +262,8 @@ export interface Article {
   sources: { label: string; org: string }[];
   type: "article" | "video";
   videoDurationLabel?: string;
+  /** Sponsoring optionnel (affiché étiqueté « Contenu sponsorisé »). */
+  sponsor?: { name: string; logo?: string; url?: string };
   trust: TrustMeta;
 }
 
@@ -256,7 +271,12 @@ export interface Facility {
   slug: string;
   published?: boolean;
   name: string;
-  type: string; // "Hôpital public", "Clinique privée"…
+  /** Legacy free-text label — kept for display fallback; prefer `category`. */
+  type?: string;
+  /** Structured taxonomy (see lib/facilityTaxonomy). */
+  category?: FacilityCategory;
+  sector?: FacilitySector;
+  level?: FacilityLevel;
   region: string;
   city: string;
   address: string;
@@ -352,7 +372,19 @@ export interface HealthEvent {
   city: string;
   organizer: string;
   mode: "Présentiel" | "En ligne" | "Hybride";
+  /** Libellé d'affichage du tarif ("Gratuit", "5 000 XOF"…) — rétro-compat. */
   price: string;
+  /** Thème pour les collections de la page d'accueil événements (optionnel). */
+  category?: string;
+  /** Mis en avant sur la page d'accueil événements. */
+  featured?: boolean;
+  // --- Billetterie (Ligne 3) ---
+  /** Prix unitaire en XOF. 0/absent = gratuit (inscription sans paiement). */
+  priceAmount?: number;
+  /** Commission plateforme (0–1). Défaut 0,09 si non défini. */
+  commissionRate?: number;
+  /** Active l'achat de billet en ligne. */
+  ticketingEnabled?: boolean;
   seatsLeft: number;
   about: string;
   audience: string[];
@@ -383,6 +415,8 @@ export interface Partner {
   featured?: boolean;
   contributionsLabel: string;
   tags: string[];
+  /** Sponsoring optionnel (affiché étiqueté « Contenu sponsorisé »). */
+  sponsor?: { name: string; logo?: string; url?: string };
 }
 
 export type ForumKind = "question" | "discussion" | "conseil";
@@ -429,7 +463,8 @@ export interface SearchFacets {
   awareCategory?: AwareCategory; // medicament
   withoutPrescription?: boolean; // medicament
   essentialMedicine?: boolean; // medicament
-  facilityType?: string; // etablissement (Facility.type)
+  facilityType?: string; // etablissement (category label, ex-Facility.type)
+  sector?: string; // etablissement (secteur)
   region?: string; // etablissement, besoin
   city?: string; // etablissement, evenement
   specialties?: string[]; // etablissement
@@ -447,6 +482,130 @@ export interface SearchFacets {
   readingMinutes?: number; // article (tri)
   publishedAt?: string; // article (tri date)
   articleType?: Article["type"]; // article vs video
+}
+
+// ---------------------------------------------------------------------------
+// Monétisation — registre transactionnel unifié (scaffold)
+// ---------------------------------------------------------------------------
+// Ces entités sous-tendent toutes les lignes de revenu (dons, pages, billetterie,
+// sponsoring…). Le rail paiement reste Bictorys (cf. functions/src/index.ts) ;
+// `transactions` est la source unique pour le reporting. Montants en XOF.
+
+/** Ligne de business à laquelle un revenu est rattaché (pour le reporting). */
+export type LineOfBusiness = "donations" | "pages" | "events" | "content" | "data";
+
+/** Type de modèle économique porté par un plan tarifaire. */
+export type RevenueModel = "one_time" | "subscription" | "commission" | "freemium";
+
+/** Périodicité de facturation d'un plan. */
+export type BillingPeriod = "monthly" | "yearly" | "one_time";
+
+/** Un plan tarifaire (abonnement page, billet type, etc.). */
+export interface PricingPlan {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  lineOfBusiness: LineOfBusiness;
+  model: RevenueModel;
+  /** Prix en XOF. */
+  price: number;
+  currency: "XOF";
+  billingPeriod: BillingPeriod;
+  /** Ce qui est inclus (affiché sur la grille tarifaire). */
+  features: string[];
+  /** Quotas / limitations optionnels (ex. { photos: 10 }). */
+  limits?: Record<string, number>;
+  isActive: boolean;
+  sortOrder: number;
+  trialDays?: number | null;
+}
+
+export type SubscriptionStatus = "active" | "cancelled" | "past_due" | "trialing";
+
+/** Abonnement récurrent (page structure premium, don mensuel…). */
+export interface Subscription {
+  id: string;
+  subscriberUid: string;
+  /** Renseigné si l'abonnement porte sur une page (Organization). */
+  orgId?: string;
+  planId: string;
+  status: SubscriptionStatus;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  provider: "bictorys";
+  providerSubscriptionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TxnType =
+  | "donation"
+  | "donation_tip"
+  | "subscription"
+  | "ticket"
+  | "commission"
+  | "refund"
+  | "payout"
+  | "sponsorship";
+
+export type TxnStatus = "pending" | "completed" | "failed" | "refunded";
+
+/**
+ * Écriture unique de référence pour chaque mouvement financier.
+ * Écrite exclusivement par les Cloud Functions (cf. règles Firestore).
+ * `amount` = montant total perçu ; `netAmount` = reversé au bénéficiaire ;
+ * `platformAmount` = part plateforme (pourboire/commission) ; `fees` = frais agrégateur.
+ */
+export interface Transaction {
+  id: string;
+  type: TxnType;
+  lineOfBusiness: LineOfBusiness;
+  payerUid?: string;
+  /** Référence métier : needId / eventId / orgId / planId selon le type. */
+  refId?: string;
+  amount: number;
+  currency: "XOF";
+  fees: number;
+  platformAmount: number;
+  netAmount: number;
+  status: TxnStatus;
+  paymentMethod?: "wave" | "orange_money" | "mtn_money" | "card";
+  providerTransactionId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+/** Commission due à un bénéficiaire (organisateur/vendeur) + suivi de reversement. */
+export interface Commission {
+  id: string;
+  transactionId: string;
+  beneficiaryUid: string;
+  grossAmount: number;
+  commissionRate: number;
+  commissionAmount: number;
+  netAmount: number;
+  payoutStatus: "pending" | "processed" | "paid";
+  payoutDate?: string;
+  payoutReference?: string;
+  createdAt: string;
+}
+
+/** Agrégat de revenus pré-calculé par période et par ligne (pour le dashboard). */
+export interface RevenueReport {
+  id: string;
+  period: "daily" | "weekly" | "monthly";
+  date: string;
+  lineOfBusiness: LineOfBusiness;
+  grossRevenue: number;
+  fees: number;
+  commissions: number;
+  netRevenue: number;
+  transactionsCount: number;
+  newCustomers: number;
+  churnedCustomers: number;
+  createdAt: string;
 }
 
 /** Unified search hit produced by the federated mock index. */

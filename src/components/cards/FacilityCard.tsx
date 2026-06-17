@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BadgeCheck, Building2, MapPin, Navigation, Star } from "lucide-react";
 import type { Facility } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
+import { categoryLabel, sectorLabel } from "@/lib/facilityTaxonomy";
 import { formatDistance } from "@/lib/geo";
 import { CardMedia, OverlayBadge, MetaItem, PillList, cardInteractive } from "./primitives";
 
@@ -19,6 +20,8 @@ export function FacilityCard({
   badge?: string;
 }) {
   const needsCount = facility.equipmentNeeds?.length ?? 0;
+  const typeLabel = categoryLabel(facility.category) || facility.type;
+  const sector = sectorLabel(facility.sector);
 
   return (
     <Link to={href ?? `/etablissements/${facility.slug}`} className={`${cardInteractive} block overflow-hidden`}>
@@ -37,8 +40,9 @@ export function FacilityCard({
       />
 
       <div className="p-4">
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          <Badge tone="navy">{facility.type}</Badge>
+        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          {typeLabel && <Badge tone="navy">{typeLabel}</Badge>}
+          {sector && <Badge tone="mint">{sector}</Badge>}
           {facility.verified && (
             <Badge tone="green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>
               Vérifié

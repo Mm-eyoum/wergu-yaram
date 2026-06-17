@@ -28,7 +28,9 @@ export type FacilityOwnerPatch = Partial<
   Pick<
     Facility,
     | "name"
-    | "type"
+    | "category"
+    | "sector"
+    | "level"
     | "region"
     | "city"
     | "address"

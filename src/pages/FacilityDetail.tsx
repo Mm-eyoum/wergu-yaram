@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
+import { categoryLabel, sectorLabel, levelLabel } from "@/lib/facilityTaxonomy";
 import { SectionCard } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -87,7 +88,11 @@ export default function FacilityDetail() {
         <div className="flex flex-wrap items-start justify-between gap-4 p-6">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="navy">{facility.type}</Badge>
+              {(categoryLabel(facility.category) || facility.type) && (
+                <Badge tone="navy">{categoryLabel(facility.category) || facility.type}</Badge>
+              )}
+              {sectorLabel(facility.sector) && <Badge tone="mint">{sectorLabel(facility.sector)}</Badge>}
+              {levelLabel(facility.level) && <Badge tone="neutral">{levelLabel(facility.level)}</Badge>}
               {facility.verified && (
                 <Badge tone="green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>
                   Référencé & vérifié
@@ -165,7 +170,7 @@ export default function FacilityDetail() {
         <Fact icon={<Stethoscope className="h-5 w-5" />} label="Spécialités" value={`${facility.specialties.length}`} />
         <Fact icon={<Building2 className="h-5 w-5" />} label="Capacité" value={facility.capacity} />
         <Fact icon={<Clock className="h-5 w-5" />} label="Horaires" value={facility.hours} />
-        <Fact icon={<Building2 className="h-5 w-5" />} label="Type d'établissement" value={facility.type} />
+        <Fact icon={<Building2 className="h-5 w-5" />} label="Type d'établissement" value={categoryLabel(facility.category) || facility.type || "—"} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">

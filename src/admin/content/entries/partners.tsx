@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/Badge";
 import { makeContentAdmin } from "@/services/admin/contentAdmin";
 import type { Partner } from "@/types/domain";
 import type { ContentEntry } from "../registry";
-import { PUBLISHED } from "./shared";
+import { PUBLISHED, SPONSOR } from "./shared";
 
 export const partnersEntry: ContentEntry<Partner> = {
   key: "partners",
@@ -36,6 +36,7 @@ export const partnersEntry: ContentEntry<Partner> = {
         { name: "contributionsLabel", label: "Contributions", type: "text" },
         { name: "tags", label: "Tags", type: "stringArray" },
       ] },
+      { title: "Sponsoring", fields: [SPONSOR] },
     ],
   },
   empty: () => ({

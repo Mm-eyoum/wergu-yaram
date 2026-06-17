@@ -17,6 +17,8 @@ interface ChargeInput {
   needId: string;
   amount: number;
   paymentType?: DonationPaymentType;
+  /** Optional platform tip ("Soutenir aussi Wergu Yaram"), in XOF. */
+  tipAmount?: number;
 }
 
 /**

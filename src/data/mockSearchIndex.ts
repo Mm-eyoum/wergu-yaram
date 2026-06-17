@@ -1,4 +1,5 @@
 import type { SearchHit } from "@/types/domain";
+import { categoryLabel, sectorLabel } from "@/lib/facilityTaxonomy";
 import { getMockMedications } from "./medicationsLazy";
 import { pathologies } from "./mockPathologies";
 import { articles } from "./mockArticles";
@@ -91,12 +92,13 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
       title: f.name,
       description: f.description,
       href: `/etablissements/${f.slug}`,
-      meta: `${f.type} · ${f.city}`,
+      meta: `${categoryLabel(f.category) || f.type || "Établissement"} · ${f.city}`,
       verified: f.verified,
       thumbnail: f.cover,
-      keywords: `${f.name} ${f.type} ${f.city} ${f.region} ${f.specialties.join(" ")}`.toLowerCase(),
+      keywords: `${f.name} ${categoryLabel(f.category) || f.type || ""} ${f.city} ${f.region} ${f.specialties.join(" ")}`.toLowerCase(),
       facets: {
-        facilityType: f.type,
+        facilityType: categoryLabel(f.category) || f.type,
+        sector: sectorLabel(f.sector),
         region: f.region,
         city: f.city,
         specialties: f.specialties,

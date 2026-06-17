@@ -32,10 +32,14 @@ export interface RouteEntry {
 /** Public structural pages (no dynamic param). */
 export const staticEntries: RouteEntry[] = [
   { path: "/", changefreq: "daily", priority: 1.0 },
+  { path: "/carte", changefreq: "weekly", priority: 0.7 },
+  { path: "/structures", changefreq: "weekly", priority: 0.7 },
   { path: "/communautes", changefreq: "weekly", priority: 0.7 },
   { path: "/forum", changefreq: "daily", priority: 0.7 },
   { path: "/besoins", changefreq: "daily", priority: 0.8 },
+  { path: "/evenements", changefreq: "daily", priority: 0.7 },
   { path: "/partenaires", changefreq: "monthly", priority: 0.6 },
+  { path: "/soutenir", changefreq: "monthly", priority: 0.6 },
 ];
 
 export const dynamicEntries: RouteEntry[] = [

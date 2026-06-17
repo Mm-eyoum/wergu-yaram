@@ -123,7 +123,8 @@ export const TYPE_FILTERS: Record<SearchScope, TypeFilterConfig> = {
       { value: "distance", label: "Plus proches" },
     ],
     facets: [
-      { param: "typeetab", label: "Type de structure", facetKey: "facilityType", kind: "select" },
+      { param: "categorie", label: "Catégorie", facetKey: "facilityType", kind: "select" },
+      { param: "secteur", label: "Secteur", facetKey: "sector", kind: "select" },
       { param: "region", label: "Région", facetKey: "region", kind: "select", options: REGION_OPTIONS },
       { param: "ville", label: "Ville", facetKey: "city", kind: "select" },
       { param: "specialites", label: "Spécialités", facetKey: "specialties", kind: "multi" },
