@@ -28,17 +28,21 @@ import { equipmentNeeds } from "../src/data/mockEquipmentNeeds";
 import { events } from "../src/data/mockEvents";
 import { partners } from "../src/data/mockPartners";
 
+// Admin SDK credentials come from Application Default Credentials, which resolve
+// EITHER a service-account key (GOOGLE_APPLICATION_CREDENTIALS) OR a gcloud user
+// login (`gcloud auth application-default login`). Both bypass security rules.
 if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  console.error(
-    "✖ GOOGLE_APPLICATION_CREDENTIALS non défini.\n" +
-      "  Exportez le chemin vers la clé de service avant de lancer :\n" +
-      "    export GOOGLE_APPLICATION_CREDENTIALS=/chemin/serviceAccountKey.json",
+  console.log(
+    "ℹ GOOGLE_APPLICATION_CREDENTIALS non défini — utilisation des Application\n" +
+      "  Default Credentials (gcloud auth application-default login).\n",
   );
-  process.exit(1);
 }
 
 if (getApps().length === 0) {
-  initializeApp({ credential: applicationDefault() });
+  initializeApp({
+    credential: applicationDefault(),
+    projectId: process.env.GOOGLE_CLOUD_PROJECT ?? process.env.VITE_FIREBASE_PROJECT_ID,
+  });
 }
 
 const db = getFirestore();
