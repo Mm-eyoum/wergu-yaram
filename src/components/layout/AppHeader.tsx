@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { UniversalSearchBar } from "@/components/search/UniversalSearchBar";
 import { ExploreAccordion, ExploreMenu } from "@/components/layout/ExploreMenu";
 import { useAuth } from "@/hooks/useAuth";
+import { useMenuConfig } from "@/hooks/useSiteConfig";
 
 export function AppHeader() {
   const { pathname } = useLocation();
@@ -21,6 +22,11 @@ export function AppHeader() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const isHome = pathname === "/";
+
+  // Editable primary navigation (admin → Menus), falling back to the bundled default.
+  const { data: menus } = useMenuConfig();
+  const headerLinks =
+    menus?.header?.length ? menus.header.map((l) => ({ label: l.label, to: l.href })) : PRIMARY_NAV;
 
   // Subtle elevation once the page scrolls away from the top.
   useEffect(() => {
@@ -95,8 +101,8 @@ export function AppHeader() {
 
         {/* Desktop nav: Portail Santé · Explorer ▾ · (destinations) */}
         <nav className="hidden items-center gap-0.5 xl:flex">
-          {PRIMARY_NAV.map((item, i) => (
-            <Fragment key={item.to}>
+          {headerLinks.map((item, i) => (
+            <Fragment key={`${item.to}-${i}`}>
               <NavLink to={item.to} end={item.to === "/"} className={navLinkClass}>
                 {item.label}
               </NavLink>
@@ -189,17 +195,19 @@ export function AppHeader() {
             <div className="container-page max-h-[calc(100vh-4rem)] space-y-4 overflow-y-auto py-4 scroll-thin">
               <UniversalSearchBar size="compact" />
               <nav className="grid gap-1">
-                <Link
-                  to="/"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-brand-mint"
-                >
-                  Portail Santé
-                </Link>
-                <ExploreAccordion onNavigate={() => setMobileOpen(false)} />
-                {PRIMARY_NAV.slice(1).map((item) => (
+                {headerLinks[0] && (
                   <Link
-                    key={item.to}
+                    to={headerLinks[0].to}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-brand-mint"
+                  >
+                    {headerLinks[0].label}
+                  </Link>
+                )}
+                <ExploreAccordion onNavigate={() => setMobileOpen(false)} />
+                {headerLinks.slice(1).map((item, i) => (
+                  <Link
+                    key={`${item.to}-${i}`}
                     to={item.to}
                     onClick={() => setMobileOpen(false)}
                     className="flex min-h-[44px] items-center rounded-xl px-3 py-2.5 text-sm font-medium text-text-primary hover:bg-brand-mint"

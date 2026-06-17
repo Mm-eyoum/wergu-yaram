@@ -91,6 +91,10 @@ service cloud.firestore {
     match /events/{doc}         { allow read: if true; allow write: if isEditor(); }
     match /equipmentNeeds/{doc} { allow read: if true; allow write: if isEditor(); }
 
+    // --- Site configuration (navigation menus, global settings) ---
+    // Public read (header/footer render from it); admin-only writes.
+    match /settings/{doc} { allow read: if true; allow write: if isAdmin(); }
+
     // --- Organizations / "pages" (Facebook/LinkedIn model) ---
     // Any active user creates a page they own; it starts 'pending' and only an
     // admin can flip its status. Owner/managers edit the profile but never the
@@ -151,7 +155,9 @@ service cloud.firestore {
         allow create: if isActiveUser()
           && request.resource.data.authorUid == request.auth.uid
           && isText(request.resource.data.content, 1, 5000);
-        allow update, delete: if isOwner(resource.data.authorUid) || isAdmin();
+        // Author edits own post; editors/admins moderate (delete) any post.
+        allow update: if isOwner(resource.data.authorUid) || isAdmin();
+        allow delete: if isOwner(resource.data.authorUid) || isEditor();
       }
     }
 
@@ -162,12 +168,18 @@ service cloud.firestore {
         && isText(request.resource.data.title, 1, 200)
         && isText(request.resource.data.excerpt, 1, 5000)
         && request.resource.data.kind in ['question', 'discussion', 'conseil'];
-      allow update, delete: if isOwner(resource.data.authorUid) || isAdmin();
+      // Author edits own thread; editors/admins moderate (delete) any thread.
+      allow update: if isOwner(resource.data.authorUid) || isAdmin();
+      allow delete: if isOwner(resource.data.authorUid) || isEditor();
     }
 
     // --- Private per-user collections (owner-only) ---
     // Dashboard data: favorites, saved searches, reminders, memberships.
-    match /users/{uid}/{sub=**} {
+    // NOTE: the match starts at a subcollection segment ({collection}/{doc})
+    // so it can NEVER alias the profile document /users/{uid} itself —
+    // otherwise this broad allow would override the role/status locking above
+    // and let a user self-promote by writing their own profile doc.
+    match /users/{uid}/{collection}/{doc=**} {
       allow read, write: if isOwner(uid);
     }
 

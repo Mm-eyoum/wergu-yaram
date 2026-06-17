@@ -1,5 +1,6 @@
 import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
+import { AnnouncementBanner } from "./AnnouncementBanner";
 
 /** Standard page shell: header + main content + footer. */
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         Aller au contenu
       </a>
+      <AnnouncementBanner />
       <AppHeader />
       <main id="main" className="flex-1">
         {children}

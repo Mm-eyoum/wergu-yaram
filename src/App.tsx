@@ -6,6 +6,7 @@ import { RequirePermission } from "@/components/admin/PermissionGate";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
+import { RedirectHandler } from "@/components/layout/RedirectHandler";
 
 const Home = lazy(() => import("@/pages/Home"));
 const SearchResults = lazy(() => import("@/pages/SearchResults"));
@@ -38,6 +39,13 @@ const Media = lazy(() => import("@/pages/admin/Media"));
 const ContentHub = lazy(() => import("@/pages/admin/ContentHub"));
 const ContentList = lazy(() => import("@/pages/admin/ContentList"));
 const ContentEditor = lazy(() => import("@/pages/admin/ContentEditor"));
+const Settings = lazy(() => import("@/pages/admin/Settings"));
+const Menus = lazy(() => import("@/pages/admin/Menus"));
+const Comments = lazy(() => import("@/pages/admin/Comments"));
+const AuditLog = lazy(() => import("@/pages/admin/AuditLog"));
+const Appearance = lazy(() => import("@/pages/admin/Appearance"));
+const Redirects = lazy(() => import("@/pages/admin/Redirects"));
+const Emails = lazy(() => import("@/pages/admin/Emails"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
@@ -192,6 +200,62 @@ export default function App() {
               </RequirePermission>
             }
           />
+          <Route
+            path="menus"
+            element={
+              <RequirePermission permission="menus.manage">
+                <Menus />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RequirePermission permission="settings.update">
+                <Settings />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="comments"
+            element={
+              <RequirePermission permission="comments.moderate">
+                <Comments />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="audit-log"
+            element={
+              <RequirePermission permission="audit.read">
+                <AuditLog />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="appearance"
+            element={
+              <RequirePermission permission="appearance.manage">
+                <Appearance />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="redirects"
+            element={
+              <RequirePermission permission="redirects.manage">
+                <Redirects />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="emails"
+            element={
+              <RequirePermission permission="emails.manage">
+                <Emails />
+              </RequirePermission>
+            }
+          />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
         <Route path="*" element={<NotFound />} />
@@ -203,6 +267,7 @@ export default function App() {
   return (
     <>
       <ScrollToTop />
+      <RedirectHandler />
       {bareLayout ? content : <AppShell>{content}</AppShell>}
     </>
   );
