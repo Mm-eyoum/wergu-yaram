@@ -66,16 +66,23 @@ async function maybeSignIn() {
   console.log(`✓ Authentifié en tant qu'admin : ${email}\n`);
 }
 
+// Firestore caps a WriteBatch at 500 operations; chunk below that so large
+// collections (e.g. the 560-entry LME medications) don't blow the limit.
+const BATCH_LIMIT = 450;
+
 async function seedCollection<T extends Record<string, unknown>>(
   name: string,
   items: T[],
   idKey: keyof T,
 ) {
-  const batch = writeBatch(db);
-  for (const item of items) {
-    batch.set(doc(db, name, String(item[idKey])), item);
+  for (let i = 0; i < items.length; i += BATCH_LIMIT) {
+    const slice = items.slice(i, i + BATCH_LIMIT);
+    const batch = writeBatch(db);
+    for (const item of slice) {
+      batch.set(doc(db, name, String(item[idKey])), item);
+    }
+    await batch.commit();
   }
-  await batch.commit();
   console.log(`✓ ${name}: ${items.length} documents`);
 }
 

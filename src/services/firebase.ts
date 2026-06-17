@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { connectAuthEmulator, getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions, type Functions } from "firebase/functions";
@@ -26,8 +27,30 @@ let dbInstance: Firestore | undefined;
 let storageInstance: FirebaseStorage | undefined;
 let functionsInstance: Functions | undefined;
 
+/** reCAPTCHA v3 site key for App Check (anti-abuse). Empty disables App Check. */
+const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
+/** Debug token for App Check in local dev (set in the browser before load). */
+const appCheckDebugToken = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
+
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
+
+  // App Check guards Firestore/Storage/Functions against requests from outside
+  // the real app (token minted via reCAPTCHA v3). Only wired when a site key is
+  // configured, so dev/test without the key keeps working. Must run before the
+  // other SDKs issue requests.
+  if (appCheckSiteKey && !useEmulators) {
+    if (appCheckDebugToken) {
+      // Lets a developer obtain a valid token from a non-registered origin.
+      (globalThis as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN =
+        appCheckDebugToken;
+    }
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(appCheckSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  }
+
   authInstance = getAuth(app);
   dbInstance = getFirestore(app);
   storageInstance = getStorage(app);

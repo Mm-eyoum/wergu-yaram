@@ -40,14 +40,17 @@ const RATE_MAX = 20;
 
 // Restrict callable functions to the app's own origins (defense in depth on top
 // of the per-call auth token). Set CORS_ORIGINS (comma-separated) to override
-// for staging/preview hosts; localhost is allowed for local development.
+// for staging/preview hosts; localhost is allowed ONLY under the emulator so it
+// never widens the allow-list in production.
 const CORS_ORIGINS: (string | RegExp)[] = (
   process.env.CORS_ORIGINS ?? "https://werguyaram.org,https://werguyaram.web.app"
 )
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
-CORS_ORIGINS.push(/^http:\/\/localhost(:\d+)?$/);
+if (process.env.FUNCTIONS_EMULATOR === "true") {
+  CORS_ORIGINS.push(/^http:\/\/localhost(:\d+)?$/);
+}
 
 type PaymentType = "wave" | "orange_money" | "mtn_money" | "card";
 
