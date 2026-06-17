@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/useToast";
 import { auth } from "@/services/firebase";
 import {
   getOrCreateSupportConversation,
+  MESSAGES_PAGE_SIZE,
   sendMessage,
   subscribeConversations,
   subscribeMessages,
@@ -28,7 +29,9 @@ export default function Messages() {
   const [draft, setDraft] = useState("");
   const [search, setSearch] = useState("");
   const [starting, setStarting] = useState(false);
+  const [msgLimit, setMsgLimit] = useState(MESSAGES_PAGE_SIZE);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMsgIdRef = useRef<string | null>(null);
 
   // Subscribe to the user's conversations (cleaned up on unmount).
   useEffect(() => {
@@ -44,20 +47,35 @@ export default function Messages() {
     return unsub;
   }, [uid]);
 
-  // Subscribe to the active conversation's messages.
+  // Reset the message window when switching conversations.
+  useEffect(() => {
+    setMsgLimit(MESSAGES_PAGE_SIZE);
+    lastMsgIdRef.current = null;
+  }, [activeId]);
+
+  // Subscribe to the active conversation's most recent `msgLimit` messages.
+  // Growing `msgLimit` widens the window to reveal older history.
   useEffect(() => {
     if (!uid || !activeId) {
       setMessages([]);
       return;
     }
-    const unsub = subscribeMessages(activeId, uid, setMessages, () => setMessages([]));
+    const unsub = subscribeMessages(activeId, uid, setMessages, () => setMessages([]), msgLimit);
     return unsub;
-  }, [uid, activeId]);
+  }, [uid, activeId, msgLimit]);
 
-  // Auto-scroll to the newest message.
+  // Auto-scroll to the bottom only when a NEW message arrives at the tail
+  // (or on first load) — never when prepending older history.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    const lastId = messages.length ? messages[messages.length - 1].id : null;
+    if (lastId !== lastMsgIdRef.current) {
+      lastMsgIdRef.current = lastId;
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    }
   }, [messages]);
+
+  // The window is full → older messages may exist.
+  const hasOlder = messages.length >= msgLimit;
 
   const active = conversations?.find((c) => c.id === activeId) ?? null;
   const filtered = (conversations ?? []).filter((c) =>
@@ -163,6 +181,17 @@ export default function Messages() {
               </header>
 
               <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-brand-soft p-4 scroll-thin">
+                {hasOlder && (
+                  <div className="flex justify-center pb-1">
+                    <button
+                      type="button"
+                      onClick={() => setMsgLimit((n) => n + MESSAGES_PAGE_SIZE)}
+                      className="rounded-full border border-border-soft bg-white px-3 py-1 text-xs font-semibold text-text-secondary hover:border-brand-teal hover:text-brand-green"
+                    >
+                      Voir les messages plus anciens
+                    </button>
+                  </div>
+                )}
                 {messages.length === 0 ? (
                   <p className="py-8 text-center text-sm text-text-secondary">
                     Démarrez la conversation en envoyant un message.

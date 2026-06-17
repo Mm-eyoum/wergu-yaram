@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   doc,
+  limit as fbLimit,
   onSnapshot,
   orderBy,
   query,
@@ -72,12 +73,22 @@ export function subscribeConversations(
   );
 }
 
-/** Live messages of a conversation (oldest first). */
+/** Default size of the live messages window. */
+export const MESSAGES_PAGE_SIZE = 50;
+
+/**
+ * Live messages of a conversation (oldest first), bounded to the most recent
+ * `pageSize` messages. The query reads newest-first with a `limit` (so a long
+ * thread can never load thousands of docs / blow up memory or cost) and the
+ * result is reversed to ascending for display. To load older history, grow
+ * `pageSize` by a page and re-subscribe — the window simply widens.
+ */
 export function subscribeMessages(
   conversationId: string,
   uid: string,
   onData: (rows: LiveMessage[]) => void,
   onError?: (e: Error) => void,
+  pageSize: number = MESSAGES_PAGE_SIZE,
 ): () => void {
   if (!db) {
     onData([]);
@@ -85,23 +96,26 @@ export function subscribeMessages(
   }
   const q = query(
     collection(db, "conversations", conversationId, "messages"),
-    orderBy("createdAt", "asc"),
+    orderBy("createdAt", "desc"),
+    fbLimit(pageSize),
   );
   return onSnapshot(
     q,
     (snap) =>
       onData(
-        snap.docs.map((d) => {
-          const data = d.data();
-          const senderUid = (data.senderUid as string) ?? "";
-          return {
-            id: d.id,
-            senderUid,
-            text: (data.text as string) ?? "",
-            createdAt: isoOf(data.createdAt),
-            fromMe: senderUid === uid,
-          };
-        }),
+        snap.docs
+          .map((d) => {
+            const data = d.data();
+            const senderUid = (data.senderUid as string) ?? "";
+            return {
+              id: d.id,
+              senderUid,
+              text: (data.text as string) ?? "",
+              createdAt: isoOf(data.createdAt),
+              fromMe: senderUid === uid,
+            };
+          })
+          .reverse(),
       ),
     (e) => onError?.(e),
   );
