@@ -90,6 +90,33 @@ describe("users — self-signup & role locking", () => {
     await assertFails(updateDoc(doc(db, "users", "u2"), { role: "admin" }));
   });
 
+  it("lets a plain admin promote patient_public → editor", async () => {
+    await seedProfile("admin1", "admin");
+    await seedProfile("u2", "patient_public");
+    const db = testEnv.authenticatedContext("admin1").firestore();
+    await assertSucceeds(updateDoc(doc(db, "users", "u2"), { role: "editor" }));
+  });
+
+  it("lets a plain admin demote editor → patient_public", async () => {
+    await seedProfile("admin1", "admin");
+    await seedProfile("u2", "editor");
+    const db = testEnv.authenticatedContext("admin1").firestore();
+    await assertSucceeds(updateDoc(doc(db, "users", "u2"), { role: "patient_public" }));
+  });
+
+  it("forbids a plain admin from touching a super_admin's role", async () => {
+    await seedProfile("admin1", "admin");
+    await seedProfile("super2", "super_admin");
+    const db = testEnv.authenticatedContext("admin1").firestore();
+    await assertFails(updateDoc(doc(db, "users", "super2"), { role: "editor" }));
+  });
+
+  it("forbids an admin from changing their own role", async () => {
+    await seedProfile("admin1", "admin");
+    const db = testEnv.authenticatedContext("admin1").firestore();
+    await assertFails(updateDoc(doc(db, "users", "admin1"), { role: "editor" }));
+  });
+
   it("lets a super_admin grant admin", async () => {
     await seedProfile("super1", "super_admin");
     await seedProfile("u2", "patient_public");

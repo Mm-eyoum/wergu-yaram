@@ -6,21 +6,22 @@ import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { useToast } from "@/hooks/useToast";
 import { useAllUsers, adminKeys } from "@/hooks/useAdminData";
+import { useAuth } from "@/hooks/useAuth";
 import { setUserRole, setUserStatus } from "@/services/users";
 import { logAudit } from "@/services/audit";
 import { ROLE_LABELS } from "@/lib/constants";
+import { assignableRoles } from "@/lib/permissions";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { usePermission } from "@/components/admin/PermissionGate";
 import type { AppUser, Role, UserStatus } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
 
-/** Roles a super_admin may assign through the UI (never super_admin itself). */
-const ASSIGNABLE_ROLES: Role[] = ["patient_public", "editor", "admin"];
-
 export default function AdminUsers() {
   const { notify } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const canManageRoles = usePermission("roles.manage");
+  const assignable = assignableRoles(user?.role);
   const users = useAllUsers(true);
   const [search, setSearch] = useState("");
 
@@ -65,7 +66,7 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: adminKeys.users });
       notify("Rôle mis à jour ✓", "success");
     },
-    onError: () => notify("Action réservée au super-administrateur.", "error"),
+    onError: () => notify("Action non autorisée.", "error"),
   });
 
   return (
@@ -102,7 +103,7 @@ export default function AdminUsers() {
         <div className="space-y-2">
           {filtered.map((u) => (
             <UserRow key={u.uid} u={u}>
-              {canManageRoles && u.role !== "super_admin" && (
+              {canManageRoles && u.uid !== user?.uid && assignable.includes(u.role) && (
                 <select
                   value={u.role}
                   onChange={(e) =>
@@ -112,7 +113,7 @@ export default function AdminUsers() {
                   className="rounded-lg border border-black/10 bg-white px-2 py-1 text-xs font-medium dark:border-white/10 dark:bg-white/5 dark:text-white"
                   aria-label={`Rôle de ${u.displayName ?? "l'utilisateur"}`}
                 >
-                  {ASSIGNABLE_ROLES.map((r) => (
+                  {assignable.map((r) => (
                     <option key={r} value={r}>
                       {ROLE_LABELS[r]}
                     </option>

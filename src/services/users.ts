@@ -114,7 +114,10 @@ export async function setUserStatus(uid: string, status: UserStatus): Promise<vo
   await updateDoc(doc(db, "users", uid), { status, updatedAt: serverTimestamp() });
 }
 
-/** Grant / revoke the admin role (super_admin only — rules enforce this). */
+/**
+ * Change a user's role. Admins toggle patient_public ↔ editor; only a
+ * super_admin grants/revokes the admin role. Rules enforce the exact policy.
+ */
 export async function setUserRole(uid: string, role: Role): Promise<void> {
   if (!db) throw new Error("Firebase non configuré.");
   await updateDoc(doc(db, "users", uid), { role, updatedAt: serverTimestamp() });

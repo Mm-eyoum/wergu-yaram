@@ -42,16 +42,19 @@ service cloud.firestore {
     }
 
     // Guards which role transitions an admin may perform on a user profile.
-    function roleChangeAuthorized(oldRole, newRole) {
+    function roleChangeAuthorized(uid, oldRole, newRole) {
       return
         // No role change → a plain admin may still update other fields (e.g. status).
         (oldRole == newRole && isAdmin())
-        // Granting/revoking 'admin' is super_admin-only…
-        || (oldRole != newRole
-            && isSuperAdmin()
-            // …and a super_admin account can never be granted/demoted via rules.
-            && oldRole != 'super_admin'
-            && newRole != 'super_admin');
+        // Role change → never on one's own account.
+        || (oldRole != newRole && request.auth.uid != uid && (
+             // Super_admin grants/revokes 'admin', but never 'super_admin'.
+             (isSuperAdmin() && oldRole != 'super_admin' && newRole != 'super_admin')
+             // Admin only toggles patient_public ↔ editor (no privilege escalation).
+             || (isAdmin()
+                 && oldRole in ['patient_public', 'editor']
+                 && newRole in ['patient_public', 'editor'])
+           ));
     }
 
     // --- User profiles ---
@@ -68,15 +71,16 @@ service cloud.firestore {
         && request.resource.data.displayName.size() <= 120;
 
       // Owner may edit profile fields but NOT role/status.
-      // Admins may change status (e.g. suspend) and grant/revoke 'admin',
-      // but only a super_admin may create or remove an 'admin'/'super_admin',
-      // and a super_admin can never be demoted here.
+      // Admins change status (e.g. suspend) and toggle patient_public ↔ editor;
+      // only a super_admin may grant/revoke 'admin'. No actor can create or demote
+      // a 'super_admin', and no admin may change their own role (see
+      // roleChangeAuthorized).
       allow update: if
         (isOwner(uid)
           && request.resource.data.role == resource.data.role
           && request.resource.data.status == resource.data.status)
         || (isAdmin()
-          && roleChangeAuthorized(resource.data.role, request.resource.data.role));
+          && roleChangeAuthorized(uid, resource.data.role, request.resource.data.role));
 
       allow delete: if isSuperAdmin();
     }

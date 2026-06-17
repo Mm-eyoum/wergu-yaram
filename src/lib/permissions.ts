@@ -41,7 +41,7 @@ const PERMISSION_ROLES: Record<Permission, Role[]> = {
   "comments.moderate": EDITOR,
   "menus.manage": ADMIN,
   "users.manage": ADMIN,
-  "roles.manage": SUPER,
+  "roles.manage": ADMIN,
   "settings.update": ADMIN,
   "appearance.manage": ADMIN,
   "redirects.manage": ADMIN,
@@ -59,4 +59,15 @@ export function can(role: Role | null | undefined, permission: Permission): bool
 /** True if the role may reach the admin area at all (any admin-side permission). */
 export function canAccessAdmin(role: Role | null | undefined): boolean {
   return can(role, "content.read");
+}
+
+/**
+ * Roles that `actorRole` may assign through the admin UI (never super_admin).
+ * Mirrors `roleChangeAuthorized` in firestore.rules — keep both in sync:
+ * super_admins manage the `admin` role; admins only toggle patient ↔ editor.
+ */
+export function assignableRoles(actorRole: Role | null | undefined): Role[] {
+  if (actorRole === "super_admin") return ["patient_public", "editor", "admin"];
+  if (actorRole === "admin") return ["patient_public", "editor"];
+  return [];
 }
