@@ -71,40 +71,56 @@ function isPublic(data: unknown): boolean {
   return (data as { published?: boolean }).published !== false;
 }
 
-/** List a collection from Firestore, falling back to mock when empty/absent. */
+/**
+ * Whether the bundled mock data may stand in for an empty/absent Firestore.
+ * Allowed in dev (offline work, before seeding) and when explicitly opted into,
+ * but NEVER in a normal production build — there an unseeded/unreachable
+ * collection yields an empty result and the page shows an honest empty state,
+ * rather than presenting invented content as real. Seed Firestore before a
+ * production build:seo (see DEPLOYMENT.md §4–§5).
+ */
+const ALLOW_MOCK_FALLBACK = (() => {
+  const flag = import.meta.env.VITE_ALLOW_MOCK_FALLBACK;
+  if (flag === "true") return true; // explicit opt-in (e.g. a staging build)
+  if (flag === "false") return false; // explicit opt-out
+  return import.meta.env.DEV; // default: dev only, never a plain prod build
+})();
+
+/** List a collection from Firestore; fall back to mock only when allowed. */
 async function listOrMock<T>(collectionName: string, fallback: Lazy<T[]>): Promise<T[]> {
-  if (!db) return resolveLazy(fallback);
+  if (!db) return ALLOW_MOCK_FALLBACK ? resolveLazy(fallback) : [];
   try {
     const snap = await getDocs(query(collection(db, collectionName), limit(CATALOG_PAGE_SIZE)));
-    if (snap.empty) return resolveLazy(fallback);
+    if (snap.empty) return ALLOW_MOCK_FALLBACK ? resolveLazy(fallback) : [];
     // Drafts (published === false) are hidden from the public site.
     return snap.docs.map((d) => d.data() as T).filter(isPublic);
   } catch (err) {
-    // Network/permission error → degrade gracefully to mock, but surface the
-    // cause so a misconfiguration (e.g. denied rules) is not silently masked.
+    // Network/permission error → surface the cause so a misconfiguration (e.g.
+    // denied rules) is not silently masked, then degrade: mock in dev, empty in prod.
     reportError(err, { scope: "catalog.listOrMock", collection: collectionName });
-    return resolveLazy(fallback);
+    return ALLOW_MOCK_FALLBACK ? resolveLazy(fallback) : [];
   }
 }
 
-/** Read one document (id === slug/id) from Firestore, falling back to mock. */
+/** Read one document (id === slug/id) from Firestore; mock only when allowed. */
 async function oneOrMock<T>(
   collectionName: string,
   id: string | undefined,
   fallback: Lazy<T | undefined>,
 ): Promise<T | null> {
   if (!id) return null;
-  if (!db) return (await resolveLazy(fallback)) ?? null;
+  const mock = async () => (ALLOW_MOCK_FALLBACK ? ((await resolveLazy(fallback)) ?? null) : null);
+  if (!db) return mock();
   try {
     const snap = await getDoc(doc(db, collectionName, id));
     if (snap.exists()) {
       // A draft document 404s on the public site (admins use the admin services).
       return isPublic(snap.data()) ? (snap.data() as T) : null;
     }
-    return (await resolveLazy(fallback)) ?? null;
+    return mock();
   } catch (err) {
     reportError(err, { scope: "catalog.oneOrMock", collection: collectionName, id });
-    return (await resolveLazy(fallback)) ?? null;
+    return mock();
   }
 }
 

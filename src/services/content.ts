@@ -15,8 +15,6 @@ export { communities, communityBySlug } from "@/data/mockCommunities";
 export { equipmentNeeds, equipmentNeedById } from "@/data/mockEquipmentNeeds";
 export { events, eventById } from "@/data/mockEvents";
 export { partners, partnerBySlug } from "@/data/mockPartners";
-export { forumThreads, FORUM_TOPICS, FORUM_CONTRIBUTORS } from "@/data/mockForum";
-export { conversations } from "@/data/mockMessages";
 
 export type SearchScope = ContentType | "all";
 

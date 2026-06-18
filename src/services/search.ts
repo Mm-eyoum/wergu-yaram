@@ -24,6 +24,23 @@ const protocol = (import.meta.env.VITE_TYPESENSE_PROTOCOL as string) ?? "https";
 /** True when a Typesense search endpoint is configured. */
 export const isTypesenseConfigured = Boolean(host && searchKey);
 
+/**
+ * Whether the bundled mock index may back search when Typesense is absent.
+ * Allowed in dev / when explicitly opted in, but NEVER in a normal production
+ * build — there, missing Typesense yields an empty result rather than serving
+ * invented hits built from mock catalog data. Provision Typesense for prod.
+ */
+const ALLOW_MOCK_SEARCH = (() => {
+  const flag = import.meta.env.VITE_ALLOW_MOCK_FALLBACK;
+  if (flag === "true") return true;
+  if (flag === "false") return false;
+  return import.meta.env.DEV;
+})();
+
+/** Local mock index when allowed, otherwise no results (prod without Typesense). */
+const localSearch = (query: string): Promise<SearchHit[]> =>
+  ALLOW_MOCK_SEARCH ? searchContent(query, "all") : Promise.resolve([]);
+
 // The Typesense SDK is loaded lazily (dynamic import) so it stays out of the
 // initial bundle — it's only fetched the first time a real search runs.
 let clientPromise: Promise<TypesenseClient> | null = null;
@@ -49,7 +66,7 @@ function getClient(): Promise<TypesenseClient> | null {
  */
 export async function searchAllHits(query: string): Promise<SearchHit[]> {
   const clientP = getClient();
-  if (!clientP) return searchContent(query, "all");
+  if (!clientP) return localSearch(query);
   try {
     const client = await clientP;
     const res = await client
@@ -66,6 +83,6 @@ export async function searchAllHits(query: string): Promise<SearchHit[]> {
     // Network/permission/collection error → degrade to the local index,
     // but surface the cause instead of masking a Typesense misconfiguration.
     reportError(err, { scope: "search.searchAllHits" });
-    return searchContent(query, "all");
+    return localSearch(query);
   }
 }

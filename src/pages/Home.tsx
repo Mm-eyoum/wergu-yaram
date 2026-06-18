@@ -22,7 +22,7 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { FacilityCard } from "@/components/cards/FacilityCard";
 import { CommunityCard } from "@/components/cards/CommunityCard";
 import { EquipmentNeedCard } from "@/components/cards/EquipmentNeedCard";
-import { TrustStatsBar } from "@/components/ui/TrustStatsBar";
+import { TrustStatsBar, type Stat } from "@/components/ui/TrustStatsBar";
 import { ButtonLink } from "@/components/ui/Button";
 import {
   useArticles,
@@ -30,6 +30,9 @@ import {
   useEquipmentNeeds,
   useFacilities,
 } from "@/hooks/useCatalog";
+import { usePlatformStats } from "@/hooks/usePlatformStats";
+import { useSiteSettings } from "@/hooks/useSiteConfig";
+import { formatCount } from "@/services/stats";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { haversineKm } from "@/lib/geo";
 import { fetchActiveFacilityOrganizations } from "@/services/organizations";
@@ -77,6 +80,28 @@ export default function Home() {
   });
   const geo = useGeolocation();
   const urgentNeeds = equipmentNeeds.filter((n) => n.urgency === "urgent").slice(0, 3);
+
+  // Trust strip: real computed counts + admin-entered figures. Cards with no
+  // real value are omitted so the platform never shows an invented number.
+  const platformStats = usePlatformStats().data;
+  const editableStats = useSiteSettings().data?.stats;
+  const trustStats = useMemo<Stat[]>(() => {
+    const cards: (Stat | false)[] = [
+      editableStats?.verifiedInfo
+        ? { value: editableStats.verifiedInfo, label: "Informations vérifiées", icon: <ShieldCheck className="h-5 w-5" /> }
+        : false,
+      platformStats?.members != null
+        ? { value: formatCount(platformStats.members)!, label: "Membres de la communauté", icon: <Users className="h-5 w-5" /> }
+        : false,
+      platformStats?.facilities != null
+        ? { value: formatCount(platformStats.facilities)!, label: "Structures référencées", icon: <Hospital className="h-5 w-5" /> }
+        : false,
+      platformStats?.equipmentNeeds != null
+        ? { value: formatCount(platformStats.equipmentNeeds)!, label: "Besoins soutenus", icon: <HandHeart className="h-5 w-5" /> }
+        : false,
+    ];
+    return cards.filter(Boolean) as Stat[];
+  }, [platformStats, editableStats]);
 
   // Curated catalog facilities + directory orgs (imported/created), unified.
   const facilityEntries = useMemo(
@@ -203,16 +228,13 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Trust stats */}
-        <TrustStatsBar
-          title="Une plateforme de confiance, au service de tous"
-          stats={[
-            { value: "1,2M+", label: "Informations vérifiées", icon: <ShieldCheck className="h-5 w-5" /> },
-            { value: "15 000+", label: "Membres de la communauté", icon: <Users className="h-5 w-5" /> },
-            { value: "850+", label: "Structures référencées", icon: <Hospital className="h-5 w-5" /> },
-            { value: "320+", label: "Besoins soutenus", icon: <HandHeart className="h-5 w-5" /> },
-          ]}
-        />
+        {/* Trust stats — only shown when we have real/configured figures */}
+        {trustStats.length > 0 && (
+          <TrustStatsBar
+            title="Une plateforme de confiance, au service de tous"
+            stats={trustStats}
+          />
+        )}
       </div>
     </>
   );

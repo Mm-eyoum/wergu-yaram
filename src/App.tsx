@@ -53,6 +53,7 @@ const Revenue = lazy(() => import("@/pages/admin/Revenue"));
 const Appearance = lazy(() => import("@/pages/admin/Appearance"));
 const Redirects = lazy(() => import("@/pages/admin/Redirects"));
 const Emails = lazy(() => import("@/pages/admin/Emails"));
+const Legal = lazy(() => import("@/pages/admin/Legal"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
@@ -281,6 +282,14 @@ export default function App() {
             element={
               <RequirePermission permission="emails.manage">
                 <Emails />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="legal"
+            element={
+              <RequirePermission permission="settings.update">
+                <Legal />
               </RequirePermission>
             }
           />

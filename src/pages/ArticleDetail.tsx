@@ -6,12 +6,15 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { SidebarPanel } from "@/components/ui/SidebarPanel";
-import { TrustStatsBar } from "@/components/ui/TrustStatsBar";
+import { TrustStatsBar, type Stat } from "@/components/ui/TrustStatsBar";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { MedicationCard } from "@/components/cards/MedicationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useArticle, useArticles, useFacilities, useMedications } from "@/hooks/useCatalog";
+import { usePlatformStats } from "@/hooks/usePlatformStats";
+import { useSiteSettings } from "@/hooks/useSiteConfig";
+import { formatCount } from "@/services/stats";
 import { formatDate } from "@/lib/format";
 import { SEOHead } from "@/seo/SEOHead";
 import { articleJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
@@ -22,6 +25,22 @@ export default function ArticleDetail() {
   const { data: articles = [] } = useArticles();
   const { data: medications = [] } = useMedications();
   const { data: facilities = [] } = useFacilities();
+
+  // Trust strip: real counts + admin-entered figures; empty cards are dropped.
+  const platformStats = usePlatformStats().data;
+  const editableStats = useSiteSettings().data?.stats;
+  const trustStats: Stat[] = [
+    platformStats?.members != null
+      ? { value: formatCount(platformStats.members)!, label: "Utilisateurs", icon: <Users className="h-5 w-5" /> }
+      : false,
+    editableStats?.verifiedInfo
+      ? { value: editableStats.verifiedInfo, label: "Contenus vérifiés", icon: <BadgeCheck className="h-5 w-5" /> }
+      : false,
+    platformStats?.facilities != null
+      ? { value: formatCount(platformStats.facilities)!, label: "Établissements", icon: <MapPin className="h-5 w-5" /> }
+      : false,
+    { value: "100 %", label: "Sources fiables", icon: <ShieldCheck className="h-5 w-5" /> },
+  ].filter(Boolean) as Stat[];
 
   if (isLoading) {
     return (
@@ -263,12 +282,7 @@ export default function ArticleDetail() {
         variant="light"
         title="Une plateforme de confiance"
         subtitle="Des contenus vérifiés par des professionnels de santé."
-        stats={[
-          { value: "1,2M+", label: "Utilisateurs", icon: <Users className="h-5 w-5" /> },
-          { value: "15 000+", label: "Contenus vérifiés", icon: <BadgeCheck className="h-5 w-5" /> },
-          { value: "850+", label: "Établissements", icon: <MapPin className="h-5 w-5" /> },
-          { value: "100 %", label: "Sources fiables", icon: <ShieldCheck className="h-5 w-5" /> },
-        ]}
+        stats={trustStats}
       />
     </div>
   );

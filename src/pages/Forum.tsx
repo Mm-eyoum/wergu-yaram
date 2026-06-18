@@ -10,7 +10,7 @@ import { SidebarPanel } from "@/components/ui/SidebarPanel";
 import { FormInput } from "@/components/ui/FormInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NewThreadDialog } from "@/components/forum/NewThreadDialog";
-import { FORUM_CONTRIBUTORS, FORUM_TOPICS, forumThreads as seedThreads } from "@/services/content";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { fetchForumThreads } from "@/services/forum";
 import { usePagination } from "@/hooks/usePagination";
 import type { ForumKind } from "@/types/domain";
@@ -44,10 +44,8 @@ export default function Forum() {
 
   const realThreads = useQuery({ queryKey: ["forumThreads"], queryFn: fetchForumThreads });
 
-  const allThreads = useMemo(
-    () => [...(realThreads.data ?? []), ...seedThreads],
-    [realThreads.data],
-  );
+  // Real forum threads only — no mock/seed data is ever merged in.
+  const allThreads = useMemo(() => realThreads.data ?? [], [realThreads.data]);
 
   const threads = useMemo(() => {
     return allThreads.filter((t) => {
@@ -70,6 +68,18 @@ export default function Forum() {
       })),
     [allThreads],
   );
+
+  // Popular topics derived from the real threads' tags (most frequent first).
+  const topics = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const t of allThreads) {
+      for (const tag of t.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([label, count]) => ({ label, count }));
+  }, [allThreads]);
 
   // Unanswered questions surfaced in the right rail.
   const unanswered = useMemo(
@@ -118,15 +128,17 @@ export default function Forum() {
       <div className="container-page grid gap-6 py-8 lg:grid-cols-[260px_1fr_300px]">
         {/* Left rail: topics + categories + help */}
         <aside className="hidden space-y-5 lg:block">
-          <SidebarPanel title="Thèmes populaires" icon={<TrendingUp className="h-4 w-4" />}>
-            <div className="flex flex-wrap gap-2">
-              {FORUM_TOPICS.map((topic) => (
-                <Badge key={topic.label} tone="neutral">
-                  {topic.label} · {topic.count}
-                </Badge>
-              ))}
-            </div>
-          </SidebarPanel>
+          {topics.length > 0 && (
+            <SidebarPanel title="Thèmes populaires" icon={<TrendingUp className="h-4 w-4" />}>
+              <div className="flex flex-wrap gap-2">
+                {topics.map((topic) => (
+                  <Badge key={topic.label} tone="neutral">
+                    {topic.label} · {topic.count}
+                  </Badge>
+                ))}
+              </div>
+            </SidebarPanel>
+          )}
 
           <SidebarPanel title="Catégories de discussion" icon={<MessageSquare className="h-4 w-4" />}>
             <ul className="space-y-1">
@@ -175,8 +187,13 @@ export default function Forum() {
         <div>
           <Tabs items={TABS} active={tab} onChange={setTab} className="mb-5" />
 
-          {threads.length === 0 ? (
-            <EmptyState title="Aucune question" message="Essayez un autre mot-clé ou posez votre question." />
+          {realThreads.isLoading ? (
+            <LoadingState />
+          ) : threads.length === 0 ? (
+            <EmptyState
+              title="Aucune question pour l'instant"
+              message="Soyez le premier à poser une question à la communauté."
+            />
           ) : (
             <div className="space-y-4">
               {pageItems.map((thread) => (
@@ -219,21 +236,6 @@ export default function Forum() {
         </div>
 
         <aside className="space-y-5">
-          <SidebarPanel title="Top contributeurs">
-            <ul className="space-y-3">
-              {FORUM_CONTRIBUTORS.map((c) => (
-                <li key={c.name} className="flex items-center gap-3">
-                  <Avatar name={c.name} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-text-primary">{c.name}</p>
-                    <p className="text-xs text-text-secondary">{c.role}</p>
-                  </div>
-                  <span className="text-xs font-semibold text-brand-green">{c.answers}</span>
-                </li>
-              ))}
-            </ul>
-          </SidebarPanel>
-
           <SidebarPanel title="Questions sans réponses" icon={<HelpCircle className="h-4 w-4" />}>
             {unanswered.length ? (
               <ul className="space-y-3">
