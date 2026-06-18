@@ -5,6 +5,7 @@
  * data, no separate transpile step.
  */
 import { createServer, loadEnv } from "vite";
+import { loadLiveContent } from "./loadLiveContent.mjs";
 
 /** Reads VITE_SITE_URL from the .env files the same way the app does. */
 export function getSiteUrl(mode = "production") {
@@ -12,7 +13,12 @@ export function getSiteUrl(mode = "production") {
   return (env.VITE_SITE_URL || process.env.VITE_SITE_URL || "").replace(/\/$/, "");
 }
 
-/** Loads src/seo/routes.ts and returns its exports. */
+/**
+ * Loads the SEO route manifest. Prefers **live Firestore content** (so
+ * CMS-created/edited pages are prerendered and listed in the sitemap) and falls
+ * back to the bundled mock baseline when Firestore is unavailable — the manifest
+ * shape is identical either way (see src/seo/routes.ts `buildSeoManifest`).
+ */
 export async function loadSeoRoutes() {
   const vite = await createServer({
     server: { middlewareMode: true },
@@ -20,7 +26,9 @@ export async function loadSeoRoutes() {
     logLevel: "error",
   });
   try {
-    return await vite.ssrLoadModule("/src/seo/routes.ts");
+    const mod = await vite.ssrLoadModule("/src/seo/routes.ts");
+    const live = await loadLiveContent();
+    return live ? mod.buildSeoManifest(live) : mod;
   } finally {
     await vite.close();
   }
