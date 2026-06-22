@@ -947,6 +947,12 @@ export const bictorysWebhook = onRequest(
     // Signature verification (HMAC of the raw body). Adjust the header name to
     // match Bictorys' actual scheme.
     const signature = String(req.headers["x-signature"] ?? req.headers["x-bictorys-signature"] ?? "");
+    // Garde : une requête sans signature ou sans corps brut est rejetée (401)
+    // au lieu de faire planter createHmac().update(undefined) → 500.
+    if (!signature || !req.rawBody) {
+      res.status(401).send("invalid signature");
+      return;
+    }
     const expected = createHmac("sha256", BICTORYS_WEBHOOK_SECRET.value())
       .update(req.rawBody)
       .digest("hex");

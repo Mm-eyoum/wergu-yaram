@@ -27,14 +27,18 @@ Tant que ce n'est pas fait, l'UI affiche « paiement bientôt disponible ».
    ```
    VITE_BICTORYS_ENABLED=true
    ```
-4. 🖥️ **Autoriser le Hosting à invoquer la fonction** (binding IAM — à faire **une fois**). La route `/api/bictorysWebhook` renvoie sinon **403** : le service Cloud Run n'autorise pas l'agent Firebase Hosting à l'invoquer.
+4. ✅ **Autoriser l'invocation du service Cloud Run** (binding IAM — **FAIT**, 2026-06-22). Sans lui, les routes `/api/*` renvoyaient **403**. Le bon membre est **`allUsers`** (invocation publique au niveau Cloud Run ; chaque fonction authentifie en interne : HMAC pour le webhook, token Firebase + rôle admin pour les Places). C'est exactement la config de `chatwootwebhook`.
+   - ⚠️ `gcloud run …` exige **Python ≥ 3.10** ; sur Python 3.9 il plante (`unsupported operand type(s) for |`). Réparer via `brew install python@3.12` + `export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.12/bin/python3.12"`, **ou** passer par la Console.
+   - **Console** (sans CLI) : Cloud Run → cocher le service → panneau **Autorisations** → **Ajouter un principal** `allUsers`, rôle **Cloud Run Invoker** → Enregistrer.
+   - **CLI** (gcloud réparé) :
    ```
-   gcloud run services add-iam-policy-binding bictoryswebhook \
-     --region=us-central1 --project=werguyaram \
-     --member="serviceAccount:service-938740988677@gcp-sa-firebasehosting.iam.gserviceaccount.com" \
-     --role="roles/run.invoker"
+   for s in bictoryswebhook searchplaces importplaces; do
+     gcloud run services add-iam-policy-binding "$s" \
+       --region=us-central1 --project=werguyaram \
+       --member=allUsers --role=roles/run.invoker
+   done
    ```
-   > Le **même binding manque sur `searchplaces`/`importplaces`** (import d'annuaire admin) — appliquez-le aussi (remplacez le nom du service). `chatwootwebhook`, déployée récemment, l'a déjà (elle répond bien `401` et non `403`).
+   > Appliqué sur **`bictoryswebhook` + `searchplaces` + `importplaces`** ; vérifié `allUsers`/`roles/run.invoker` présent et routes joignables (401, plus 403).
 5. 🌐 **Webhook côté Bictorys** : dans le dashboard Bictorys, pointez le webhook de paiement sur :
    ```
    https://werguyaram.org/api/bictorysWebhook
@@ -60,6 +64,15 @@ Le site est en ligne sur `werguyaram.web.app`. Pour `werguyaram.org` (utilisé p
 4. ✅ **Test** : `https://werguyaram.org` s'ouvre en HTTPS ; après un don, la redirection `…/besoins/<id>?don=succes` retombe bien sur le site.
 
 > Sans rattachement, les redirections de paiement (`APP_PUBLIC_URL=https://werguyaram.org`) pointent vers un domaine non servi. Option de repli : mettre temporairement `APP_PUBLIC_URL=https://werguyaram.web.app` dans `functions/.env` et redéployer les functions.
+
+### 2b. Sous-domaines des espaces partenaires (multi-tenant, P2) — ⏳ à faire
+
+Chaque espace partenaire est servi sur `<slug>.werguyaram.org` (résolu par `src/lib/tenantHost.ts`). Firebase Hosting ne gère pas un **wildcard** simplement — deux voies :
+
+- **Par partenaire (MVP, recommandé au début)** : Firebase Console → **Hosting → Add custom domain** → ex. `assad.werguyaram.org` → ajouter l'enregistrement **A/CNAME** chez le registrar → SSL auto émis. À répéter à chaque nouveau partenaire.
+- **Wildcard `*.werguyaram.org`** : nécessite un **Load Balancer GCP + certificat managé wildcard** devant Hosting/Cloud Run (plus lourd) — à envisager quand le nombre de partenaires le justifie.
+- ✅ **En attendant**, l'espace est déjà accessible sans DNS : `https://werguyaram.web.app/espace/<slug>` (ou `?tenant=<slug>` sur le domaine principal).
+- ✅ **Test** : `https://werguyaram.web.app/espace/assad` affiche la page brandée (après seed des `tenants`).
 
 ---
 
@@ -90,13 +103,27 @@ Déjà documenté pas à pas dans **[docs/guide-mise-en-service.md](guide-mise-e
 
 État connu : les secrets Chatwoot/Brevo et les params (`CHATWOOT_BASE_URL`, `CHATWOOT_ACCOUNT_ID`, `CHATWOOT_WEBSITE_INBOX_ID`, `BREVO_SENDER`) ont été posés et les functions déployées. Reste à **finir les branchements de canaux** dans les dashboards (WhatsApp/email) et à coller le webhook.
 
+### 4b. Templates WhatsApp pour les campagnes de prévention (P3) — ⏳ à faire
+
+Les campagnes ciblées (`/admin/campaigns` → fonction `sendCampaign`, dispatch via Chatwoot) peuvent être envoyées à tout consentant. Mais **WhatsApp impose un *message template* approuvé par Meta** pour tout message sortant **hors de la fenêtre de 24 h** (les réponses entrantes et l'envoi sous 24 h n'en ont pas besoin).
+
+1. 🌐 **Meta Business Manager → WhatsApp Manager → Message Templates → Create template**.
+2. 🌐 Catégorie : **UTILITY** (rappels santé/RDV) ou **MARKETING** (sensibilisation) ; rédiger le contenu + variables ; **soumettre pour approbation** (24–48 h).
+3. 🌐 Une fois approuvé, référencer le template côté **Chatwoot / WhatsApp Cloud API** pour l'envoi initial.
+4. ✅ Le **consentement** (opt-in SMS/WhatsApp) est déjà capté côté plateforme (profil utilisateur) et filtré par `sendCampaign` ; rien à faire côté code.
+
+> Sans template approuvé, l'envoi sortant initial WhatsApp échoue côté Meta — c'est une contrainte de la plateforme WhatsApp, pas de Wergu Yaram.
+
 ---
 
 ## 5. Checklist finale
 
+- [x] **Binding IAM** `allUsers`/`run.invoker` sur `bictoryswebhook`/`searchplaces`/`importplaces` (routes joignables, 401 ≠ 403). *(fait 2026-06-22)*
 - [ ] **Paiements** : don sandbox OK → crédité + visible dans `/admin/revenue` ; `VITE_BICTORYS_ENABLED=true` déployé.
 - [ ] **Webhook Bictorys** configuré sur `/api/bictorysWebhook` (secret concordant).
 - [ ] **Domaine** `werguyaram.org` rattaché, SSL actif, redirections de don OK.
+- [ ] **Sous-domaines partenaires** (`<slug>.werguyaram.org`) rattachés au besoin (§2b) — sinon `/espace/<slug>`.
+- [ ] **Templates WhatsApp** approuvés par Meta pour les campagnes hors fenêtre 24 h (§4b).
 - [ ] **Seed** exécuté ; vraies campagnes saisies ; communautés taguées (intérêts/pathologies).
 - [ ] **Recherche** : Typesense configuré et indexé (ou repli local accepté).
 - [ ] **Chatwoot** : bulle de chat + utilisateur « vérifié » ; webhook de réponse posé.
