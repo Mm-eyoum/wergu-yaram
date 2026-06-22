@@ -8,7 +8,7 @@ import { EventCard } from "@/components/cards/EventCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getTenantBySlug } from "@/services/catalog";
-import { useArticles, useCommunities, useEvents } from "@/hooks/useCatalog";
+import { useArticles, useCommunities, useEvents, useCommittees } from "@/hooks/useCatalog";
 import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 
@@ -27,8 +27,13 @@ export default function TenantSpace() {
   const { data: communities = [] } = useCommunities();
   const { data: events = [] } = useEvents();
   const { data: articles = [] } = useArticles();
+  const { data: committees = [] } = useCommittees();
 
   const tenant = tenantQuery.data;
+  const committee = useMemo(
+    () => committees.find((c) => c.tenantSlug === tenant?.slug),
+    [committees, tenant],
+  );
   const spaceCommunities = useMemo(
     () => communities.filter((c) => tenant?.communitySlugs?.includes(c.slug)),
     [communities, tenant],
@@ -102,6 +107,38 @@ export default function TenantSpace() {
       </section>
 
       <div className="container-page space-y-12 py-12">
+        {/* Impact mesurable */}
+        <section>
+          <h2 className="mb-4 text-lg font-bold text-text-primary">Impact &amp; gouvernance</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <ImpactTile label="Communautés" value={spaceCommunities.length} />
+            <ImpactTile label="Membres" value={spaceCommunities.reduce((n, c) => n + (c.membersCount || 0), 0)} />
+            <ImpactTile label="Événements" value={spaceEvents.length} />
+            <ImpactTile label="Ressources" value={spaceArticles.length} />
+            {committee?.indicators.map((i) => (
+              <ImpactTile key={i.label} label={i.label} value={i.value} />
+            ))}
+          </div>
+
+          {committee && (
+            <div className="card-surface mt-4 p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Comité de pilotage</p>
+              <h3 className="mt-1 font-bold text-text-primary">{committee.name}</h3>
+              {committee.mission && <p className="mt-1 text-sm text-text-secondary">{committee.mission}</p>}
+              {committee.members.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {committee.members.map((m) => (
+                    <span key={m.name} className="rounded-full bg-brand-soft px-3 py-1 text-xs text-text-secondary">
+                      <b className="text-text-primary">{m.name}</b>
+                      {m.role ? ` · ${m.role}` : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
         {spaceCommunities.length === 0 && spaceEvents.length === 0 && spaceArticles.length === 0 ? (
           <EmptyState
             title="Espace en préparation"
@@ -150,5 +187,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="mb-4 text-lg font-bold text-text-primary">{title}</h2>
       {children}
     </section>
+  );
+}
+
+function ImpactTile({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl border border-border-soft bg-white p-4 text-center">
+      <p className="text-xl font-extrabold" style={{ color: "var(--tenant-accent, #007A5E)" }}>{value}</p>
+      <p className="mt-0.5 text-xs text-text-secondary">{label}</p>
+    </div>
   );
 }

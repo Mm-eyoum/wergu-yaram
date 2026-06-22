@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Pill, Stethoscope, Newspaper, Building2, Users, HeartHandshake, Calendar, Handshake, FileText, MapPin, ArrowRight, GraduationCap, Globe,
+  Pill, Stethoscope, Newspaper, Building2, Users, HeartHandshake, Calendar, Handshake, FileText, MapPin, ArrowRight, GraduationCap, Globe, Scale,
   type LucideIcon,
 } from "lucide-react";
 import { CONTENT_ENTRIES } from "@/admin/content/entries";
@@ -18,6 +18,7 @@ const ICONS: Record<string, LucideIcon> = {
   handshake: Handshake,
   "graduation-cap": GraduationCap,
   globe: Globe,
+  scale: Scale,
 };
 
 export default function ContentHub() {

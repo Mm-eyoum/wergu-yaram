@@ -38,6 +38,7 @@ import { events } from "../src/data/mockEvents";
 import { partners } from "../src/data/mockPartners";
 import { formations } from "../src/data/mockFormations";
 import { tenants } from "../src/data/mockTenants";
+import { committees } from "../src/data/mockCommittees";
 import { pricingPlans } from "../src/data/pricingPlans";
 
 const config = {
@@ -103,6 +104,7 @@ async function main() {
   await seedCollection("partners", partners, "slug");
   await seedCollection("formations", formations, "slug");
   await seedCollection("tenants", tenants, "slug");
+  await seedCollection("committees", committees, "slug");
   await seedCollection("pricingPlans", pricingPlans, "id");
 
   console.log("\n✅ Seed terminé.");

@@ -183,6 +183,22 @@ export interface Campaign {
   createdAt?: string;
 }
 
+/**
+ * Comité (groupe de travail multi-acteurs) qui pilote et **valide les
+ * indicateurs d'impact** d'un programme / espace partenaire (le mot du deck).
+ */
+export interface Committee {
+  slug: string;
+  published?: boolean;
+  name: string;
+  mission?: string;
+  /** Espace partenaire rattaché (optionnel) — relie le comité à un tenant. */
+  tenantSlug?: string;
+  members: { name: string; role?: string; org?: string }[];
+  /** Indicateurs d'impact suivis (mesurables) — ex. « Personnes dépistées » : « 1 200 ». */
+  indicators: { label: string; value: string }[];
+}
+
 /** Type of any searchable content — drives the universal search & result tabs. */
 export type ContentType =
   | "pathologie"

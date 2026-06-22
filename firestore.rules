@@ -115,6 +115,8 @@ service cloud.firestore {
     match /formations/{doc}     { allow read: if true; allow write: if isEditor(); }
     // Espaces partenaires multi-tenant (config de marque + contenu curé).
     match /tenants/{doc}        { allow read: if true; allow write: if isEditor(); }
+    // Comités (gouvernance + indicateurs d'impact).
+    match /committees/{doc}     { allow read: if true; allow write: if isEditor(); }
 
     // --- Site configuration (navigation menus, global settings) ---
     // Public read (header/footer render from it); admin-only writes.

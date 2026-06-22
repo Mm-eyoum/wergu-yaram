@@ -24,6 +24,7 @@ import {
   getPathologyBySlug,
   getFormations,
   getFormationBySlug,
+  getCommittees,
 } from "@/services/catalog";
 
 /** Query keys for catalog data — invalidate these after admin content edits. */
@@ -46,6 +47,7 @@ export const catalogKeys = {
   partner: (slug: string) => ["catalog", "partner", slug] as const,
   formations: ["catalog", "formations"] as const,
   formation: (slug: string) => ["catalog", "formation", slug] as const,
+  committees: ["catalog", "committees"] as const,
 };
 
 // --- Lists ---
@@ -66,6 +68,8 @@ export const usePartners = () =>
   useQuery({ queryKey: catalogKeys.partners, queryFn: getPartners });
 export const useFormations = () =>
   useQuery({ queryKey: catalogKeys.formations, queryFn: getFormations });
+export const useCommittees = () =>
+  useQuery({ queryKey: catalogKeys.committees, queryFn: getCommittees });
 
 // --- Single items (enabled only when the route param is present) ---
 export const useMedication = (slug: string | undefined) =>
