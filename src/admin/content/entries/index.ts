@@ -13,6 +13,7 @@ import { communitiesEntry } from "./communities";
 import { equipmentNeedsEntry } from "./equipmentNeeds";
 import { eventsEntry } from "./events";
 import { partnersEntry } from "./partners";
+import { formationsEntry } from "./formations";
 
 export const CONTENT_ENTRIES = [
   medicationsEntry,
@@ -23,6 +24,7 @@ export const CONTENT_ENTRIES = [
   equipmentNeedsEntry,
   eventsEntry,
   partnersEntry,
+  formationsEntry,
 ] as unknown as AnyContentEntry[];
 
 export function getContentEntry(key: string | undefined): AnyContentEntry | undefined {

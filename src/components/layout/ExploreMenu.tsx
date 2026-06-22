@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Compass,
   FileText,
+  GraduationCap,
   Hospital,
   Pill,
   PlayCircle,
@@ -22,6 +23,7 @@ const ICONS: Record<string, React.ReactNode> = {
   etablissement: <Hospital className="h-5 w-5" />,
   article: <FileText className="h-5 w-5" />,
   video: <PlayCircle className="h-5 w-5" />,
+  formation: <GraduationCap className="h-5 w-5" />,
 };
 
 /** True when the user is currently viewing this category's search tab. */

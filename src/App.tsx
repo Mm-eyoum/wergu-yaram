@@ -29,6 +29,8 @@ const Evenements = lazy(() => import("@/pages/Evenements"));
 const Partners = lazy(() => import("@/pages/Partners"));
 const PartnerDetail = lazy(() => import("@/pages/PartnerDetail"));
 const Soutenir = lazy(() => import("@/pages/Soutenir"));
+const Formations = lazy(() => import("@/pages/Formations"));
+const FormationDetail = lazy(() => import("@/pages/FormationDetail"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -99,6 +101,8 @@ export default function App() {
         <Route path="/partenaires" element={<Partners />} />
         <Route path="/partenaires/:slug" element={<PartnerDetail />} />
         <Route path="/soutenir" element={<Soutenir />} />
+        <Route path="/formations" element={<Formations />} />
+        <Route path="/formations/:slug" element={<FormationDetail />} />
         <Route path="/connexion" element={<Login />} />
         <Route path="/inscription" element={<Register />} />
         <Route path="/conditions" element={<Terms />} />

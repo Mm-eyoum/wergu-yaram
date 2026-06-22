@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BadgeCheck, Pill, Stethoscope, Hospital, Users, FileText, PlayCircle, Calendar, HeartHandshake, Activity } from "lucide-react";
+import { ArrowRight, BadgeCheck, Pill, Stethoscope, Hospital, Users, FileText, PlayCircle, Calendar, HeartHandshake, Activity, GraduationCap } from "lucide-react";
 import type { ContentType, SearchHit } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
 
@@ -14,6 +14,7 @@ const TYPE_META: Record<ContentType, { label: string; icon: React.ReactNode }> =
   evenement: { label: "Événement", icon: <Calendar className="h-4 w-4" /> },
   besoin: { label: "Besoin", icon: <HeartHandshake className="h-4 w-4" /> },
   partenaire: { label: "Partenaire", icon: <Users className="h-4 w-4" /> },
+  formation: { label: "Formation", icon: <GraduationCap className="h-4 w-4" /> },
 };
 
 /** Rich universal result card used on the search results page. */

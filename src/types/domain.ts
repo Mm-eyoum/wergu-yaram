@@ -143,7 +143,8 @@ export type ContentType =
   | "communaute"
   | "evenement"
   | "besoin"
-  | "partenaire";
+  | "partenaire"
+  | "formation";
 
 export interface TrustMeta {
   verified: boolean;
@@ -419,6 +420,35 @@ export interface HealthEvent {
   communitySlug?: string;
   relatedEvents: string[];
   coords: { lat: number; lng: number };
+}
+
+/** Formation / e-learning (Ligne académique). Catalogue MVP : pas de LMS interne. */
+export type FormationLevel = "debutant" | "intermediaire" | "avance";
+export type FormationFormat = "e-learning" | "webinaire" | "presentiel" | "hybride";
+
+export interface Formation {
+  slug: string;
+  published?: boolean;
+  title: string;
+  excerpt: string;
+  cover?: string;
+  /** Thème (ex. "Diabète", "Prévention", "Santé maternelle"). */
+  category?: string;
+  level: FormationLevel;
+  format: FormationFormat;
+  /** Durée affichée (ex. "3 h", "5 modules"). */
+  durationLabel?: string;
+  audience: string[];
+  /** Organisme de formation (partenaire académique). */
+  provider?: { name: string; role?: string };
+  modules: { title: string; summary?: string; durationLabel?: string }[];
+  objectives: string[];
+  certification?: boolean;
+  /** Lien d'inscription / d'accès (webinaire, plateforme) — MVP sans LMS interne. */
+  enrollUrl?: string;
+  /** Webinaire lié (id d'un HealthEvent), le cas échéant. */
+  relatedEventId?: string;
+  trust?: TrustMeta;
 }
 
 export type PartnerCategory =

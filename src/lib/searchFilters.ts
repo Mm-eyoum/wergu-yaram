@@ -167,6 +167,13 @@ export const TYPE_FILTERS: Record<SearchScope, TypeFilterConfig> = {
       { param: "zone", label: "Zone", facetKey: "zone", kind: "select" },
     ],
   },
+  formation: {
+    reliability: true,
+    sorts: DEFAULT_SORTS,
+    facets: [
+      { param: "theme", label: "Thème", facetKey: "category", kind: "select" },
+    ],
+  },
 };
 
 /** All filter param names used by any type (for cleaning the URL on type change). */

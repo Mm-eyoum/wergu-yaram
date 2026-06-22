@@ -20,6 +20,7 @@ import type {
   Community,
   EquipmentNeed,
   Facility,
+  Formation,
   HealthEvent,
   Medication,
   Partner,
@@ -48,6 +49,8 @@ import {
   events,
   facilities,
   facilityBySlug,
+  formationBySlug,
+  formations,
   partnerBySlug,
   partners,
   pathologies,
@@ -133,6 +136,7 @@ export const getCommunities = () => listOrMock<Community>("communities", communi
 export const getEquipmentNeeds = () => listOrMock<EquipmentNeed>("equipmentNeeds", equipmentNeeds);
 export const getEvents = () => listOrMock<HealthEvent>("events", events);
 export const getPartners = () => listOrMock<Partner>("partners", partners);
+export const getFormations = () => listOrMock<Formation>("formations", formations);
 
 // --- Single items ---
 export const getMedicationBySlug = (slug?: string) =>
@@ -151,3 +155,5 @@ export const getEventById = (id?: string) =>
   oneOrMock<HealthEvent>("events", id, id ? eventById(id) : undefined);
 export const getPartnerBySlug = (slug?: string) =>
   oneOrMock<Partner>("partners", slug, slug ? partnerBySlug(slug) : undefined);
+export const getFormationBySlug = (slug?: string) =>
+  oneOrMock<Formation>("formations", slug, slug ? () => formationBySlug(slug) : undefined);

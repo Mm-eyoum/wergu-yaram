@@ -3,6 +3,7 @@ import type {
   Community,
   EquipmentNeed,
   Facility,
+  Formation,
   HealthEvent,
   Medication,
   Partner,
@@ -18,6 +19,7 @@ import { communities } from "./mockCommunities";
 import { equipmentNeeds } from "./mockEquipmentNeeds";
 import { events } from "./mockEvents";
 import { partners } from "./mockPartners";
+import { formations } from "./mockFormations";
 
 /** The resolved catalog content a federated index is built from. */
 export interface SearchContent {
@@ -29,6 +31,7 @@ export interface SearchContent {
   events: HealthEvent[];
   equipmentNeeds: EquipmentNeed[];
   partners: Partner[];
+  formations: Formation[];
 }
 
 /**
@@ -204,6 +207,20 @@ export function buildSearchHits(content: SearchContent): SearchHit[] {
     });
   }
 
+  for (const f of content.formations) {
+    hits.push({
+      id: `formation-${f.slug}`,
+      type: "formation",
+      title: f.title,
+      description: f.excerpt,
+      href: `/formations/${f.slug}`,
+      meta: f.category,
+      verified: f.trust?.verified,
+      keywords: `${f.title} ${f.category ?? ""} ${f.excerpt} ${(f.audience ?? []).join(" ")}`.toLowerCase(),
+      facets: { category: f.category },
+    });
+  }
+
   return hits;
 }
 
@@ -218,6 +235,7 @@ export async function mockSearchContent(): Promise<SearchContent> {
     events,
     equipmentNeeds,
     partners,
+    formations,
   };
 }
 

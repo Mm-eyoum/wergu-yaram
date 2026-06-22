@@ -61,7 +61,7 @@ async function fetchLiveCatalog(db: Firestore | null): Promise<SearchContent | n
       const snap = await db.collection(name).get();
       return snap.docs.map((d) => d.data() as Record<string, unknown>).filter(isPublic);
     };
-    const [medications, pathologies, articles, facilities, communities, events, equipmentNeeds, partners] =
+    const [medications, pathologies, articles, facilities, communities, events, equipmentNeeds, partners, formations] =
       await Promise.all([
         read("medications"),
         read("pathologies"),
@@ -71,6 +71,7 @@ async function fetchLiveCatalog(db: Firestore | null): Promise<SearchContent | n
         read("events"),
         read("equipmentNeeds"),
         read("partners"),
+        read("formations"),
       ]);
     const content = {
       medications,
@@ -81,6 +82,7 @@ async function fetchLiveCatalog(db: Firestore | null): Promise<SearchContent | n
       events,
       equipmentNeeds,
       partners,
+      formations,
     } as unknown as SearchContent;
     const total = Object.values(content).reduce((n, list) => n + (list as unknown[]).length, 0);
     if (total === 0) {

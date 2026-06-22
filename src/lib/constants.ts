@@ -35,6 +35,7 @@ export const EXPLORE_CATEGORIES: {
   { key: "etablissement", label: "Établissements", description: "Structures à proximité", to: "/recherche?type=etablissement" },
   { key: "article", label: "Articles", description: "Contenus vérifiés", to: "/recherche?type=article" },
   { key: "video", label: "Vidéos", description: "Formats courts", to: "/recherche?type=video" },
+  { key: "formation", label: "Formations", description: "Apprendre & se certifier", to: "/formations" },
 ];
 
 /** Search content types shown as chips / tabs. */
@@ -48,6 +49,7 @@ export const SEARCH_TYPES: { key: ContentType | "all"; label: string }[] = [
   { key: "etablissement", label: "Établissements" },
   { key: "communaute", label: "Communautés" },
   { key: "evenement", label: "Événements" },
+  { key: "formation", label: "Formations" },
 ];
 
 export const QUICK_SHORTCUTS = [
