@@ -12,6 +12,9 @@ export interface ProfilePatch {
   region?: string;
   interests?: string[];
   photoURL?: string | null;
+  phone?: string;
+  smsConsent?: boolean;
+  whatsappConsent?: boolean;
 }
 
 export async function updateOwnProfile(uid: string, patch: ProfilePatch): Promise<void> {

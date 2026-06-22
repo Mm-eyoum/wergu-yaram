@@ -33,6 +33,9 @@ export interface AppUser {
   createdAt?: string;
   /** Optional reference location for "near me" sorting without re-prompting GPS. */
   homeCoords?: Coords;
+  /** Opt-in pour les campagnes de prévention (ciblées). Défaut : non. */
+  smsConsent?: boolean;
+  whatsappConsent?: boolean;
 }
 
 /** A "page"/organization type a base user can create (Facebook/LinkedIn model). */
@@ -155,6 +158,29 @@ export interface Tenant {
   website?: string;
   /** Domaine personnalisé éventuel (sinon `<slug>.werguyaram.org`). */
   domain?: string;
+}
+
+/** Canal d'une campagne de prévention ciblée (P3). */
+export type CampaignChannel = "sms" | "whatsapp";
+export type CampaignStatus = "draft" | "sent" | "failed";
+
+/**
+ * Campagne de prévention ciblée (SMS/WhatsApp). Le ciblage + l'envoi se font
+ * côté serveur (Cloud Function `sendCampaign`) ; le consentement (opt-in) des
+ * utilisateurs est requis. Écrite exclusivement par les Functions.
+ */
+export interface Campaign {
+  id: string;
+  title: string;
+  channel: CampaignChannel;
+  message: string;
+  /** Segment ciblé (au moins un critère). */
+  segment: { interest?: string; region?: string; communitySlug?: string };
+  status: CampaignStatus;
+  targetedCount?: number;
+  sentCount?: number;
+  createdByUid?: string;
+  createdAt?: string;
 }
 
 /** Type of any searchable content — drives the universal search & result tabs. */

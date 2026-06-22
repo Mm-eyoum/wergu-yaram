@@ -13,6 +13,7 @@ import {
   CornerUpRight,
   Mail,
   MessageSquare,
+  Megaphone,
   TrendingUp,
   Scale,
 } from "lucide-react";
@@ -42,6 +43,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { key: "directory", label: "Annuaire (import)", to: "/admin/directory", icon: Building2, permission: "moderation", ready: true },
   { key: "comments", label: "Contributions", to: "/admin/comments", icon: MessageSquare, permission: "comments.moderate", ready: true },
   { key: "revenue", label: "Revenus", to: "/admin/revenue", icon: TrendingUp, permission: "revenue.read", ready: true },
+  { key: "campaigns", label: "Campagnes", to: "/admin/campaigns", icon: Megaphone, permission: "campaigns.manage", ready: true },
   { key: "users", label: "Utilisateurs", to: "/admin/users", icon: Users, permission: "users.manage", ready: true },
   { key: "menus", label: "Menus", to: "/admin/menus", icon: MenuIcon, permission: "menus.manage", ready: true },
   { key: "redirects", label: "Redirections", to: "/admin/redirects", icon: CornerUpRight, permission: "redirects.manage", ready: true },

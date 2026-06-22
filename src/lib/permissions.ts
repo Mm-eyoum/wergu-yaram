@@ -25,6 +25,7 @@ export type Permission =
   | "emails.manage"
   | "audit.read"
   | "revenue.read"
+  | "campaigns.manage"
   | "backups.manage";
 
 const EDITOR: Role[] = ["editor", "admin", "super_admin"];
@@ -49,6 +50,7 @@ const PERMISSION_ROLES: Record<Permission, Role[]> = {
   "emails.manage": ADMIN,
   "audit.read": ADMIN,
   "revenue.read": ADMIN,
+  "campaigns.manage": ADMIN,
   "backups.manage": SUPER,
 };
 

@@ -316,6 +316,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Campagnes de prévention (SMS/WhatsApp) : créées/envoyées par la Function
+    // sendCampaign (Admin SDK) ; lecture admin pour le suivi.
+    match /campaigns/{campaign} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // --- Capture d'engagement public (newsletter, intention de don) ---
     // Création ouverte (visiteur non connecté) mais shape validée et taille
     // bornée ; lecture réservée aux admins ; jamais de mutation/suppression.

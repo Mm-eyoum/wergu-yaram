@@ -869,6 +869,77 @@ export const onSupportIntent = onDocumentCreated(
   },
 );
 
+/**
+ * Campagne de prévention ciblée (SMS/WhatsApp) — admin uniquement.
+ *
+ * Résout l'audience (utilisateurs consentants au canal, filtrés par intérêt/région),
+ * enregistre la campagne, puis dispatche via Chatwoot (qui délivre par le canal
+ * connecté). Le consentement (opt-in) est obligatoire ; dispatch gracieux (no-op)
+ * si Chatwoot n'est pas configuré. Plafonné pour borner le coût.
+ */
+export const sendCampaign = onCall(
+  { secrets: [CHATWOOT_API_TOKEN], cors: CORS_ORIGINS },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError("unauthenticated", "Connexion requise.");
+    const actorSnap = await db.collection("users").doc(uid).get();
+    const role = (actorSnap.data() as { role?: string } | undefined)?.role;
+    if (role !== "admin" && role !== "super_admin") {
+      throw new HttpsError("permission-denied", "Réservé aux administrateurs.");
+    }
+
+    const { title, channel, message, segment } = (request.data ?? {}) as {
+      title?: string;
+      channel?: "sms" | "whatsapp";
+      message?: string;
+      segment?: { interest?: string; region?: string; communitySlug?: string };
+    };
+    if (!title || !message || (channel !== "sms" && channel !== "whatsapp")) {
+      throw new HttpsError("invalid-argument", "Titre, canal (sms|whatsapp) et message requis.");
+    }
+    const seg = segment ?? {};
+    const consentField = channel === "whatsapp" ? "whatsappConsent" : "smsConsent";
+
+    // Audience : utilisateurs ayant consenti au canal (index simple), filtrés en
+    // mémoire par intérêt/région (évite un index composite + array-contains).
+    const snap = await db.collection("users").where(consentField, "==", true).limit(2000).get();
+    const recipients = snap.docs
+      .map((d) => d.data() as { phone?: string; region?: string; displayName?: string; email?: string; interests?: string[] })
+      .filter(
+        (u) =>
+          !!u.phone &&
+          (!seg.interest || (u.interests ?? []).includes(seg.interest)) &&
+          (!seg.region || u.region === seg.region),
+      );
+
+    const ref = await db.collection("campaigns").add({
+      title,
+      channel,
+      message,
+      segment: seg,
+      status: "sent",
+      targetedCount: recipients.length,
+      sentCount: 0,
+      createdByUid: uid,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    let sent = 0;
+    for (const u of recipients.slice(0, 500)) {
+      const ok = await pushToChatwoot({
+        name: u.displayName ?? u.phone!,
+        email: u.email ?? `${u.phone}@sms.local`,
+        identifier: u.phone!,
+        message,
+        customAttributes: { type: "campaign", channel, campaignId: ref.id },
+      });
+      if (ok) sent++;
+    }
+    await ref.update({ sentCount: sent });
+    return { campaignId: ref.id, targeted: recipients.length, sent };
+  },
+);
+
 /** Bictorys payment notifications → credit the campaign once paid. */
 export const bictorysWebhook = onRequest(
   { secrets: [BICTORYS_WEBHOOK_SECRET, BREVO_API_KEY] },

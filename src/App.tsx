@@ -56,6 +56,7 @@ const Menus = lazy(() => import("@/pages/admin/Menus"));
 const Comments = lazy(() => import("@/pages/admin/Comments"));
 const AuditLog = lazy(() => import("@/pages/admin/AuditLog"));
 const Revenue = lazy(() => import("@/pages/admin/Revenue"));
+const Campaigns = lazy(() => import("@/pages/admin/Campaigns"));
 const Appearance = lazy(() => import("@/pages/admin/Appearance"));
 const Redirects = lazy(() => import("@/pages/admin/Redirects"));
 const Emails = lazy(() => import("@/pages/admin/Emails"));
@@ -289,6 +290,14 @@ export default function App() {
             element={
               <RequirePermission permission="revenue.read">
                 <Revenue />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="campaigns"
+            element={
+              <RequirePermission permission="campaigns.manage">
+                <Campaigns />
               </RequirePermission>
             }
           />

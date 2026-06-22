@@ -78,6 +78,8 @@ export async function fetchUserProfile(user: User): Promise<AppUser> {
     phone: data.phone as string | undefined,
     language: data.language as string | undefined,
     interests: data.interests ?? [],
+    smsConsent: (data.smsConsent as boolean | undefined) ?? false,
+    whatsappConsent: (data.whatsappConsent as boolean | undefined) ?? false,
   };
 }
 

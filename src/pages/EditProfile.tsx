@@ -21,6 +21,9 @@ export default function EditProfile() {
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [region, setRegion] = useState(user?.region || SENEGAL_REGIONS[1]);
   const [interests, setInterests] = useState<string[]>(user?.interests ?? []);
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [smsConsent, setSmsConsent] = useState(user?.smsConsent ?? false);
+  const [whatsappConsent, setWhatsappConsent] = useState(user?.whatsappConsent ?? false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(user?.photoURL ?? null);
   const [error, setError] = useState("");
@@ -51,6 +54,9 @@ export default function EditProfile() {
         region,
         interests,
         photoURL,
+        phone: phone.trim(),
+        smsConsent,
+        whatsappConsent,
       });
       await refreshProfile();
     },
@@ -131,6 +137,26 @@ export default function EditProfile() {
           <p className="mb-2 text-sm font-medium text-text-primary">Centres d'intérêt santé</p>
           <InterestSelector value={interests} onChange={setInterests} />
         </div>
+
+        <FormInput
+          label="Téléphone (pour les rappels de prévention)"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="+221 …"
+        />
+
+        <fieldset className="rounded-xl border border-border-soft p-3">
+          <legend className="px-1 text-sm font-medium text-text-primary">Recevoir des messages de prévention</legend>
+          <label className="flex items-center gap-2 py-1 text-sm text-text-secondary">
+            <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)} className="h-4 w-4 accent-brand-green" />
+            Par SMS
+          </label>
+          <label className="flex items-center gap-2 py-1 text-sm text-text-secondary">
+            <input type="checkbox" checked={whatsappConsent} onChange={(e) => setWhatsappConsent(e.target.checked)} className="h-4 w-4 accent-brand-green" />
+            Par WhatsApp
+          </label>
+          <p className="mt-1 text-xs text-text-secondary">Conseils ciblés selon vos centres d'intérêt. Désinscription à tout moment.</p>
+        </fieldset>
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>Annuler</Button>
