@@ -16,6 +16,7 @@ export { equipmentNeeds, equipmentNeedById } from "@/data/mockEquipmentNeeds";
 export { events, eventById } from "@/data/mockEvents";
 export { partners, partnerBySlug } from "@/data/mockPartners";
 export { formations, formationBySlug } from "@/data/mockFormations";
+export { tenants, tenantBySlug } from "@/data/mockTenants";
 
 export type SearchScope = ContentType | "all";
 

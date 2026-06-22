@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { RedirectHandler } from "@/components/layout/RedirectHandler";
+import { useTenant } from "@/hooks/useTenant";
 
 const Home = lazy(() => import("@/pages/Home"));
 const SearchResults = lazy(() => import("@/pages/SearchResults"));
@@ -31,6 +32,7 @@ const PartnerDetail = lazy(() => import("@/pages/PartnerDetail"));
 const Soutenir = lazy(() => import("@/pages/Soutenir"));
 const Formations = lazy(() => import("@/pages/Formations"));
 const FormationDetail = lazy(() => import("@/pages/FormationDetail"));
+const TenantSpace = lazy(() => import("@/pages/TenantSpace"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -69,6 +71,12 @@ function PageFallback() {
   );
 }
 
+/** On a partner-space host (`<slug>.werguyaram.org`), `/` lands on that space. */
+function HomeOrTenant() {
+  const { tenant } = useTenant();
+  return tenant ? <Navigate to={`/espace/${tenant.slug}`} replace /> : <Home />;
+}
+
 export default function App() {
   const { pathname } = useLocation();
   // Auth pages use their own split layout (no global header/footer).
@@ -81,7 +89,7 @@ export default function App() {
     <ErrorBoundary>
       <Suspense fallback={<PageFallback />}>
         <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomeOrTenant />} />
         <Route path="/recherche" element={<SearchResults />} />
         <Route path="/medicaments/:slug" element={<MedicationDetail />} />
         <Route path="/pathologies/:slug" element={<PathologyDetail />} />
@@ -103,6 +111,7 @@ export default function App() {
         <Route path="/soutenir" element={<Soutenir />} />
         <Route path="/formations" element={<Formations />} />
         <Route path="/formations/:slug" element={<FormationDetail />} />
+        <Route path="/espace/:slug" element={<TenantSpace />} />
         <Route path="/connexion" element={<Login />} />
         <Route path="/inscription" element={<Register />} />
         <Route path="/conditions" element={<Terms />} />

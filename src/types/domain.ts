@@ -132,6 +132,31 @@ export interface ProfessionalVerificationRequest {
   createdAt?: string;
 }
 
+/**
+ * Espace partenaire multi-tenant (modèle ASSAD). Servi sur `<slug>.werguyaram.org`
+ * (sous-domaine) ou via `/espace/<slug>`. Agrège du contenu curé à la marque du
+ * partenaire, sur l'infrastructure Wergu Yaram.
+ */
+export interface Tenant {
+  /** Sous-domaine : `assad` → assad.werguyaram.org. Sert d'id de document. */
+  slug: string;
+  published?: boolean;
+  name: string;
+  description?: string;
+  logo?: string | null;
+  /** Page/organisation propriétaire (partenaire), optionnel. */
+  partnerOrgId?: string;
+  /** Personnalisation visuelle légère (la charte globale reste le socle). */
+  theme?: { accent?: string; banner?: string };
+  /** Contenu curé agrégé dans l'espace (slugs/ids existants). */
+  communitySlugs?: string[];
+  eventIds?: string[];
+  articleSlugs?: string[];
+  website?: string;
+  /** Domaine personnalisé éventuel (sinon `<slug>.werguyaram.org`). */
+  domain?: string;
+}
+
 /** Type of any searchable content — drives the universal search & result tabs. */
 export type ContentType =
   | "pathologie"
