@@ -7,7 +7,7 @@ import {
 } from "@/services/userData";
 import { fetchUserOrganizations } from "@/services/organizations";
 import { fetchUserFacilities } from "@/services/facilities";
-import { fetchUserSubscriptions } from "@/services/billing";
+import { fetchUserSubscriptions, fetchUserDonations } from "@/services/billing";
 
 /** Query keys for per-user dashboard data — invalidate these after mutations. */
 export const dashboardKeys = {
@@ -18,6 +18,7 @@ export const dashboardKeys = {
   organizations: (uid: string) => ["organizations", uid] as const,
   facilities: (uid: string) => ["userFacilities", uid] as const,
   subscriptions: (uid: string) => ["userSubscriptions", uid] as const,
+  donations: (uid: string) => ["userDonations", uid] as const,
 };
 
 export function useFavorites(uid: string | undefined) {
@@ -72,6 +73,14 @@ export function useUserSubscriptions(uid: string | undefined) {
   return useQuery({
     queryKey: dashboardKeys.subscriptions(uid ?? ""),
     queryFn: () => fetchUserSubscriptions(uid!),
+    enabled: !!uid,
+  });
+}
+
+export function useUserDonations(uid: string | undefined) {
+  return useQuery({
+    queryKey: dashboardKeys.donations(uid ?? ""),
+    queryFn: () => fetchUserDonations(uid!),
     enabled: !!uid,
   });
 }

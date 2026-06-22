@@ -121,6 +121,7 @@ export const PARTNER_CATEGORY_LABELS: Record<PartnerCategory, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   patient_public: "Patient",
+  health_pro: "Professionnel de santé vérifié",
   editor: "Éditeur",
   admin: "Administrateur",
   super_admin: "Super administrateur",

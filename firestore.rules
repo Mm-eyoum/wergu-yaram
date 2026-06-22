@@ -50,10 +50,11 @@ service cloud.firestore {
         || (oldRole != newRole && request.auth.uid != uid && (
              // Super_admin grants/revokes 'admin', but never 'super_admin'.
              (isSuperAdmin() && oldRole != 'super_admin' && newRole != 'super_admin')
-             // Admin only toggles patient_public ↔ editor (no privilege escalation).
+             // Admin toggles patient_public ↔ health_pro ↔ editor (no privilege escalation;
+             // health_pro is a patient-level verified badge, not an admin power).
              || (isAdmin()
-                 && oldRole in ['patient_public', 'editor']
-                 && newRole in ['patient_public', 'editor'])
+                 && oldRole in ['patient_public', 'health_pro', 'editor']
+                 && newRole in ['patient_public', 'health_pro', 'editor'])
            ));
     }
 
@@ -168,6 +169,19 @@ service cloud.firestore {
         && request.resource.data.requesterUid == request.auth.uid
         && request.resource.data.status == 'pending'
         && isText(request.resource.data.justification, 1, 2000);
+      allow update, delete: if isAdmin();
+    }
+
+    // --- Demandes de vérification « professionnel de santé » ---
+    // Un utilisateur actif crée SA demande ; un admin lit la file et décide.
+    // Le passage au rôle `health_pro` se fait via la règle /users/{uid}
+    // (roleChangeAuthorized, admin-only) lors de l'approbation.
+    match /professionalVerificationRequests/{request} {
+      allow read: if isAdmin() || isOwner(resource.data.requesterUid);
+      allow create: if isActiveUser()
+        && request.resource.data.requesterUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && isText(request.resource.data.justification, 1, 5000);
       allow update, delete: if isAdmin();
     }
 

@@ -15,6 +15,7 @@ export const TEXT_LIMITS = {
   threadTitle: { min: 1, max: 200 },
   threadExcerpt: { min: 1, max: 5000 },
   claimJustification: { min: 1, max: 2000 },
+  verificationJustification: { min: 1, max: 5000 },
   messageText: { min: 1, max: 5000 },
 } as const;
 

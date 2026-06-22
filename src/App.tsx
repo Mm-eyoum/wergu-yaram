@@ -35,6 +35,8 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const EditProfile = lazy(() => import("@/pages/EditProfile"));
 const CreatePage = lazy(() => import("@/pages/CreatePage"));
 const ManagePage = lazy(() => import("@/pages/ManagePage"));
+const ProfessionalVerification = lazy(() => import("@/pages/ProfessionalVerification"));
+const MyDonations = lazy(() => import("@/pages/MyDonations"));
 const ManageFacility = lazy(() => import("@/pages/ManageFacility"));
 const AdminShell = lazy(() => import("@/components/admin/AdminShell").then((m) => ({ default: m.AdminShell })));
 const AdminHome = lazy(() => import("@/pages/admin/AdminHome"));
@@ -121,6 +123,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/dons"
+          element={
+            <ProtectedRoute>
+              <MyDonations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/verification-pro"
+          element={
+            <ProtectedRoute>
+              <ProfessionalVerification />
             </ProtectedRoute>
           }
         />

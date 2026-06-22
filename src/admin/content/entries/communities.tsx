@@ -22,6 +22,10 @@ export const communitiesEntry: ContentEntry<Community> = {
         { name: "isPublic", label: "Publique", type: "boolean" },
         PUBLISHED,
       ] },
+      { title: "Ciblage (suggestions)", fields: [
+        { name: "relatedInterests", label: "Intérêts santé liés (ex. Diabète, Nutrition)", type: "stringArray" },
+        { name: "pathologySlugs", label: "Pathologies liées (slugs)", type: "stringArray" },
+      ] },
       { title: "Description", fields: [{ name: "description", label: "Description", type: "textarea" }] },
       { title: "Statistiques", fields: [
         { name: "membersCount", label: "Membres", type: "number" },

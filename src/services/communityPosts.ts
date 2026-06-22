@@ -12,6 +12,16 @@ import { db } from "./firebase";
 import { validateText } from "@/lib/validation";
 import type { AppUser, CommunityPost } from "@/types/domain";
 
+/**
+ * Author stamp written on a post/thread. Verified health professionals carry a
+ * « Professionnel vérifié » role label (surfaced as a badge). Role is omitted
+ * for other users (Firestore rejects `undefined`).
+ */
+export function postAuthor(profile: AppUser): { name: string; role?: string } {
+  const name = profile.displayName ?? "Membre";
+  return profile.role === "health_pro" ? { name, role: "Professionnel vérifié" } : { name };
+}
+
 /** Compact "il y a …" label from a Date. */
 export function timeAgoLabel(date: Date): string {
   const sec = Math.max(1, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -74,7 +84,7 @@ export async function createCommunityPost(
   const content = validateText("postContent", input.content, "Le message");
   await addDoc(collection(db, "communities", slug, "posts"), {
     authorUid: fbUser.uid,
-    author: { name: profile.displayName ?? "Membre" },
+    author: postAuthor(profile),
     content,
     tags: input.tags ?? [],
     likes: 0,

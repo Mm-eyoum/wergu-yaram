@@ -148,6 +148,49 @@ export async function fetchMrr(): Promise<{ mrr: number; activeCount: number }> 
   return { mrr: Math.round(mrr), activeCount: subsSnap.size };
 }
 
+/**
+ * A signed-in user's own donations (line of business "donations"), newest first.
+ * Reads `transactions` filtered by `payerUid` (owner-readable by rules) and keeps
+ * only the donations line client-side. Powers the "Mes dons & impact" page.
+ */
+export async function fetchUserDonations(uid: string): Promise<Transaction[]> {
+  if (!db || !uid) return [];
+  const q = query(
+    collection(db, "transactions"),
+    where("payerUid", "==", uid),
+    orderBy("createdAt", "desc"),
+    fbLimit(200),
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => mapTransaction(d.id, d.data()))
+    .filter((t) => t.lineOfBusiness === "donations" && t.status === "completed");
+}
+
+/** Headline figures for a user's donations. */
+export interface DonationSummary {
+  /** Total transacted (don + pourboire). */
+  total: number;
+  /** Total tip kept by the platform. */
+  tips: number;
+  /** Number of donations. */
+  count: number;
+  /** Distinct campaigns supported (by refId). */
+  campaigns: number;
+}
+
+export function summarizeDonations(txns: Transaction[]): DonationSummary {
+  const campaigns = new Set<string>();
+  let total = 0;
+  let tips = 0;
+  for (const t of txns) {
+    total += t.amount;
+    tips += t.platformAmount;
+    if (t.refId) campaigns.add(t.refId);
+  }
+  return { total, tips, count: txns.length, campaigns: campaigns.size };
+}
+
 /** Most-recent completed transactions (admin dashboard source). */
 export async function fetchRecentTransactions(max = 500): Promise<Transaction[]> {
   if (!db) return [];

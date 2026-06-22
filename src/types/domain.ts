@@ -8,7 +8,7 @@ import type { FacilityCategory, FacilitySector, FacilityLevel } from "@/lib/faci
  * `editor` is a content-staff role: it manages editorial content (medications,
  * articles, …) via the admin CMS but cannot manage users, roles or settings.
  */
-export type Role = "patient_public" | "editor" | "admin" | "super_admin";
+export type Role = "patient_public" | "health_pro" | "editor" | "admin" | "super_admin";
 
 export type UserStatus = "pending" | "active" | "suspended";
 
@@ -108,6 +108,27 @@ export interface ClaimRequest {
   requesterName: string;
   justification: string;
   status: ClaimRequestStatus;
+  createdAt?: string;
+}
+
+/** Statut d'une demande de vérification « professionnel de santé ». */
+export type ProfessionalVerificationStatus = "pending" | "approved" | "rejected";
+
+/**
+ * Demande, par un utilisateur, du statut « professionnel de santé vérifié »
+ * (rôle {@link Role} `health_pro`). Calquée sur {@link ClaimRequest} : l'utilisateur
+ * crée sa demande, un admin l'approuve (→ rôle `health_pro`) ou la rejette.
+ */
+export interface ProfessionalVerificationRequest {
+  id: string;
+  requesterUid: string;
+  requesterName: string;
+  requesterEmail: string;
+  /** Justificatif : ordre, diplôme, structure de rattachement… */
+  justification: string;
+  licenseNumber?: string;
+  specialties?: string[];
+  status: ProfessionalVerificationStatus;
   createdAt?: string;
 }
 
@@ -329,6 +350,10 @@ export interface Community {
   resources: { title: string; type: string }[];
   upcomingEvents: string[]; // event ids
   posts: CommunityPost[];
+  /** Intérêts santé servis (valeurs de HEALTH_INTERESTS) — pilote la suggestion au signup. */
+  relatedInterests?: string[];
+  /** Pathologies (MNT) rattachées à la communauté (slugs). */
+  pathologySlugs?: string[];
 }
 
 export type Urgency = "urgent" | "eleve" | "modere";

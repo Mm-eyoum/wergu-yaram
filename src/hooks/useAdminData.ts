@@ -7,6 +7,7 @@ export const adminKeys = {
   users: ["admin", "users"] as const,
   pendingClaims: ["admin", "pendingClaims"] as const,
   directoryOrgs: ["admin", "directoryOrgs"] as const,
+  pendingVerifications: ["admin", "pendingVerifications"] as const,
 };
 
 export function usePendingOrganizations(enabled: boolean) {

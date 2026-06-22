@@ -69,7 +69,8 @@ export function canAccessAdmin(role: Role | null | undefined): boolean {
  * super_admins manage the `admin` role; admins only toggle patient ↔ editor.
  */
 export function assignableRoles(actorRole: Role | null | undefined): Role[] {
-  if (actorRole === "super_admin") return ["patient_public", "editor", "admin"];
-  if (actorRole === "admin") return ["patient_public", "editor"];
+  // `health_pro` is a patient-level badge (no admin/editor power) — admins may grant it.
+  if (actorRole === "super_admin") return ["patient_public", "health_pro", "editor", "admin"];
+  if (actorRole === "admin") return ["patient_public", "health_pro", "editor"];
   return [];
 }

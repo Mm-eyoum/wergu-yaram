@@ -224,7 +224,13 @@ export default function Forum() {
                       ))}
                       <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-text-secondary">
                         <Avatar name={thread.author.name} size="xs" />
-                        {thread.author.name} · {thread.timeAgo}
+                        {thread.author.name}
+                        {thread.author.role && (
+                          <Badge tone="green" icon={<ShieldCheck className="h-3 w-3" />}>
+                            {thread.author.role}
+                          </Badge>
+                        )}
+                        · {thread.timeAgo}
                       </span>
                     </div>
                   </div>

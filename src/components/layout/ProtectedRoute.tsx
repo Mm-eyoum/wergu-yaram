@@ -49,10 +49,12 @@ export function ProtectedRoute({
 
 /**
  * Roles are ranked; a higher rank satisfies any lower requirement.
- * patient_public < editor < admin < super_admin.
+ * patient_public / health_pro < editor < admin < super_admin.
+ * `health_pro` is a patient-level verified badge — same access rank as patient_public.
  */
 const ROLE_RANK: Record<Role, number> = {
   patient_public: 0,
+  health_pro: 0,
   editor: 1,
   admin: 2,
   super_admin: 3,

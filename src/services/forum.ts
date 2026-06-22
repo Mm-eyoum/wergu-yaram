@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { db } from "./firebase";
-import { timeAgoLabel } from "./communityPosts";
+import { timeAgoLabel, postAuthor } from "./communityPosts";
 import { validateText } from "@/lib/validation";
 import type { AppUser, ForumKind, ForumThread } from "@/types/domain";
 
@@ -53,7 +53,7 @@ export async function createForumThread(
     title,
     excerpt,
     kind: input.kind,
-    author: { name: profile.displayName ?? "Membre" },
+    author: postAuthor(profile),
     tags: input.tags ?? [],
     answers: 0,
     votes: 0,
