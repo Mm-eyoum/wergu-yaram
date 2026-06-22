@@ -28,6 +28,7 @@
       { "source": "/api/searchPlaces", "function": { "functionId": "searchPlaces", "region": "us-central1" } },
       { "source": "/api/importPlaces", "function": { "functionId": "importPlaces", "region": "us-central1" } },
       { "source": "/api/chatwootWebhook", "function": { "functionId": "chatwootWebhook", "region": "us-central1" } },
+      { "source": "/api/bictorysWebhook", "function": { "functionId": "bictorysWebhook", "region": "us-central1" } },
       { "source": "**", "destination": "/index.html" }
     ],
     "headers": [
