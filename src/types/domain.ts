@@ -105,8 +105,12 @@ export type ClaimRequestStatus = "pending" | "approved" | "rejected";
 
 export interface ClaimRequest {
   id: string;
-  orgId: string;
-  orgName: string;
+  /** Slug de l'établissement (Facility) revendiqué. */
+  facilitySlug?: string;
+  facilityName?: string;
+  /** Legacy : ancien id d'`organizations` (réclamations créées avant l'unification). */
+  orgId?: string;
+  orgName?: string;
   requesterUid: string;
   requesterName: string;
   justification: string;
@@ -356,6 +360,14 @@ export interface Article {
   trust: TrustMeta;
 }
 
+/**
+ * THE single model for a health establishment, served at /etablissements/:slug
+ * (identified by `slug`). Every health structure is a Facility regardless of
+ * provenance — created by a user (`source:"user"`), imported by an admin
+ * (`source:"imported"`), or editorial (no `source`). Provenance is a status
+ * field, NOT a separate collection. `Organization` is reserved for partner /
+ * donor pages only. See the route comment in App.tsx for the full boundary.
+ */
 export interface Facility {
   slug: string;
   published?: boolean;
@@ -384,12 +396,28 @@ export interface Facility {
   coords: { lat: number; lng: number };
   equipmentNeeds: string[]; // equipment need ids
   verified: boolean;
-  // Ownership (claimed facilities) — absent on editorial/admin-managed entries.
+  // Ownership (user-created or claimed facilities) — absent on editorial entries.
   ownerUid?: string;
   managerUids?: string[];
-  /** Set when this facility was migrated from a claimed directory `organizations` doc. */
-  sourceOrgId?: string;
+  // --- Provenance / directory claim ---
+  /** "user" (créée par un utilisateur) | "imported" (annuaire admin) | absent = éditorial. */
+  source?: OrgSource;
+  claimStatus?: ClaimStatus;
+  /** Google Places `place_id`, used to dedupe imports. */
   placeId?: string;
+  /** Legacy: id of the `organizations` doc this facility was migrated from. */
+  sourceOrgId?: string;
+  // --- Monétisation (Functions-only : posés par le webhook d'abonnement) ---
+  /** Palier d'abonnement actif. Absent = établissement gratuit. */
+  planTier?: "verified" | "pro";
+  /** Plan tarifaire en cours (cf. PricingPlan.id). */
+  planId?: string;
+  /** Mise en avant (tri prioritaire annuaire/carte) — réservé au palier Pro. */
+  featured?: boolean;
+  /** Fin de la période payée (ISO). Au-delà, l'entitlement est retiré. */
+  subscribedUntil?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CommunityPost {
@@ -649,8 +677,10 @@ export type SubscriptionStatus = "active" | "cancelled" | "past_due" | "trialing
 export interface Subscription {
   id: string;
   subscriberUid: string;
-  /** Renseigné si l'abonnement porte sur une page (Organization). */
+  /** Renseigné si l'abonnement porte sur une page (Organization partenaire/donateur). */
   orgId?: string;
+  /** Renseigné si l'abonnement porte sur un établissement de santé (Facility). */
+  facilitySlug?: string;
   planId: string;
   status: SubscriptionStatus;
   currentPeriodStart: string;

@@ -6,44 +6,44 @@ import { DirectoryImportPanel } from "@/components/admin/DirectoryImportPanel";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/hooks/useToast";
-import { useDirectoryOrganizations, adminKeys } from "@/hooks/useAdminData";
-import { setOrganizationStatus, deleteOrganization } from "@/services/organizations";
+import { useDirectoryFacilities, adminKeys } from "@/hooks/useAdminData";
+import { setFacilityPublished, deleteFacility } from "@/services/facilities";
 import { logAudit } from "@/services/audit";
-import type { Organization } from "@/types/domain";
+import type { Facility } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
 
 export default function Directory() {
   const { notify } = useToast();
   const queryClient = useQueryClient();
-  const imported = useDirectoryOrganizations();
+  const imported = useDirectoryFacilities();
   const [search, setSearch] = useState("");
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: adminKeys.directoryOrgs });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: adminKeys.directoryFacilities });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "active" | "suspended"; name: string }) =>
-      setOrganizationStatus(id, status),
+    mutationFn: ({ slug, published }: { slug: string; published: boolean; name: string }) =>
+      setFacilityPublished(slug, published),
     onSuccess: (_d, vars) => {
       void logAudit({
-        action: vars.status === "active" ? "approve" : "reject",
-        resourceType: "organization",
-        resourceId: vars.id,
+        action: vars.published ? "approve" : "reject",
+        resourceType: "facility",
+        resourceId: vars.slug,
         resourceTitle: vars.name,
-        changes: { status: { old: vars.status === "active" ? "suspended" : "active", new: vars.status } },
+        changes: { published: { old: !vars.published, new: vars.published } },
       });
       refresh();
-      notify(vars.status === "active" ? "Établissement réaffiché ✓" : "Établissement masqué.", "success");
+      notify(vars.published ? "Établissement réaffiché ✓" : "Établissement masqué.", "success");
     },
     onError: () => notify("Action impossible.", "error"),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ id }: { id: string; name: string }) => deleteOrganization(id),
+    mutationFn: ({ slug }: { slug: string; name: string }) => deleteFacility(slug),
     onSuccess: (_d, vars) => {
       void logAudit({
         action: "delete",
-        resourceType: "organization",
-        resourceId: vars.id,
+        resourceType: "facility",
+        resourceId: vars.slug,
         resourceTitle: vars.name,
       });
       refresh();
@@ -57,10 +57,10 @@ export default function Directory() {
     const q = search.trim().toLowerCase();
     if (!q) return list;
     return list.filter(
-      (o) =>
-        o.name.toLowerCase().includes(q) ||
-        (o.city ?? "").toLowerCase().includes(q) ||
-        (o.address ?? "").toLowerCase().includes(q),
+      (f) =>
+        f.name.toLowerCase().includes(q) ||
+        (f.city ?? "").toLowerCase().includes(q) ||
+        (f.address ?? "").toLowerCase().includes(q),
     );
   }, [imported.data, search]);
 
@@ -111,22 +111,22 @@ export default function Directory() {
             </p>
           ) : (
             <div className="space-y-3">
-              {filtered.map((org: Organization) => {
-                const suspended = org.status === "suspended";
+              {filtered.map((facility: Facility) => {
+                const hidden = facility.published === false;
                 return (
-                  <div key={org.id} className="card-surface flex flex-wrap items-center gap-3 p-4">
+                  <div key={facility.slug} className="card-surface flex flex-wrap items-center gap-3 p-4">
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-mint text-brand-green">
                       <Building2 className="h-5 w-5" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-text-primary">
-                        {org.name}
-                        {suspended && (
+                        {facility.name}
+                        {hidden && (
                           <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
                             Masqué
                           </span>
                         )}
-                        {org.claimStatus === "claimed" && (
+                        {facility.claimStatus === "claimed" && (
                           <span className="ml-2 rounded-full bg-brand-mint px-2 py-0.5 text-xs font-semibold text-brand-green">
                             Revendiqué
                           </span>
@@ -134,11 +134,11 @@ export default function Directory() {
                       </p>
                       <p className="flex items-center gap-1 truncate text-xs text-text-secondary">
                         <MapPin className="h-3 w-3 shrink-0" />
-                        {org.city || org.address || org.region || "Localisation non renseignée"}
+                        {facility.city || facility.address || facility.region || "Localisation non renseignée"}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Link to={`/structures/${org.id}`} target="_blank">
+                      <Link to={`/etablissements/${facility.slug}`} target="_blank">
                         <Button size="sm" variant="ghost">
                           <Eye className="h-4 w-4" /> Voir
                         </Button>
@@ -149,13 +149,13 @@ export default function Directory() {
                         disabled={busy}
                         onClick={() =>
                           statusMutation.mutate({
-                            id: org.id,
-                            status: suspended ? "active" : "suspended",
-                            name: org.name,
+                            slug: facility.slug,
+                            published: hidden,
+                            name: facility.name,
                           })
                         }
                       >
-                        {suspended ? (
+                        {hidden ? (
                           <>
                             <Eye className="h-4 w-4" /> Réafficher
                           </>
@@ -172,10 +172,10 @@ export default function Directory() {
                         onClick={() => {
                           if (
                             window.confirm(
-                              `Supprimer définitivement « ${org.name} » ? Cette action est irréversible.`,
+                              `Supprimer définitivement « ${facility.name} » ? Cette action est irréversible.`,
                             )
                           ) {
-                            deleteMutation.mutate({ id: org.id, name: org.name });
+                            deleteMutation.mutate({ slug: facility.slug, name: facility.name });
                           }
                         }}
                       >

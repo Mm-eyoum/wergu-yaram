@@ -246,21 +246,30 @@ async function postBictorysCharge(params: {
 export const createPlanCharge = onCall(
   { secrets: [BICTORYS_API_KEY], cors: CORS_ORIGINS },
   async (request) => {
-    const { planId, orgId, paymentType } = (request.data ?? {}) as {
+    const { planId, orgId, facilitySlug, paymentType } = (request.data ?? {}) as {
       planId?: string;
       orgId?: string;
+      facilitySlug?: string;
       paymentType?: PaymentType;
     };
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError("unauthenticated", "Connexion requise.");
-    if (!planId || !orgId) throw new HttpsError("invalid-argument", "planId et orgId requis.");
+    if (!planId || (!orgId && !facilitySlug)) {
+      throw new HttpsError("invalid-argument", "planId et orgId ou facilitySlug requis.");
+    }
 
-    const [planSnap, orgSnap] = await Promise.all([
+    // Target = a partner page (organizations/orgId) OR a health establishment
+    // (facilities/facilitySlug). The subscription/entitlement is written back to
+    // whichever collection the target lives in.
+    const targetCollection = facilitySlug ? "facilities" : "organizations";
+    const targetId = (facilitySlug ?? orgId) as string;
+
+    const [planSnap, targetSnap] = await Promise.all([
       db.collection("pricingPlans").doc(planId).get(),
-      db.collection("organizations").doc(orgId).get(),
+      db.collection(targetCollection).doc(targetId).get(),
     ]);
     if (!planSnap.exists) throw new HttpsError("not-found", "Plan introuvable.");
-    if (!orgSnap.exists) throw new HttpsError("not-found", "Page introuvable.");
+    if (!targetSnap.exists) throw new HttpsError("not-found", "Cible introuvable.");
 
     const plan = planSnap.data() as {
       price?: number;
@@ -269,19 +278,24 @@ export const createPlanCharge = onCall(
       billingPeriod?: string;
       name?: string;
     };
-    const org = orgSnap.data() as { ownerUid?: string; managerUids?: string[]; name?: string };
+    const target = targetSnap.data() as { ownerUid?: string; managerUids?: string[]; name?: string };
 
     if (plan.lineOfBusiness !== "pages" || !plan.isActive || typeof plan.price !== "number") {
       throw new HttpsError("failed-precondition", "Plan indisponible.");
     }
-    const isManager = org.ownerUid === uid || (org.managerUids ?? []).includes(uid);
+    const isManager = target.ownerUid === uid || (target.managerUids ?? []).includes(uid);
     if (!isManager) throw new HttpsError("permission-denied", "Vous ne gérez pas cette page.");
+
+    const redirectPath = facilitySlug
+      ? `/dashboard/facilities/${facilitySlug}`
+      : `/dashboard/pages/${orgId}`;
 
     const pendingRef = await db.collection("pendingCharges").add({
       kind: "subscription",
       payerUid: uid,
       planId,
-      orgId,
+      // Exactly one of these is set; the webhook routes by whichever is present.
+      ...(facilitySlug ? { facilitySlug } : { orgId }),
       amount: plan.price,
       billingPeriod: plan.billingPeriod ?? "monthly",
       paymentType: paymentType ?? null,
@@ -292,9 +306,9 @@ export const createPlanCharge = onCall(
     const { checkoutUrl, providerTransactionId } = await postBictorysCharge({
       amount: plan.price,
       merchantReference: pendingRef.id,
-      description: `Abonnement ${plan.name ?? planId} — ${org.name ?? orgId}`,
+      description: `Abonnement ${plan.name ?? planId} — ${target.name ?? targetId}`,
       paymentType,
-      redirectPath: `/dashboard/pages/${orgId}`,
+      redirectPath,
     });
     await pendingRef.update({ providerTransactionId, checkoutUrl });
     return { checkoutUrl, pendingId: pendingRef.id };
@@ -1049,6 +1063,7 @@ export const bictorysWebhook = onRequest(
       payerUid?: string | null;
       planId?: string;
       orgId?: string;
+      facilitySlug?: string;
       eventId?: string;
       quantity?: number;
       amount: number;
@@ -1070,10 +1085,13 @@ export const bictorysWebhook = onRequest(
     const DAY = 24 * 60 * 60 * 1000;
     const fees = Math.round(pending.amount * FEE_RATE);
 
-    if (pending.kind === "subscription" && pending.orgId) {
+    if (pending.kind === "subscription" && (pending.orgId || pending.facilitySlug)) {
       const periodDays = pending.billingPeriod === "yearly" ? 365 : 30;
       const tier = pending.planId?.includes("pro") ? "pro" : "verified";
-      const subRef = db.collection("subscriptions").doc(pending.orgId); // one sub per page
+      // Target = a partner page (organizations) or a health establishment (facilities).
+      const targetCollection = pending.facilitySlug ? "facilities" : "organizations";
+      const targetId = (pending.facilitySlug ?? pending.orgId) as string;
+      const subRef = db.collection("subscriptions").doc(targetId); // one sub per target
       await db.runTransaction(async (tx) => {
         const existing = await tx.get(subRef); // read before writes
         const nowMs = Date.now();
@@ -1086,7 +1104,7 @@ export const bictorysWebhook = onRequest(
           subRef,
           {
             subscriberUid: pending.payerUid ?? null,
-            orgId: pending.orgId,
+            ...(pending.facilitySlug ? { facilitySlug: pending.facilitySlug } : { orgId: pending.orgId }),
             planId: pending.planId,
             status: "active",
             currentPeriodStart: new Date(nowMs).toISOString(),
@@ -1100,7 +1118,7 @@ export const bictorysWebhook = onRequest(
           { merge: true },
         );
         tx.set(
-          db.collection("organizations").doc(pending.orgId!),
+          db.collection(targetCollection).doc(targetId),
           {
             planTier: tier,
             planId: pending.planId,
@@ -1114,7 +1132,7 @@ export const bictorysWebhook = onRequest(
           type: "subscription",
           lineOfBusiness: "pages",
           payerUid: pending.payerUid ?? null,
-          refId: pending.orgId,
+          refId: targetId,
           amount: pending.amount,
           currency: "XOF",
           fees,
@@ -1123,7 +1141,12 @@ export const bictorysWebhook = onRequest(
           status: "completed",
           paymentMethod: pending.paymentType ?? null,
           providerTransactionId: providerTxnId,
-          metadata: { source: "bictorys_webhook", kind: "subscription", planId: pending.planId, orgId: pending.orgId },
+          metadata: {
+            source: "bictorys_webhook",
+            kind: "subscription",
+            planId: pending.planId,
+            ...(pending.facilitySlug ? { facilitySlug: pending.facilitySlug } : { orgId: pending.orgId }),
+          },
           createdAt: FieldValue.serverTimestamp(),
         });
         tx.update(pendingRef, { status: "succeeded", paidAt: FieldValue.serverTimestamp() });
@@ -1200,15 +1223,18 @@ export const remindDueSubscriptions = onSchedule(
       subscriberUid?: string;
       renewalReminded?: boolean;
       orgId?: string;
+      facilitySlug?: string;
     };
     const endMs = Date.parse(sub.currentPeriodEnd ?? "");
     if (!Number.isFinite(endMs)) continue;
 
     if (endMs < now) {
-      // Expired → revoke entitlement.
+      // Expired → revoke entitlement on the target (org page or facility).
       await docSnap.ref.update({ status: "past_due", updatedAt: FieldValue.serverTimestamp() });
-      if (sub.orgId) {
-        await db.collection("organizations").doc(sub.orgId).update({
+      const targetCollection = sub.facilitySlug ? "facilities" : sub.orgId ? "organizations" : null;
+      const targetId = sub.facilitySlug ?? sub.orgId;
+      if (targetCollection && targetId) {
+        await db.collection(targetCollection).doc(targetId).update({
           planTier: FieldValue.delete(),
           featured: false,
           updatedAt: FieldValue.serverTimestamp(),

@@ -26,6 +26,7 @@
     "seed:admin": "node --env-file=.env.local --import tsx scripts/seedContentAdmin.ts",
     "set:admin": "node --env-file=.env.local --import tsx scripts/seedAdmin.ts",
     "backfill:categories": "node --env-file=.env.local --import tsx scripts/backfillCategories.ts",
+    "migrate:health-facilities": "node --env-file=.env.local --import tsx scripts/migrateHealthOrgsToFacilities.ts",
     "typesense:index": "node --env-file=.env.local --import tsx scripts/typesense-index.ts",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
     "deploy:hosting": "npm run build:seo && firebase deploy --only hosting"

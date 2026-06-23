@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building2, ExternalLink } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Building2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SchemaForm, type ContentFormSchema } from "@/components/admin/fields/SchemaForm";
+import { PlanPicker } from "@/components/billing/PlanPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
 import { dashboardKeys } from "@/hooks/useDashboardData";
@@ -16,7 +17,9 @@ import {
   updateFacilityAsOwner,
   type FacilityOwnerPatch,
 } from "@/services/facilities";
+import { fetchSubscription } from "@/services/billing";
 import { CATEGORY_OPTIONS, SECTOR_OPTIONS, LEVEL_OPTIONS } from "@/lib/facilityTaxonomy";
+import { formatDate } from "@/lib/format";
 import { SEOHead } from "@/seo/SEOHead";
 
 /**
@@ -92,6 +95,12 @@ export default function ManageFacility() {
   const facilityQuery = useQuery({
     queryKey: ["facilityOwner", slug],
     queryFn: () => fetchFacilityForOwner(slug!),
+    enabled: !!slug,
+  });
+
+  const subQuery = useQuery({
+    queryKey: ["facilitySubscription", slug],
+    queryFn: () => fetchSubscription(slug!),
     enabled: !!slug,
   });
 
@@ -203,6 +212,36 @@ export default function ManageFacility() {
           </Button>
         </div>
       </form>
+
+      {/* Abonnement (Vérifié / Pro) */}
+      <section className="mt-8">
+        <h2 className="text-xl font-bold text-text-primary">Visibilité & abonnement</h2>
+        {subQuery.data?.status === "active" ? (
+          <div className="card-surface mt-3 p-6">
+            <div className="flex items-center gap-2">
+              <BadgeCheck className="h-5 w-5 text-brand-green" />
+              <p className="font-bold text-text-primary">
+                Abonnement {facility.planTier === "pro" ? "Pro" : "Vérifié"} actif
+              </p>
+            </div>
+            <p className="mt-1 text-sm text-text-secondary">
+              Renouvellement avant le {formatDate(subQuery.data.currentPeriodEnd)}.
+              {facility.planTier === "pro" && " Votre établissement est mis en avant dans l'annuaire et sur la carte."}
+            </p>
+            <div className="mt-4">
+              <PlanPicker facilitySlug={facility.slug} currentPlanId={facility.planId} />
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3">
+            <p className="mb-4 text-sm text-text-secondary">
+              Gagnez en crédibilité avec un badge « Vérifié », des statistiques et — en Pro — une
+              mise en avant dans l'annuaire et sur la carte.
+            </p>
+            <PlanPicker facilitySlug={facility.slug} currentPlanId={facility.planId} />
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -135,9 +135,9 @@ export default function ManagePage() {
         <Badge tone={STATUS_TONE[org.status]}>{STATUS_TEXT[org.status]}</Badge>
       </header>
 
-      {org.status === "active" && org.type === "healthcare_facility" && (
+      {org.status === "active" && (
         <Link
-          to={`/etablissements/${org.id}`}
+          to={`/structures/${org.id}`}
           className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-green hover:underline"
         >
           <ExternalLink className="h-4 w-4" /> Voir la page publique

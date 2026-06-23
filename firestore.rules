@@ -91,14 +91,24 @@ service cloud.firestore {
     match /medications/{doc}    { allow read: if true; allow write: if isEditor(); }
     match /pathologies/{doc}    { allow read: if true; allow write: if isEditor(); }
     match /articles/{doc}       { allow read: if true; allow write: if isEditor(); }
-    // Facilities are editorial (editor-managed), BUT a facility migrated from a
-    // claimed directory listing carries an `ownerUid`: that owner may edit the
-    // content fields of their own facility, yet can never publish/verify it or
-    // change its owner/slug — admin validation gates public visibility.
+    // Facilities are THE single model for a health establishment. An editor
+    // manages editorial entries; an active user may also create one they own
+    // (source:"user"), and a claimed directory listing carries an `ownerUid`.
+    // Owners edit content fields only — they can never publish/verify, change
+    // owner/slug/source/claimStatus, nor grant themselves a paid tier
+    // (monetization fields are written by the subscription webhook). Admin
+    // validation gates public visibility.
     match /facilities/{slug} {
       function facOwner() { return resource.data.get('ownerUid', ''); }
       allow read: if true;
-      allow create: if isEditor();
+      allow create: if isEditor()
+        || (isActiveUser()
+            && request.resource.data.ownerUid == request.auth.uid
+            && request.resource.data.get('published', false) == false
+            && request.resource.data.get('verified', false) == false
+            && request.resource.data.get('source', '') == 'user'
+            && request.resource.data.slug == slug
+            && isText(request.resource.data.name, 2, 150));
       allow delete: if isEditor();
       allow update: if isEditor()
         || (isSignedIn()
@@ -107,7 +117,13 @@ service cloud.firestore {
             && request.resource.data.get('ownerUid', '') == facOwner()
             && request.resource.data.get('slug', '') == resource.data.get('slug', '')
             && request.resource.data.get('published', false) == false
-            && request.resource.data.get('verified', false) == false);
+            && request.resource.data.get('verified', false) == false
+            && request.resource.data.get('source', '') == resource.data.get('source', '')
+            && request.resource.data.get('claimStatus', '') == resource.data.get('claimStatus', '')
+            && request.resource.data.get('planTier', '') == resource.data.get('planTier', '')
+            && request.resource.data.get('planId', '') == resource.data.get('planId', '')
+            && request.resource.data.get('featured', false) == resource.data.get('featured', false)
+            && request.resource.data.get('subscribedUntil', '') == resource.data.get('subscribedUntil', ''));
     }
     match /partners/{doc}       { allow read: if true; allow write: if isEditor(); }
     match /events/{doc}         { allow read: if true; allow write: if isEditor(); }

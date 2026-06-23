@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { LayoutList, LocateFixed, Map as MapIcon, MapPinned, Search } from "lucide-react";
 import { LazyMapView } from "@/components/map/LazyMapView";
 import type { MapMarker } from "@/components/map/MapView";
@@ -12,7 +11,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useFacilities } from "@/hooks/useCatalog";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { fetchActiveFacilityOrganizations } from "@/services/organizations";
 import { SENEGAL_REGIONS } from "@/lib/constants";
 import { categoryLabel, CATEGORY_OPTIONS } from "@/lib/facilityTaxonomy";
 import { haversineKm, formatDistance } from "@/lib/geo";
@@ -46,10 +44,6 @@ const TYPES = [
 /** Discovery: synced list + map of all health structures, with filters & "near me". */
 export default function Carte() {
   const { data: facilities = [], isLoading } = useFacilities();
-  const { data: orgs = [], isError: orgsError } = useQuery({
-    queryKey: ["mapFacilityOrgs"],
-    queryFn: fetchActiveFacilityOrganizations,
-  });
   const geo = useGeolocation();
 
   const [region, setRegion] = useState(SENEGAL_REGIONS[0]);
@@ -61,38 +55,31 @@ export default function Carte() {
   const [mobileView, setMobileView] = useState<"map" | "list">("list");
 
   const entriesAll: Entry[] = useMemo(() => {
-    const cat: Entry[] = facilities.map((f) => ({
-      id: `f:${f.slug}`,
-      name: f.name,
-      meta: `${categoryLabel(f.category) || f.type || "Établissement"} · ${f.city}`,
-      color: "green",
-      category: f.category,
-      href: `/etablissements/${f.slug}`,
-      coords: f.coords,
-      source: "catalog",
-      region: f.region,
-      city: f.city,
-    }));
-    const org: Entry[] = orgs.map((o) => ({
-      id: `o:${o.id}`,
-      name: o.name,
-      meta:
-        o.claimStatus === "claimed"
-          ? `${categoryLabel(o.category) || "Structure"} · ${o.city ?? o.region ?? ""}`
-          : `${categoryLabel(o.category) || "Structure"} · Non réclamée`,
-      color: o.claimStatus === "claimed" ? "green" : "amber",
-      category: o.category,
-      amber: o.claimStatus !== "claimed",
-      badge: o.planTier ? "Vérifié" : o.claimStatus === "claimed" ? undefined : "Annuaire",
-      featured: Boolean(o.featured),
-      href: `/structures/${o.id}`,
-      coords: o.coords!,
-      source: "org",
-      region: o.region ?? "",
-      city: o.city ?? "",
-    }));
-    return [...cat, ...org];
-  }, [facilities, orgs]);
+    // Every health establishment lives in `facilities`. An imported, still
+    // unclaimed listing shows as "Annuaire" (amber); everything else is "catalog".
+    return facilities
+      .filter((f) => f.coords)
+      .map((f) => {
+        const unclaimed = f.source === "imported" && f.claimStatus !== "claimed" && !f.ownerUid;
+        return {
+          id: `f:${f.slug}`,
+          name: f.name,
+          meta: unclaimed
+            ? `${categoryLabel(f.category) || "Établissement"} · Non réclamée`
+            : `${categoryLabel(f.category) || f.type || "Établissement"} · ${f.city}`,
+          color: unclaimed ? "amber" : "green",
+          category: f.category,
+          amber: unclaimed,
+          badge: f.planTier ? "Vérifié" : unclaimed ? "Annuaire" : undefined,
+          featured: Boolean(f.featured),
+          href: `/etablissements/${f.slug}`,
+          coords: f.coords,
+          source: unclaimed ? "org" : "catalog",
+          region: f.region,
+          city: f.city,
+        };
+      });
+  }, [facilities]);
 
   const entries = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -234,11 +221,6 @@ export default function Carte() {
           </div>
 
           {geo.error && <p className="mt-2 text-xs text-text-secondary">{geo.error}</p>}
-          {orgsError && (
-            <p role="alert" className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              L'annuaire des structures n'a pas pu être chargé. Les établissements vérifiés restent affichés.
-            </p>
-          )}
 
           <div className="mt-3 max-h-[64vh] space-y-2 overflow-y-auto scroll-thin pr-1">
             {isLoading ? (

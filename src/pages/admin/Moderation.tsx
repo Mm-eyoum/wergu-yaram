@@ -83,7 +83,7 @@ export default function Moderation() {
         action: vars.approve ? "approve" : "reject",
         resourceType: "claimRequest",
         resourceId: vars.claim.id,
-        resourceTitle: vars.claim.orgName,
+        resourceTitle: vars.claim.facilityName ?? vars.claim.orgName ?? "",
       });
       queryClient.invalidateQueries({ queryKey: adminKeys.pendingClaims });
       notify(vars.approve ? "Réclamation approuvée ✓" : "Réclamation rejetée.", "success");
@@ -184,7 +184,7 @@ export default function Moderation() {
               <div key={c.id} className="card-surface p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-bold text-text-primary">{c.orgName}</p>
+                    <p className="font-bold text-text-primary">{c.facilityName ?? c.orgName}</p>
                     <p className="text-xs text-text-secondary">Demandé par {c.requesterName}</p>
                   </div>
                   <div className="flex gap-2">

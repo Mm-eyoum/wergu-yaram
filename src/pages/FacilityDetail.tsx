@@ -28,6 +28,7 @@ import { SEOHead } from "@/seo/SEOHead";
 import { facilityJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FavoriteButton } from "@/components/content/FavoriteButton";
+import { ClaimFacilityCard } from "@/components/facility/ClaimFacilityCard";
 
 export default function FacilityDetail() {
   const { slug } = useParams();
@@ -231,6 +232,10 @@ export default function FacilityDetail() {
         </div>
 
         <aside className="space-y-5">
+          {facility.claimStatus !== "claimed" && !facility.ownerUid && (
+            <ClaimFacilityCard slug={facility.slug} name={facility.name} />
+          )}
+
           <SectionCard title="Localisation" id="localisation" className="scroll-mt-24">
             <LazyMapView
               className="h-48 w-full"

@@ -221,16 +221,11 @@ export default function Dashboard() {
           >
             <AsyncList
               query={organizations}
-              emptyText="Vous ne gérez aucune page pour l'instant. Créez une page pour votre structure, partenaire ou donateur — ou réclamez une structure de santé déjà référencée."
+              emptyText="Vous ne gérez aucune page pour l'instant. Créez une page pour votre structure de santé, un partenaire ou un donateur."
               emptyCta={
-                <div className="flex flex-wrap gap-2">
-                  <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
-                    <Plus className="h-4 w-4" /> Créer une page
-                  </ButtonLink>
-                  <ButtonLink to="/structures/revendiquer" size="sm" variant="outline">
-                    <ShieldQuestion className="h-4 w-4" /> Réclamer une structure
-                  </ButtonLink>
-                </div>
+                <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                  <Plus className="h-4 w-4" /> Créer une page
+                </ButtonLink>
               }
             >
               {(orgs) => (
@@ -261,9 +256,6 @@ export default function Dashboard() {
                   <div className="flex flex-wrap gap-2">
                     <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
                       <Plus className="h-4 w-4" /> Créer une page
-                    </ButtonLink>
-                    <ButtonLink to="/structures/revendiquer" size="sm" variant="outline">
-                      <ShieldQuestion className="h-4 w-4" /> Réclamer une structure
                     </ButtonLink>
                   </div>
                 </div>
@@ -310,7 +302,13 @@ export default function Dashboard() {
                 {activeSubs.map((sub) => (
                   <Link
                     key={sub.id}
-                    to={sub.orgId ? `/dashboard/pages/${sub.orgId}` : "/dashboard"}
+                    to={
+                      sub.facilitySlug
+                        ? `/dashboard/facilities/${sub.facilitySlug}`
+                        : sub.orgId
+                          ? `/dashboard/pages/${sub.orgId}`
+                          : "/dashboard"
+                    }
                     className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5 transition-colors hover:border-brand-teal"
                   >
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-green/10 text-brand-green">
@@ -331,35 +329,65 @@ export default function Dashboard() {
             </SidebarPanel>
           )}
 
-          {(myFacilities.data?.length ?? 0) > 0 && (
-            <SidebarPanel
-              title="Mes établissements"
-              icon={<Building2 className="h-4 w-4" />}
-              className="md:col-span-2"
+          <SidebarPanel
+            title="Mes établissements de santé"
+            icon={<Building2 className="h-4 w-4" />}
+            className="md:col-span-2"
+          >
+            <AsyncList
+              query={myFacilities}
+              emptyText="Vous ne gérez aucun établissement de santé. Inscrivez le vôtre, ou réclamez un établissement déjà référencé."
+              emptyCta={
+                <div className="flex flex-wrap gap-2">
+                  <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                    <Plus className="h-4 w-4" /> Inscrire un établissement
+                  </ButtonLink>
+                  <ButtonLink to="/etablissements/revendiquer" size="sm" variant="outline">
+                    <ShieldQuestion className="h-4 w-4" /> Réclamer un établissement
+                  </ButtonLink>
+                </div>
+              }
             >
-              <ul className="space-y-2">
-                {myFacilities.data!.map((f) => (
-                  <li key={f.slug}>
-                    <Link
-                      to={`/dashboard/facilities/${f.slug}`}
-                      className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5 transition-colors hover:border-brand-teal"
-                    >
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
-                        <Building2 className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-text-primary">{f.name}</p>
-                        <p className="truncate text-xs text-text-secondary">{f.city || f.region}</p>
-                      </div>
-                      <Badge tone={f.published ? "green" : "warning"}>
-                        {f.published ? "Publié" : "En attente"}
-                      </Badge>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </SidebarPanel>
-          )}
+              {(items) => (
+                <div className="space-y-3">
+                  <ul className="space-y-2">
+                    {items.map((f) => (
+                      <li key={f.slug}>
+                        <Link
+                          to={`/dashboard/facilities/${f.slug}`}
+                          className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5 transition-colors hover:border-brand-teal"
+                        >
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
+                            <Building2 className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="flex items-center gap-1 truncate text-sm font-semibold text-text-primary">
+                              {f.name}
+                              {f.planTier && (
+                                <BadgeCheck className="h-4 w-4 shrink-0 text-brand-green" aria-label="Vérifié" />
+                              )}
+                            </p>
+                            <p className="truncate text-xs text-text-secondary">{f.city || f.region}</p>
+                          </div>
+                          <Badge tone={f.published ? "green" : "warning"}>
+                            {f.published ? "Publié" : "En attente"}
+                          </Badge>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                      <Plus className="h-4 w-4" /> Inscrire un établissement
+                    </ButtonLink>
+                    <ButtonLink to="/etablissements/revendiquer" size="sm" variant="outline">
+                      <ShieldQuestion className="h-4 w-4" /> Réclamer un établissement
+                    </ButtonLink>
+                  </div>
+                </div>
+              )}
+            </AsyncList>
+          </SidebarPanel>
 
           {(claims.data?.length ?? 0) > 0 && (
             <SidebarPanel
@@ -377,10 +405,10 @@ export default function Dashboard() {
                       <Building2 className="h-4 w-4" />
                     </span>
                     <Link
-                      to={`/structures/${c.orgId}`}
+                      to={`/etablissements/${c.facilitySlug ?? c.orgId}`}
                       className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary hover:text-brand-green"
                     >
-                      {c.orgName}
+                      {c.facilityName ?? c.orgName}
                     </Link>
                     <Badge
                       tone={c.status === "approved" ? "green" : c.status === "rejected" ? "danger" : "warning"}

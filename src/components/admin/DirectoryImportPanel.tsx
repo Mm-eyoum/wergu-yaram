@@ -50,8 +50,8 @@ export function DirectoryImportPanel() {
     mutationFn: () => importPlaces([...selected], region),
     onSuccess: (res) => {
       notify(`${res.imported} importée(s), ${res.skipped} ignorée(s).`, "success");
-      queryClient.invalidateQueries({ queryKey: ["mapFacilityOrgs"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "directoryOrgs"] });
+      queryClient.invalidateQueries({ queryKey: ["facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "directoryFacilities"] });
       // Refresh "already imported" flags.
       search.mutate();
     },

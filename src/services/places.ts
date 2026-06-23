@@ -12,21 +12,23 @@
  *   - API: "Places API (New)" only
  */
 import {
-  addDoc,
   collection,
+  doc,
   getDocs,
   limit,
   query as fsQuery,
   serverTimestamp,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { logAudit } from "./audit";
+import { uniqueFacilitySlug } from "./facilities";
 import { placeTypesToCategory, inferCategoryFromName } from "@/lib/facilityTaxonomy";
 
 const PLACES_KEY = import.meta.env.VITE_PLACES_API_KEY as string | undefined;
 const PLACES_BASE = "https://places.googleapis.com/v1";
-const ORGS = "organizations";
+const FACILITIES = "facilities";
 
 /**
  * Hard cap on a single bulk import. Bounds how much an admin can inject into the
@@ -62,10 +64,10 @@ function assertConfigured() {
   if (!db) throw new Error("Firebase non configuré.");
 }
 
-/** True if a page with this Google placeId already exists (dedupe). */
+/** True if an establishment with this Google placeId already exists (dedupe). */
 async function alreadyImported(placeId: string): Promise<boolean> {
   const snap = await getDocs(
-    fsQuery(collection(db!, ORGS), where("placeId", "==", placeId), limit(1)),
+    fsQuery(collection(db!, FACILITIES), where("placeId", "==", placeId), limit(1)),
   );
   return !snap.empty;
 }
@@ -141,24 +143,37 @@ export async function importPlaces(
       p.addressComponents?.find((c) => c.types?.includes("locality"))?.longText ?? "";
     const name = p.displayName?.text ?? "Structure de santé";
     const category = placeTypesToCategory(p.types) ?? inferCategoryFromName(name);
-    await addDoc(collection(db!, ORGS), {
-      type: "healthcare_facility",
+    const slug = await uniqueFacilitySlug(name);
+    await setDoc(doc(db!, FACILITIES, slug), {
+      slug,
+      // Imported listings are publicly visible (directory) but not yet "verified".
+      published: true,
+      verified: false,
+      type: "",
       category,
       name,
       ownerUid: "",
       managerUids: [],
-      status: "active",
       region: region ?? "",
       city,
       address: p.formattedAddress ?? "",
-      coords: { lat: p.location.latitude, lng: p.location.longitude },
       phone: p.internationalPhoneNumber ?? "",
+      email: "",
+      cover: "",
+      description: "",
+      specialties: [],
+      services: [],
+      capacity: "",
       hours: p.regularOpeningHours?.weekdayDescriptions?.join(" · ") ?? "",
-      rating: p.rating ?? null,
+      rating: p.rating ?? 0,
+      reviewsCount: 0,
+      doctors: [],
+      reviews: [],
+      coords: { lat: p.location.latitude, lng: p.location.longitude },
+      equipmentNeeds: [],
       source: "imported",
       placeId,
       claimStatus: "unclaimed",
-      logo: null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });

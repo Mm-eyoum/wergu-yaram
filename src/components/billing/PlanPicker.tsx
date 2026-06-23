@@ -13,14 +13,17 @@ import { cn } from "@/lib/cn";
 import type { PricingPlan } from "@/types/domain";
 
 /**
- * Grille tarifaire des pages (Vérifié / Pro), annuel mis en avant (−20 %).
- * Lance le checkout d'abonnement Bictorys pour la page `orgId`.
+ * Grille tarifaire (Vérifié / Pro), annuel mis en avant (−20 %). Lance le
+ * checkout d'abonnement Bictorys pour la cible : une page partenaire (`orgId`)
+ * OU un établissement de santé (`facilitySlug`).
  */
 export function PlanPicker({
   orgId,
+  facilitySlug,
   currentPlanId,
 }: {
-  orgId: string;
+  orgId?: string;
+  facilitySlug?: string;
   currentPlanId?: string;
 }) {
   const { notify } = useToast();
@@ -38,14 +41,14 @@ export function PlanPicker({
   );
 
   async function handleSelect(plan: PricingPlan) {
-    track("subscribe_clicked", { planId: plan.id, orgId });
+    track("subscribe_clicked", { planId: plan.id, orgId, facilitySlug });
     if (!isPaymentsEnabled) {
       notify("Les abonnements en ligne arrivent très bientôt.", "info");
       return;
     }
     setPendingPlan(plan.id);
     try {
-      await startPlanCheckout({ planId: plan.id, orgId });
+      await startPlanCheckout({ planId: plan.id, orgId, facilitySlug });
     } catch {
       notify("Le paiement est momentanément indisponible. Réessayez plus tard.", "error");
       setPendingPlan(null);

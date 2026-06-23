@@ -79,7 +79,7 @@ export interface SeoManifest {
 const STATIC_ENTRIES: RouteEntry[] = [
   { path: "/", changefreq: "daily", priority: 1.0 },
   { path: "/carte", changefreq: "weekly", priority: 0.7 },
-  { path: "/structures", changefreq: "weekly", priority: 0.7 },
+  { path: "/etablissements", changefreq: "weekly", priority: 0.7 },
   { path: "/communautes", changefreq: "weekly", priority: 0.7 },
   { path: "/forum", changefreq: "daily", priority: 0.7 },
   { path: "/besoins", changefreq: "daily", priority: 0.8 },

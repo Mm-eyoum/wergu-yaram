@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -35,8 +34,6 @@ import { useSiteSettings } from "@/hooks/useSiteConfig";
 import { formatCount } from "@/services/stats";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { haversineKm } from "@/lib/geo";
-import { fetchActiveFacilityOrganizations } from "@/services/organizations";
-import { orgToFacilityCard } from "@/lib/orgAdapters";
 import { SEOHead } from "@/seo/SEOHead";
 import { organizationJsonLd, websiteJsonLd } from "@/seo/jsonld";
 
@@ -74,10 +71,6 @@ export default function Home() {
   const { data: communities = [] } = useCommunities();
   const { data: equipmentNeeds = [] } = useEquipmentNeeds();
   const { data: facilities = [] } = useFacilities();
-  const { data: orgFacilities = [] } = useQuery({
-    queryKey: ["mapFacilityOrgs"],
-    queryFn: fetchActiveFacilityOrganizations,
-  });
   const geo = useGeolocation();
   const urgentNeeds = equipmentNeeds.filter((n) => n.urgency === "urgent").slice(0, 3);
 
@@ -103,21 +96,16 @@ export default function Home() {
     return cards.filter(Boolean) as Stat[];
   }, [platformStats, editableStats]);
 
-  // Curated catalog facilities + directory orgs (imported/created), unified.
+  // Every health establishment lives in `facilities` (user-created, imported, editorial).
   const facilityEntries = useMemo(
-    () => [
-      ...facilities.map((f) => ({
+    () =>
+      facilities.map((f) => ({
         facility: f,
         coords: f.coords,
         href: undefined as string | undefined,
         badge: undefined as string | undefined,
       })),
-      ...orgFacilities.map((o) => {
-        const { facility, href, badge } = orgToFacilityCard(o);
-        return { facility, coords: o.coords!, href, badge };
-      }),
-    ],
-    [facilities, orgFacilities],
+    [facilities],
   );
 
   // When the user shares their position, surface the closest facilities first.

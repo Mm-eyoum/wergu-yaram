@@ -95,10 +95,23 @@ export default function App() {
         <Route path="/medicaments/:slug" element={<MedicationDetail />} />
         <Route path="/pathologies/:slug" element={<PathologyDetail />} />
         <Route path="/articles/:slug" element={<ArticleDetail />} />
+        {/*
+          Modèle unifié des lieux de santé :
+          • `facilities` = TOUT établissement de santé (user-créé, importé, éditorial)
+            → /etablissements (annuaire), /etablissements/:slug (fiche), id = slug.
+          • `organizations` = pages PARTENAIRE / DONATEUR uniquement
+            → /structures/:id (id Firestore), page OrganizationDetail.
+          Les anciennes URLs /structures* (santé) sont redirigées vers /etablissements*.
+        */}
+        <Route path="/etablissements" element={<Structures />} />
+        <Route path="/etablissements/revendiquer" element={<ClaimStructure />} />
         <Route path="/etablissements/:slug" element={<FacilityDetail />} />
         <Route path="/carte" element={<Carte />} />
-        <Route path="/structures" element={<Structures />} />
-        <Route path="/structures/revendiquer" element={<ClaimStructure />} />
+        {/* Legacy redirects (SEO/back-compat). /structures/:id reste OrganizationDetail
+            pour les partenaires/donateurs ; il redirige lui-même vers /etablissements/:slug
+            si l'id correspond à une structure de santé migrée. */}
+        <Route path="/structures" element={<Navigate to="/etablissements" replace />} />
+        <Route path="/structures/revendiquer" element={<Navigate to="/etablissements/revendiquer" replace />} />
         <Route path="/structures/:id" element={<OrganizationDetail />} />
         <Route path="/communautes" element={<Communities />} />
         <Route path="/communautes/:slug" element={<CommunityDetail />} />

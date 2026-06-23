@@ -59,12 +59,18 @@ export async function fetchUserSubscriptions(uid: string): Promise<Subscription[
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Subscription, "id">) }));
 }
 
-/** A page's subscription (doc id = orgId — one active sub per page). */
-export async function fetchOrgSubscription(orgId: string): Promise<Subscription | null> {
-  if (!db || !orgId) return null;
-  const snap = await getDoc(doc(db, "subscriptions", orgId));
+/**
+ * A page/establishment subscription (doc id = the target id — `orgId` for a
+ * partner page, `facilitySlug` for a health establishment). One active sub each.
+ */
+export async function fetchSubscription(targetId: string): Promise<Subscription | null> {
+  if (!db || !targetId) return null;
+  const snap = await getDoc(doc(db, "subscriptions", targetId));
   return snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Subscription, "id">) }) : null;
 }
+
+/** Back-compat alias for partner/donor pages. */
+export const fetchOrgSubscription = fetchSubscription;
 
 /**
  * Start a page-subscription checkout (Vérifié/Pro). Calls the Cloud Function
@@ -73,7 +79,10 @@ export async function fetchOrgSubscription(orgId: string): Promise<Subscription 
  */
 export async function startPlanCheckout(input: {
   planId: string;
-  orgId: string;
+  /** Target page (partner/donor) — mutually exclusive with `facilitySlug`. */
+  orgId?: string;
+  /** Target health establishment — mutually exclusive with `orgId`. */
+  facilitySlug?: string;
   paymentType?: DonationPaymentType;
 }): Promise<void> {
   if (!isPaymentsEnabled || !functions) throw new Error("Paiement non activé.");
