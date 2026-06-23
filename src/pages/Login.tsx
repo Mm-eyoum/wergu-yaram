@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Bookmark, Heart, LifeBuoy, Lock, Mail, ShieldCheck, Users } from "lucide-react";
 import {
@@ -21,10 +21,18 @@ const PERKS = [
 ];
 
 export default function Login() {
-  const { login, loginWithGoogle, resetPassword, configured } = useAuth();
+  const { user, login, loginWithGoogle, resetPassword, configured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
+
+  // Redirect only once the auth context has actually populated `user`.
+  // `login()`/`loginWithGoogle()` resolve before onAuthStateChanged → fetchUserProfile
+  // runs, so navigating from the handlers would race ProtectedRoute (user still null)
+  // and bounce back to /connexion — the "must log in twice" bug.
+  useEffect(() => {
+    if (user) navigate(from, { replace: true });
+  }, [user, from, navigate]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,10 +55,10 @@ export default function Login() {
         );
       }
       await login(email, password);
-      navigate(from);
+      // Redirection handled by the effect once `user` is populated; keep the
+      // button in its loading state until then (no setLoading(false) here).
     } catch {
       setError("Email ou mot de passe incorrect.");
-    } finally {
       setLoading(false);
     }
   }
@@ -59,7 +67,7 @@ export default function Login() {
     setError("");
     try {
       await loginWithGoogle();
-      navigate(from);
+      // Redirection handled by the effect once `user` is populated.
     } catch {
       setError("Connexion Google impossible pour le moment.");
     }

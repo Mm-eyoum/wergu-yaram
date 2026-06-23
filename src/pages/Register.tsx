@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Check,
@@ -51,8 +51,15 @@ const STRENGTH_META = [
 ] as const;
 
 export default function Register() {
-  const { register, loginWithGoogle, configured } = useAuth();
+  const { user, register, loginWithGoogle, configured } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect only once the auth context has populated `user`. `register()` sets
+  // it before resolving, but `loginWithGoogle()` does not — navigating from the
+  // handler would race ProtectedRoute (user still null) and bounce to /connexion.
+  useEffect(() => {
+    if (user) navigate("/dashboard", { replace: true });
+  }, [user, navigate]);
 
   const [step, setStep] = useState(0);
   const [firstName, setFirstName] = useState("");
@@ -105,14 +112,14 @@ export default function Register() {
         language,
         interests,
       });
-      navigate("/dashboard");
+      // Redirection handled by the effect once `user` is populated; keep the
+      // button in its loading state until then (no setLoading(false) here).
     } catch (e) {
       setError(
         e instanceof Error && e.message.includes("configuré")
           ? "Firebase non configuré : renseignez .env.local."
           : "Impossible de créer le compte. Cet email est peut-être déjà utilisé.",
       );
-    } finally {
       setLoading(false);
     }
   }
@@ -255,7 +262,7 @@ export default function Register() {
             <Button fullWidth size="lg" onClick={next}>
               Continuer
             </Button>
-            <GoogleButton onClick={() => loginWithGoogle().then(() => navigate("/dashboard")).catch(() => setError("Connexion Google impossible."))} />
+            <GoogleButton onClick={() => loginWithGoogle().catch(() => setError("Connexion Google impossible."))} />
           </div>
         )}
 
