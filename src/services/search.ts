@@ -69,16 +69,40 @@ export async function searchAllHits(query: string): Promise<SearchHit[]> {
   if (!clientP) return localSearch(query);
   try {
     const client = await clientP;
-    const res = await client
-      .collections<SearchHit>(collection)
-      .documents()
-      .search({
-        q: query.trim() || "*",
-        query_by: "title,keywords,description",
-        per_page: 100,
-        sort_by: "_text_match:desc",
-      });
-    return (res.hits ?? []).map((h) => h.document);
+    const q = query.trim() || "*";
+    // Fetch ALL matching docs (paginated), not just the first page: the page
+    // filters by type/facets client-side, so a single 100-doc page truncated
+    // per-type browses (e.g. ~560 médicaments) to a handful. A real text query
+    // returns few matches → the loop stops after one page (no overhead); a
+    // browse (q="*") returns the full corpus. Dedupe guards page overlap.
+    const PER_PAGE = 250; // Typesense max
+    const MAX = 1000; // safety cap (≈ CATALOG_PAGE_SIZE)
+    const out: SearchHit[] = [];
+    const seen = new Set<string>();
+    for (let page = 1; out.length < MAX; page++) {
+      const res = await client
+        .collections<SearchHit>(collection)
+        .documents()
+        .search({
+          q,
+          query_by: "title,keywords,description",
+          per_page: PER_PAGE,
+          page,
+          sort_by: "_text_match:desc",
+        });
+      const hits = res.hits ?? [];
+      for (const h of hits) {
+        const doc = h.document as SearchHit & { id?: string };
+        const key = doc.id ?? doc.href;
+        if (key) {
+          if (seen.has(key)) continue;
+          seen.add(key);
+        }
+        out.push(h.document);
+      }
+      if (hits.length < PER_PAGE) break; // last page reached
+    }
+    return out;
   } catch (err) {
     // Network/permission/collection error → degrade to the local index,
     // but surface the cause instead of masking a Typesense misconfiguration.
