@@ -38,70 +38,74 @@ const esc = (s = "") => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").r
 const BMC = {
   partners: [
     "Bictorys — mobile money (Wave, Orange Money, MTN, carte)",
+    "ASSAD & partenaires communautaires / associatifs (pilotes)",
     "Structures de santé & ordres professionnels",
-    "ONG, fondations, institutions, bailleurs",
-    "Google Places / OpenStreetMap (annuaire & carte)",
-    "Chatwoot / Brevo (support & email)",
-    "Firebase / Google Cloud (infrastructure)",
+    "ONG, fondations, institutions & bailleurs",
+    "Partenaires académiques & de formation",
+    "Google Places / OSM · Chatwoot / Brevo · Firebase",
   ],
   activities: [
     "Production & curation de contenu vérifié",
     "Développement & exploitation de la plateforme",
     "Modération & animation de la communauté",
-    "Acquisition / SEO / growth",
-    "Vente B2B (structures, partenaires)",
-    "Traitement des paiements & reversements",
+    "Onboarding & animation des espaces partenaires",
+    "Campagnes de prévention ciblées (SMS / WhatsApp)",
+    "Mesure d'impact & reporting ESG",
+    "Acquisition / SEO / growth · vente B2B · paiements",
   ],
   resources: [
     "Référentiel santé vérifié (UEMOA/LME) — moat de contenu",
     "Plateforme tech (React + Firebase serverless, Typesense)",
-    "Annuaire des structures (effet réseau)",
-    "Audience & communauté engagée",
-    "Marque de confiance + comité éditorial",
-    "Intégration mobile money (Bictorys)",
+    "Socle multi-tenant + Comités (gouvernance d'impact)",
+    "Annuaire des structures + catalogue de formations (réseau)",
+    "Audience & communauté engagée · marque de confiance",
+    "Mobile money (Bictorys) + omnicanal (Chatwoot)",
   ],
   value: [
     "Information santé vérifiée & gratuite (DCI/UEMOA, pathologies)",
     "Annuaire géolocalisé + pages crédibles (Vérifié / Pro)",
-    "Collecte de fonds traçable pour équipements (impact mesurable)",
-    "Communauté & forum de confiance (rôles soignants)",
-    "Billetterie d'événements santé",
-    "Partenaires : visibilité ciblée + data d'impact",
+    "Espaces partenaires en marque blanche (Kit Digital)",
+    "Campagnes de prévention SMS/WhatsApp ciblées (consenties)",
+    "Tableaux de bord d'impact + reporting ESG (Comités)",
+    "Collecte de fonds traçable + billetterie d'événements",
+    "Communauté & annuaire de professionnels vérifiés · formations",
   ],
   relationships: [
     "Self-service (comptes, pages, tableau de bord)",
+    "Espace partenaire dédié + Comité de pilotage",
+    "Reconnaissance des donateurs (« Mes dons & impact »)",
     "Communauté & forum modérés",
-    "Support (Chatwoot + messagerie in-app)",
-    "Contenu éditorial régulier (confiance)",
-    "Abonnements (relation récurrente structures)",
+    "Support omnicanal (Chatwoot + messagerie in-app)",
+    "Abonnements (relation récurrente structures & partenaires)",
   ],
   channels: [
     "Web / PWA — SEO du référentiel = moteur d'acquisition",
+    "Sous-domaines partenaires (<marque>.werguyaram.org)",
+    "Campagnes SMS / WhatsApp (Chatwoot)",
     "Recherche fédérée (Typesense)",
-    "Réseaux sociaux & partage de campagnes",
-    "Communautés WhatsApp / églises (canal local)",
-    "Newsletter / email",
-    "Bouche-à-oreille & parrainage",
+    "Réseaux sociaux · communautés WhatsApp / églises",
+    "Newsletter / email · bouche-à-oreille & parrainage",
   ],
   segments: [
     "Grand public : patients & aidants",
     "Donateurs (locaux + récurrents)",
     "Structures de santé (hôpitaux, cliniques, CSPS)",
-    "Partenaires / ONG / institutions / bailleurs",
-    "Organisateurs d'événements santé",
-    "Soignants (forum, contenu)",
+    "Partenaires communautaires & associatifs (ASSAD)",
+    "Institutions & bailleurs (impact / ESG)",
+    "Académiques & formation · soignants vérifiés · organisateurs",
   ],
   costs: [
     "Infrastructure cloud (coût marginal faible)",
     "Frais agrégateur mobile money (~1,2 %)",
-    "Production éditoriale & modération",
-    "Acquisition marketing (ads ciblées)",
-    "Équipe & exploitation",
-    "Conformité (TVA, protection des données / CDP)",
+    "Coûts SMS / WhatsApp (templates Meta, agrégateur)",
+    "Provisioning DNS / SSL multi-tenant",
+    "Production éditoriale & modération · acquisition",
+    "Équipe & exploitation · conformité (TVA, CDP)",
   ],
   revenue: [
     "Dons + pourboire plateforme optionnel (+ dons récurrents)",
     "Abonnements pages : Vérifié 9 900 / Pro 24 900 XOF / mois (−20 % annuel)",
+    "Espaces partenaires (Kit Digital) : ~49–99 k XOF/mois + Pacte-Convention annuel sur devis",
     "Commission billetterie (8–10 %)",
     "Sponsoring de rubriques (150 k–400 k XOF / mois)",
     "Data / B2B & rapports d'impact (devis 500 k+ XOF)",
@@ -120,10 +124,11 @@ const lineCard = (n) => `
 const LINES = [
   { prio: 1, name: "Dons — Crowdfunding équipement", status: "🟡 Câblé (flag OFF)", model: "Don + pourboire plateforme optionnel + dons récurrents", pricing: "Pourboire 0–6 %", revenue: "0,9–4,8 M XOF / an" },
   { prio: 2, name: "Pages structures (annuaire)", status: "🟢 Active", model: "Freemium → abonnement Vérifié / Pro + mise en avant", pricing: "9 900–24 900 XOF/mois", revenue: "1,2–6 M XOF / an" },
-  { prio: 3, name: "Événements & formations", status: "🟡 En construction", model: "Billetterie one-time + commission organisateur", pricing: "2 500–15 000 XOF/billet", revenue: "0,4–2,5 M XOF / an" },
-  { prio: 4, name: "Contenu santé & SEO", status: "🟢 Active", model: "Gratuit stratégique → sponsoring de rubrique (étiqueté)", pricing: "150 k–400 k XOF/mois", revenue: "0–2,4 M XOF / an" },
-  { prio: 5, name: "Communauté & forum", status: "🟢 Active", model: "Non monétisé — moteur du flywheel (réduit le CAC)", pricing: "—", revenue: "Valeur indirecte" },
-  { prio: 6, name: "Données & B2B santé", status: "⚪ Potentielle", model: "Licence rapports d'impact / dashboard B2B", pricing: "Devis 500 k+ XOF", revenue: "0–3 M XOF / an" },
+  { prio: 3, name: "Espaces partenaires (Kit Digital)", status: "🟢 Socle livré (P2)", model: "Marque blanche multi-tenant — hybride : abonnement + Pacte-Convention", pricing: "~49–99 k XOF/mois + devis", revenue: "Phare — récurrence B2B" },
+  { prio: 4, name: "Événements & formations", status: "🟢 Livré (checkout)", model: "Billetterie one-time + commission organisateur (formations = gratuit)", pricing: "2 500–15 000 XOF/billet", revenue: "0,4–2,5 M XOF / an" },
+  { prio: 5, name: "Contenu santé & SEO", status: "🟢 Active", model: "Gratuit stratégique → sponsoring de rubrique (étiqueté)", pricing: "150 k–400 k XOF/mois", revenue: "0–2,4 M XOF / an" },
+  { prio: 6, name: "Communauté & forum", status: "🟢 Active", model: "Non monétisé — moteur du flywheel (réduit le CAC)", pricing: "—", revenue: "Valeur indirecte" },
+  { prio: 7, name: "Données & B2B santé", status: "⚪ Potentielle", model: "Licence rapports d'impact / dashboard B2B", pricing: "Devis 500 k+ XOF", revenue: "0–3 M XOF / an" },
 ];
 
 const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
@@ -212,14 +217,15 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
   <section>
     <h2>1 · Résumé exécutif</h2><div class="rule"></div>
     <p class="lead">Wergu Yaram est une plateforme <b>santé + communauté + collecte de fonds</b> à vocation chrétienne pour l'Afrique de l'Ouest (Sénégal, devise <b>XOF</b>). Elle combine un référentiel médical vérifié (DCI/UEMOA), un annuaire géolocalisé des structures de santé, une communauté, et une mécanique de dons sur mobile money (Wave, Orange Money, MTN) via Bictorys.</p>
-    <p>Le socle technique et l'audience sont solides ; l'enjeu est la <b>monétisation</b>. Six lignes de revenu ont été identifiées, articulées autour d'un <b>flywheel</b> : un contenu vérifié et gratuit attire un trafic organique qualifié, qui nourrit la confiance, qui se convertit en dons, abonnements et billets — revenus réinvestis dans le contenu.</p>
+    <p>Le socle technique et l'audience sont solides ; l'enjeu est la <b>monétisation</b>. Sept lignes de revenu ont été identifiées, articulées autour d'un <b>flywheel</b> : un contenu vérifié et gratuit attire un trafic organique qualifié, qui nourrit la confiance, qui se convertit en dons, abonnements et billets — revenus réinvestis dans le contenu.</p>
+    <p>La ligne phare est désormais l'<b>espace partenaire en marque blanche (« Kit Digital », modèle ASSAD)</b> : un sous-domaine brandé clé-en-main (CMS, communautés, campagnes SMS/WhatsApp, tableau de bord d'impact + Comité) — relais de <b>revenu B2B récurrent</b> au modèle hybride (abonnement + convention).</p>
     <div class="kfig">
-      <div><div class="v">6</div><div class="l">lignes de business</div></div>
+      <div><div class="v">7</div><div class="l">lignes de business</div></div>
       <div><div class="v">85–95 %</div><div class="l">marge brute</div></div>
       <div><div class="v">3–12 M</div><div class="l">XOF — objectif An 1</div></div>
-      <div><div class="v">7/10</div><div class="l">santé écosystème</div></div>
+      <div><div class="v">8/10</div><div class="l">santé écosystème</div></div>
     </div>
-    <div class="callout"><b>Priorité absolue (cash le plus rapide)</b> : activer les dons (Bictorys) + pourboire optionnel, puis construire la récurrence (abonnements de pages structures = MRR).</div>
+    <div class="callout"><b>Priorité absolue (cash le plus rapide)</b> : activer les dons (Bictorys) + pourboire optionnel, puis construire la récurrence (abonnements de pages + <b>espaces partenaires</b> = MRR B2B).</div>
   </section>
 
   <section style="margin-top:18px">
@@ -255,6 +261,7 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
       <tbody>
         <tr><td>Dons</td><td>Don + frais opt.</td><td>500 XOF</td><td>5 000/mois (récurrent)</td><td>~0 / 1 200</td><td>12 000 → 60 000</td><td>10×–∞</td><td>~94 %*</td></tr>
         <tr><td>Pages structures</td><td>Abonnement</td><td>Gratuit</td><td>9 900 → 24 900/mois</td><td>8 000</td><td>178 000</td><td>~22×</td><td>~88 %</td></tr>
+        <tr><td>Espaces partenaires (Kit)</td><td>Hybride abo + convention</td><td>~49 k/mois</td><td>Convention (devis)</td><td>vente B2B</td><td>annuel</td><td>élevé</td><td>~88 %</td></tr>
         <tr><td>Billetterie</td><td>One-time + commission</td><td>Gratuit</td><td>2 500–15 000/billet</td><td>~0</td><td>variable</td><td>élevé</td><td>~90 %</td></tr>
         <tr><td>Sponsoring</td><td>Rubrique sponsorisée</td><td>—</td><td>150 k–400 k/mois</td><td>vente B2B</td><td>multi-mois</td><td>—</td><td>~95 %</td></tr>
         <tr><td>Data / B2B</td><td>Licence / devis</td><td>—</td><td>500 k+</td><td>vente directe</td><td>annuel</td><td>—</td><td>~85 %</td></tr>
@@ -268,7 +275,13 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
       <li><b>Pro — 24 900 XOF/mois</b> — tout Vérifié + mise en avant annuaire/carte, publication d'événements, réponse prioritaire.</li>
       <li><b>−20 %</b> sur l'annuel (rétention).</li>
     </ul>
-    <div class="callout">Hypothèses M12 (réaliste) : ~25 000 visiteurs/mois ; ~50 structures payantes ⇒ ~0,5 M XOF MRR pages + dons. Modèle de récurrence <b>par période payée à l'avance</b> (réaliste sur mobile money — pas de prélèvement automatique).</div>
+    <h3 style="margin-top:8px;font-size:13px">Espaces partenaires (Kit Digital) — modèle hybride</h3>
+    <ul class="plain">
+      <li><b>Palier d'abonnement public</b> ~49 000–99 000 XOF/mois — PME, associations, structures voulant une présence clé-en-main (auto-onboarding).</li>
+      <li><b>« Pacte-Convention » annuel sur devis</b> — institutions, ONG &amp; bailleurs (value-based, adossé à des objectifs d'impact/ESG).</li>
+      <li>Inclus : sous-domaine marque blanche, CMS, communautés, campagnes SMS/WhatsApp, tableau de bord d'impact + Comité. <b>Formations = incluses, non facturées</b> (valeur/acquisition).</li>
+    </ul>
+    <div class="callout">Hypothèses M12 (réaliste) : ~25 000 visiteurs/mois ; ~50 structures payantes ⇒ ~0,5 M XOF MRR pages + dons ; ~10 partenaires Kit @ ~70 k ⇒ ~0,7 M XOF MRR B2B (hors conventions). Récurrence <b>par période payée à l'avance</b> (réaliste sur mobile money — pas de prélèvement automatique).</div>
   </section>
 </div>
 
@@ -281,6 +294,7 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
     </div>
     <ul class="plain" style="margin-top:10px">
       <li><b>Moteur principal</b> : contenu vérifié (autorité) couplé à la confiance communautaire.</li>
+      <li><b>Accélérateur partenaire</b> : chaque espace (Kit Digital) injecte communautés, contenu et campagnes → audience à CAC quasi nul ; la couche d'impact (Comités) convertit la traçabilité en preuve pour les bailleurs.</li>
       <li><b>Goulot actuel</b> : paiement non activé + données encore en seed → finir l'activation et la migration.</li>
       <li><b>Effets de réseau</b> : annuaire (plus de structures = plus utile), communauté (direct), data (plus de besoins = meilleurs insights B2B).</li>
     </ul>
@@ -335,15 +349,15 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
     <table class="scorecard">
       <thead><tr><th>Dimension</th><th>/10</th><th>Commentaire</th></tr></thead>
       <tbody>
-        <tr><td>Diversification des revenus</td><td>6</td><td>6 lignes, mais 1 seule câblée (et désactivée).</td></tr>
-        <tr><td>Synergies entre lignes</td><td>8</td><td>Flywheel contenu→confiance→dons/pages cohérent.</td></tr>
-        <tr><td>Rétention &amp; récurrence</td><td>4</td><td>Aujourd'hui 100 % ponctuel ; récurrence à construire.</td></tr>
+        <tr><td>Diversification des revenus</td><td>7</td><td>7 lignes ; socle multi-tenant (Kit) livré = relais B2B récurrent.</td></tr>
+        <tr><td>Synergies entre lignes</td><td>8</td><td>Flywheel contenu→confiance→dons/pages ; espaces partenaires l'alimentent.</td></tr>
+        <tr><td>Rétention &amp; récurrence</td><td>5</td><td>Abonnements pages + espaces partenaires ; récurrence auto à construire.</td></tr>
         <tr><td>Scalabilité</td><td>8</td><td>Serverless + contenu = coût marginal quasi nul.</td></tr>
-        <tr><td>Défensabilité</td><td>7</td><td>Contenu vérifié + annuaire (réseau) + confiance.</td></tr>
+        <tr><td>Défensabilité</td><td>8</td><td>Contenu vérifié + annuaire + confiance + marque blanche & impact.</td></tr>
         <tr><td>Efficacité d'acquisition</td><td>7</td><td>Fort potentiel organique (SEO santé, communautés).</td></tr>
         <tr><td>Marge</td><td>9</td><td>85–95 % sur toutes les lignes monétisables.</td></tr>
-        <tr><td>Time-to-revenue</td><td>8</td><td>Dons activables en jours (code prêt).</td></tr>
-        <tr><td><b>Santé globale</b></td><td><b>7</b></td><td>Excellent socle ; débloquer paiement + couche récurrente.</td></tr>
+        <tr><td>Time-to-revenue</td><td>8</td><td>Dons activables en jours ; socle partenaire déjà livré.</td></tr>
+        <tr><td><b>Santé globale</b></td><td><b>8</b></td><td>Socle élargi (partenaires, impact) ; débloquer paiement + récurrence auto.</td></tr>
       </tbody>
     </table>
   </section>
@@ -361,6 +375,12 @@ const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
         <tr><td>Billetterie événements + page d'accueil dédiée</td><td>✅ Livré</td></tr>
         <tr><td>Dashboard revenus admin (GMV, take rate, MRR)</td><td>✅ Livré</td></tr>
         <tr><td>Sponsoring de contenu (champ CMS + bandeau étiqueté)</td><td>✅ Livré</td></tr>
+        <tr><td><b>Espaces partenaires multi-tenant (Kit Digital, ASSAD)</b></td><td>✅ Socle livré (P2)</td></tr>
+        <tr><td>Campagnes SMS/WhatsApp ciblées + consentement</td><td>✅ Livré (P3)</td></tr>
+        <tr><td>Couche d'impact + Comités (reporting ESG)</td><td>✅ Livré (P4)</td></tr>
+        <tr><td>Rôle professionnel vérifié + reconnaissance donateurs</td><td>✅ Livré (P1)</td></tr>
+        <tr><td>Formations / e-learning (catégorie académique)</td><td>✅ Livré — non monétisé (P5)</td></tr>
+        <tr><td>Facturation du Kit partenaire (plan + conventions)</td><td>⏳ À venir</td></tr>
         <tr><td>Activation Bictorys (clés + flag) — étape ops</td><td>⏳ À activer</td></tr>
         <tr><td>Envoi d'emails (rappels/newsletter), TVA/facturation</td><td>⏳ Différé / externe</td></tr>
       </tbody>

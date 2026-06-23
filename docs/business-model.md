@@ -78,8 +78,8 @@ Aucune donnée d'audience réelle n'est dans le code (tout est mock/seed). Les u
 
 ┌─────────────────────────────────────────────────────────────┐
 │ LIGNE 3 : Événements & Formations (Billetterie)             │
-│ Statut : 🟡 En construction (entité complète, prix=string,  │
-│   pas de checkout)                                          │
+│ Statut : 🟢 Livré (checkout createTicketCharge + commission;│
+│   activation = clés Bictorys)                               │
 ├─────────────────────────────────────────────────────────────┤
 │ Description : talks, ateliers, webinaires (présentiel/en     │
 │   ligne/hybride), avec capacité (seatsLeft).                │
@@ -150,6 +150,31 @@ Aucune donnée d'audience réelle n'est dans le code (tout est mock/seed). Les u
 │ Preuves : equipmentNeeds (region/category/urgency),         │
 │   organizations annuaire, auditLogs, partners (institution).│
 └─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ LIGNE 7 : Espaces partenaires — Kit Digital (PHARE)         │
+│ Statut : 🟢 Socle livré (P2) — monétisation à activer       │
+├─────────────────────────────────────────────────────────────┤
+│ Description : espace en marque blanche multi-tenant pour un  │
+│   partenaire (ASSAD…) sur <marque>.werguyaram.org : CMS,    │
+│   communauté(s), événements, campagnes SMS/WhatsApp,         │
+│   tableau de bord d'impact + Comité de pilotage.            │
+│ Audience : associations, ONG, institutions, bailleurs,      │
+│   partenaires communautaires & académiques.                 │
+│ Valeur : présence digitale clé-en-main + audience + outils  │
+│   de prévention + impact mesurable (ESG), sans build propre.│
+│ Modèle : HYBRIDE — palier d'abonnement public (PME/assos)   │
+│   + « Pacte-Convention » annuel sur devis (institutions).   │
+│ Pricing : ~49 000–99 000 XOF/mois (palier) ; convention sur │
+│   devis (value-based, bailleurs/institutions).             │
+│ Revenu potentiel : phare — déterminé par le nb de partenaires│
+│   onboardés (chaque espace = abonnement + services).       │
+│ Effort technique : socle livré (tenants, host-routing,      │
+│   espace, Comités, campagnes) ; reste facturation + DNS/SSL.│
+│ Priorité : haute (différenciateur du deck 2026).           │
+│ Preuves : Tenant + tenantHost.ts + TenantContext +          │
+│   TenantSpace.tsx ; Committee ; sendCampaign ; entries CMS. │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## A.2 — Matrice Business Model
@@ -162,6 +187,9 @@ Aucune donnée d'audience réelle n'est dans le code (tout est mock/seed). Les u
 | 4 | Contenu / sponsoring | Sponsoring rubrique | — | 150 000–400 000 XOF/mois | vente B2B | multi-mois | ~95 % | 4 |
 | 5 | Communauté | Non monétisé (flywheel) | Gratuit | (différé 2 000 XOF/mois) | — | indirect (−CAC) | — | 5 |
 | 6 | Data / B2B | Licence / devis | — | 500 000 XOF+ | vente directe | annuel | ~85 % | 6 |
+| 7 | **Espaces partenaires (Kit Digital)** | Hybride : abonnement + convention | ~49 000 XOF/mois | Convention annuelle sur devis | vente B2B / partenariat | annuel (récurrent) | élevé | ~88 % | **haute** |
+
+> **Note formations** : la verticale **Formations / e-learning** (livrée) n'est **pas** une ligne de revenus — elle est positionnée comme **levier d'acquisition & de valeur partenaire** (catégorie académique), au même titre que la communauté.
 
 \* La marge brute des dons n'est "à la plateforme" que si l'on prélève des frais ; sinon le don est reversé (la "marge plateforme" = frais perçus − frais agrégateur). Voir A.3.
 
@@ -204,6 +232,14 @@ Aucune donnée d'audience réelle n'est dans le code (tout est mock/seed). Les u
 ### Ligne 6 — Data/B2B (PRIORITÉ 6, après traction)
 - Insights agrégés anonymisés sur les besoins en équipement par région/catégorie/urgence (`equipmentNeeds`) + annuaire structuré = produit vendable aux bailleurs. Nécessite anonymisation + cadre RGPD/loi sénégalaise (CDP). Devis 500 000 XOF+.
 
+### Ligne 7 — Espaces partenaires / Kit Digital (PHARE, récurrence B2B)
+- **Pourquoi ce modèle (hybride)** : le marché partenaire est hétérogène. Un **palier d'abonnement public** (~49 000–99 000 XOF/mois) capte les PME, associations et structures qui veulent une présence clé-en-main et auto-onboardable ; une **« Pacte-Convention » annuelle sur devis** (value-based) capte les institutions, ONG et **bailleurs** dont l'achat est négocié et adossé à des objectifs d'impact/ESG. Les deux cohabitent sans cannibalisation.
+- **Ce que l'espace inclut** (réutilise le socle livré) : sous-domaine en marque blanche (`<marque>.werguyaram.org`), CMS dédié, communauté(s) par pathologie, événements, **campagnes SMS/WhatsApp consenties**, **tableau de bord d'impact + Comité de pilotage** (indicateurs mesurables, exportables ESG). Les **formations** du partenaire (catégorie académique) y sont publiées **sans surcoût** — elles servent la valeur, pas une ligne de revenus.
+- **Monétisation** : abonnement récurrent (rattaché à `subscriptions`/`pricingPlans`, à étendre avec un plan « Espace partenaire ») + prestations de convention (setup, accompagnement, volume de campagnes). Marge ~85–90 % (coût marginal cloud + SMS/WhatsApp + provisioning DNS/SSL).
+- **Unit economics (indicatif)** : 10 partenaires au palier ~70 000 XOF/mois = **~700 000 XOF/mois** (~8,4 M XOF/an) de MRR partenaire, **avant** les conventions institutionnelles (devis ponctuels plus élevés). C'est la ligne au plus fort potentiel de récurrence B2B.
+- **Risque principal** : complexité multi-tenant (wildcard DNS/SSL, isolation logique, SEO multi-domaine, **gouvernance de marque**). **Mitigation** : onboarding par partenaire (custom domain) avant wildcard ; charte de marque + Comité de pilotage par espace.
+- **Benchmark** : modèles « powered-by » / marque blanche SaaS B2B2C ; le deck 2026 (Kit Digital ASSAD) en fait le **différenciateur** de la plateforme.
+
 ## A.4 — Synergies, flywheel & funnel
 
 ### Matrice de synergies (flux X → Y)
@@ -226,6 +262,7 @@ Contenu santé vérifié (SEO gratuit)
             ↺
 ```
 - **Moteur principal** : le **contenu vérifié** (autorité) couplé à la **confiance communautaire**.
+- **Accélérateur partenaire (Ligne 7)** : chaque **espace partenaire (Kit Digital)** injecte dans le flywheel ses communautés, son contenu et ses campagnes de prévention → plus d'audience et d'engagement à coût d'acquisition quasi nul ; la **couche d'impact (Comités)** transforme la traçabilité (don → équipement, messages délivrés, dépistages) en **preuve vendable aux bailleurs** (boucle de financement).
 - **Goulot actuel** : (a) Bictorys OFF = zéro conversion monétaire ; (b) tout tourne sur du **mock/seed** (pas d'audience réelle).
 - **Investissement qui débloque** : activer Bictorys (cash) + finir la migration mock→Firestore (déjà un programme connu) + SEO réel.
 - **Effets de réseau** : annuaire (plus de structures → plus utile → plus de structures) ; communauté (direct) ; data (plus de besoins → meilleurs insights B2B).
@@ -278,15 +315,15 @@ Contenu santé vérifié (SEO gratuit)
 
 | Dimension | Score /10 | Commentaire |
 |---|---|---|
-| Diversification des revenus | 6 | 6 lignes identifiées, mais 1 seule câblée (et désactivée). Potentiel élevé, réalisation faible. |
-| Synergies entre lignes | 8 | Flywheel contenu→confiance→dons/pages très cohérent ; lignes complémentaires. |
-| Rétention & récurrence | 4 | Aujourd'hui 100 % ponctuel (dons one-shot). Récurrence à construire (abonnements/dons récurrents). |
+| Diversification des revenus | 7 | 7 lignes ; socle multi-tenant (Kit Digital) livré → relais de revenu B2B récurrent en plus des dons/pages. Reste à activer le paiement. |
+| Synergies entre lignes | 8 | Flywheel contenu→confiance→dons/pages très cohérent ; les espaces partenaires l'alimentent. |
+| Rétention & récurrence | 5 | Abonnements pages + espaces partenaires (relation récurrente B2B) posés ; récurrence **automatique** (prélèvement) encore à construire. |
 | Scalabilité | 8 | Serverless Firebase + contenu = coût marginal quasi-nul ; carte OSM sans coût clé. |
-| Défensabilité | 7 | Moat = contenu vérifié UEMOA + annuaire (effet réseau) + confiance communautaire. |
+| Défensabilité | 8 | Moat = contenu vérifié UEMOA + annuaire (effet réseau) + confiance + **espaces marque blanche & couche d'impact** (verrou partenaire). |
 | Efficacité d'acquisition | 7 | Fort potentiel organique (SEO santé + communautés/églises) ; CAC bas. |
 | Marge | 9 | Marges 85–95 % sur toutes les lignes monétisables. |
-| Time-to-revenue | 8 | Ligne 1 activable en jours (code prêt). |
-| **SANTÉ GLOBALE** | **7/10** | Excellent socle technique et logique de plateforme ; **bloqué par la non-activation du paiement et l'absence de couche récurrente/transactionnelle.** |
+| Time-to-revenue | 8 | Ligne 1 activable en jours (code prêt) ; socle partenaire déjà livré. |
+| **SANTÉ GLOBALE** | **8/10** | Socle élargi (partenaires, impact mesurable, prévention SMS/WhatsApp) ; reste à **activer le paiement** et la **récurrence automatique** pour convertir le potentiel en cash. |
 
 ## A.8 — Top 10 actions immédiates (cette semaine)
 
@@ -305,7 +342,7 @@ Contenu santé vérifié (SEO gratuit)
 
 # PARTIE B — SCAFFOLD DE MONÉTISATION (Plan d'implémentation Phase 5)
 
-Objectif : poser une **architecture transactionnelle unifiée** qui supporte les 6 lignes, en réutilisant les patterns existants (Cloud Functions + Firestore rules + admin CMS schema-driven). On **étend** le rail Bictorys déjà en place plutôt que d'en créer un nouveau.
+Objectif : poser une **architecture transactionnelle unifiée** qui supporte les 7 lignes, en réutilisant les patterns existants (Cloud Functions + Firestore rules + admin CMS schema-driven). On **étend** le rail Bictorys déjà en place plutôt que d'en créer un nouveau.
 
 ## B.1 — Ce qui existe vs ce qui manque
 
@@ -455,6 +492,24 @@ Le **socle transactionnel** est posé et vérifié (`tsc` app + functions, ESLin
 | Admin | `src/pages/admin/Revenue.tsx` + route + `adminNav.ts` | dashboard `/admin/revenue` (GMV, take rate, par ligne) |
 
 **Reste à faire** (différé selon B.6) : `subscriptions` récurrents + `chargeDueSubscriptions`, `commissions` billetterie, `aggregateRevenue` → `revenueReports` (le dashboard agrège pour l'instant côté client).
+
+---
+
+## État d'implémentation — Lots croissance partenaire (P1–P5)
+
+Au-delà du scaffold de monétisation, la **stratégie partenaire** (cf. `docs/partner-growth-strategy.md`, ancrée sur le deck 2026 + le modèle ASSAD « Kit Digital ») a été livrée jusqu'à P5 :
+
+| Lot | Contenu | Statut | Impact business model |
+|---|---|---|---|
+| **P1** | Rôle **`health_pro` vérifié** (annuaire de professionnels de confiance) ; communautés ↔ pathologie + **suggestion au signup** ; **reconnaissance des donateurs** (page « Mes dons & impact ») | ✅ Livré | Renforce confiance (Lignes 1/2/5) + relation donateur |
+| **P2** | **Espaces partenaires multi-tenant (Kit Digital)** : `Tenant`, résolution par hôte, espace brandé, CMS | ✅ Socle livré | **Ligne 7 (phare)** — relais de revenu B2B récurrent |
+| **P3** | **Campagnes SMS/WhatsApp** ciblées + **consentement (opt-in)**, envoi via Chatwoot | ✅ Livré | Capacité-clé du Kit (valeur partenaire/prévention) |
+| **P4** | **Couche d'impact + Comités** (indicateurs mesurables, reporting ESG) sur l'espace partenaire | ✅ Livré | Argument bailleurs/financiers (preuve d'impact) |
+| **P5** | **Formations / e-learning** (catégorie académique) | ✅ Livré — **non monétisé** (acquisition/valeur partenaire) | Active la catégorie académique du deck |
+
+**À venir** : **P6** vertical Bien-être & Sport ; **P7** fil d'actualité + notifications push ; **facturation du Kit partenaire** (plan « Espace partenaire » + conventions) ; **récurrence automatique** des abonnements/dons ; **activation des paiements** (ops : clés Bictorys + `VITE_BICTORYS_ENABLED`).
+
+**Ops d'activation du Kit** : provisioning **DNS/SSL** par sous-domaine partenaire (ou wildcard `*.werguyaram.org`), **templates WhatsApp** approuvés par Meta (envoi hors fenêtre 24 h). Détails dans `docs/go-live-checklist.md`.
 
 ### Décisions à trancher avant d'aller plus loin
 1. **Modèle de frais sur les dons** : la version livrée applique le **pourboire optionnel** (levier recommandé, taux 0/3/6/10 %). Alternatives : frais fixes, ou 100 % gratuit type HelloAsso. Ce choix conditionne le calcul `platformAmount` dans le webhook.

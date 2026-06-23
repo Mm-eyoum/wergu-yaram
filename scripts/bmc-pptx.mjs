@@ -36,15 +36,15 @@ const W = 13.333;
 
 /* ---- BMC content ---- */
 const BMC = {
-  partners: ["Bictorys — mobile money (Wave, Orange Money, MTN, carte)", "Structures de santé & ordres professionnels", "ONG, fondations, institutions, bailleurs", "Google Places / OpenStreetMap (annuaire & carte)", "Chatwoot / Brevo (support & email)", "Firebase / Google Cloud (infrastructure)"],
-  activities: ["Production & curation de contenu vérifié", "Développement & exploitation de la plateforme", "Modération & animation de la communauté", "Acquisition / SEO / growth", "Vente B2B (structures, partenaires)", "Traitement des paiements & reversements"],
-  resources: ["Référentiel santé vérifié (UEMOA/LME) — moat de contenu", "Plateforme tech (React + Firebase serverless, Typesense)", "Annuaire des structures (effet réseau)", "Audience & communauté engagée", "Marque de confiance + comité éditorial", "Intégration mobile money (Bictorys)"],
-  value: ["Information santé vérifiée & gratuite (DCI/UEMOA, pathologies)", "Annuaire géolocalisé + pages crédibles (Vérifié / Pro)", "Collecte de fonds traçable pour équipements (impact mesurable)", "Communauté & forum de confiance (rôles soignants)", "Billetterie d'événements santé", "Partenaires : visibilité ciblée + data d'impact"],
-  relationships: ["Self-service (comptes, pages, tableau de bord)", "Communauté & forum modérés", "Support (Chatwoot + messagerie in-app)", "Contenu éditorial régulier (confiance)", "Abonnements (relation récurrente structures)"],
-  channels: ["Web / PWA — SEO du référentiel = moteur d'acquisition", "Recherche fédérée (Typesense)", "Réseaux sociaux & partage de campagnes", "Communautés WhatsApp / églises (canal local)", "Newsletter / email", "Bouche-à-oreille & parrainage"],
-  segments: ["Grand public : patients & aidants", "Donateurs (locaux + récurrents)", "Structures de santé (hôpitaux, cliniques, CSPS)", "Partenaires / ONG / institutions / bailleurs", "Organisateurs d'événements santé", "Soignants (forum, contenu)"],
-  costs: ["Infrastructure cloud (coût marginal faible)", "Frais agrégateur mobile money (~1,2 %)", "Production éditoriale & modération", "Acquisition marketing (ads ciblées)", "Équipe & exploitation", "Conformité (TVA, protection des données / CDP)"],
-  revenue: ["Dons + pourboire plateforme optionnel (+ récurrents)", "Abonnements pages : Vérifié 9 900 / Pro 24 900 XOF / mois (−20 % annuel)", "Commission billetterie (8–10 %)", "Sponsoring de rubriques (150 k–400 k XOF / mois)", "Data / B2B & rapports d'impact (devis 500 k+ XOF)"],
+  partners: ["Bictorys — mobile money (Wave, Orange Money, MTN, carte)", "ASSAD & partenaires communautaires / associatifs (pilotes)", "Structures de santé & ordres professionnels", "ONG, fondations, institutions & bailleurs", "Partenaires académiques & de formation", "Google Places / OSM · Chatwoot / Brevo · Firebase"],
+  activities: ["Production & curation de contenu vérifié", "Développement & exploitation de la plateforme", "Modération & animation de la communauté", "Onboarding & animation des espaces partenaires", "Campagnes de prévention ciblées (SMS / WhatsApp)", "Mesure d'impact & reporting ESG", "Acquisition / SEO / growth · vente B2B · paiements"],
+  resources: ["Référentiel santé vérifié (UEMOA/LME) — moat de contenu", "Plateforme tech (React + Firebase serverless, Typesense)", "Socle multi-tenant + Comités (gouvernance d'impact)", "Annuaire des structures + catalogue de formations (réseau)", "Audience & communauté engagée · marque de confiance", "Mobile money (Bictorys) + omnicanal (Chatwoot)"],
+  value: ["Information santé vérifiée & gratuite (DCI/UEMOA, pathologies)", "Annuaire géolocalisé + pages crédibles (Vérifié / Pro)", "Espaces partenaires en marque blanche (Kit Digital)", "Campagnes de prévention SMS/WhatsApp ciblées (consenties)", "Tableaux de bord d'impact + reporting ESG (Comités)", "Collecte de fonds traçable + billetterie d'événements", "Communauté & annuaire de professionnels vérifiés · formations"],
+  relationships: ["Self-service (comptes, pages, tableau de bord)", "Espace partenaire dédié + Comité de pilotage", "Reconnaissance des donateurs (« Mes dons & impact »)", "Communauté & forum modérés", "Support omnicanal (Chatwoot + messagerie in-app)", "Abonnements (relation récurrente structures & partenaires)"],
+  channels: ["Web / PWA — SEO du référentiel = moteur d'acquisition", "Sous-domaines partenaires (<marque>.werguyaram.org)", "Campagnes SMS / WhatsApp (Chatwoot)", "Recherche fédérée (Typesense)", "Réseaux sociaux · communautés WhatsApp / églises", "Newsletter / email · bouche-à-oreille & parrainage"],
+  segments: ["Grand public : patients & aidants", "Donateurs (locaux + récurrents)", "Structures de santé (hôpitaux, cliniques, CSPS)", "Partenaires communautaires & associatifs (ASSAD)", "Institutions & bailleurs (impact / ESG)", "Académiques & formation · soignants vérifiés · organisateurs"],
+  costs: ["Infrastructure cloud (coût marginal faible)", "Frais agrégateur mobile money (~1,2 %)", "Coûts SMS / WhatsApp (templates Meta, agrégateur)", "Provisioning DNS / SSL multi-tenant", "Production éditoriale & modération · acquisition", "Équipe & exploitation · conformité (TVA, CDP)"],
+  revenue: ["Dons + pourboire plateforme optionnel (+ dons récurrents)", "Abonnements pages : Vérifié 9 900 / Pro 24 900 XOF / mois (−20 % annuel)", "Espaces partenaires (Kit Digital) : ~49–99 k XOF/mois + Pacte-Convention annuel sur devis", "Commission billetterie (8–10 %)", "Sponsoring de rubriques (150 k–400 k XOF / mois)", "Data / B2B & rapports d'impact (devis 500 k+ XOF)"],
 };
 
 /* ---- helpers ---- */
@@ -90,7 +90,7 @@ function contentSlide(title, kicker) {
   const cards = [
     { t: "Quoi", b: "Portail santé vérifié + annuaire des structures + collecte de fonds & événements, pour l'Afrique de l'Ouest." },
     { t: "Pour qui", b: "Grand public, donateurs, structures de santé, ONG/partenaires, organisateurs, soignants." },
-    { t: "Comment on gagne", b: "Pourboire sur dons, abonnements de pages (MRR), commission billetterie, sponsoring, data B2B." },
+    { t: "Comment on gagne", b: "Pourboire sur dons, abonnements de pages (MRR), espaces partenaires (Kit Digital), commission billetterie, sponsoring, data B2B." },
   ];
   cards.forEach((c, i) => {
     const x = 0.5 + i * 4.15;
@@ -170,20 +170,21 @@ blocks.forEach(([title, items, accent], i) => {
   const rows = [
     ["Dons", "Don + pourboire", "500 XOF", "5 000/mois (récurrent)", "10×–∞", "~94 %*"],
     ["Pages structures", "Abonnement", "Gratuit", "9 900 → 24 900/mois", "~22×", "~88 %"],
+    ["Espaces partenaires (Kit)", "Hybride abo + convention", "~49 k/mois", "Convention (devis)", "élevé", "~88 %"],
     ["Billetterie", "One-time + commission", "Gratuit", "2 500–15 000/billet", "élevé", "~90 %"],
     ["Sponsoring", "Rubrique sponsorisée", "—", "150 k–400 k/mois", "—", "~95 %"],
     ["Data / B2B", "Licence / devis", "—", "500 k+", "—", "~85 %"],
   ].map((r) => r.map((c) => ({ text: c, options: { fontSize: 11, color: NAVY } })));
   s.addTable([head, ...rows], {
-    x: 0.5, y: 1.8, w: 12.3, colW: [2.0, 2.6, 1.6, 3.3, 1.4, 1.4],
-    border: { type: "solid", color: BORDER, pt: 1 }, rowH: 0.55, valign: "middle", align: "left",
+    x: 0.5, y: 1.8, w: 12.3, colW: [2.2, 2.6, 1.6, 3.1, 1.4, 1.4],
+    border: { type: "solid", color: BORDER, pt: 1 }, rowH: 0.5, valign: "middle", align: "left",
     fill: { color: SOFT },
   });
-  s.addText("* Marge plateforme sur dons = pourboire/frais perçus − frais agrégateur ; le don est intégralement reversé à la structure.", { x: 0.5, y: 5.2, w: 12.3, h: 0.4, fontSize: 10, italic: true, color: TEXT2 });
+  s.addText("* Marge plateforme sur dons = pourboire/frais perçus − frais agrégateur ; le don est intégralement reversé à la structure.", { x: 0.5, y: 5.45, w: 12.3, h: 0.4, fontSize: 10, italic: true, color: TEXT2 });
   s.addText([
     { text: "Objectif An 1 : ", options: { bold: true, color: GREEN } },
-    { text: "3–12 M XOF · ~50–150 structures payantes · marges 85–95 % · récurrence par période payée à l'avance.", options: { color: NAVY } },
-  ], { x: 0.5, y: 5.7, w: 12.3, h: 0.6, fontSize: 13, fill: { color: MINT }, align: "left" });
+    { text: "3–12 M XOF · ~50–150 structures payantes + espaces partenaires (MRR B2B) · marges 85–95 %.", options: { color: NAVY } },
+  ], { x: 0.5, y: 5.95, w: 12.3, h: 0.6, fontSize: 13, fill: { color: MINT }, align: "left" });
   footer(s, 13);
 }
 
@@ -194,7 +195,7 @@ blocks.forEach(([title, items, accent], i) => {
   const s = contentSlide("Roadmap 12 mois", "Exécution");
   const phases = [
     ["M1–M3 · Fondations", "Activer dons (Bictorys) + pourboire ; migration données ; KPIs.", "0,1–0,6 M"],
-    ["M4–M6 · Accélération", "Abonnements pages (Vérifié/Pro) + featured ; dons récurrents.", "0,8–3 M"],
+    ["M4–M6 · Accélération", "Abonnements pages + espaces partenaires (Kit Digital) ; dons récurrents.", "0,8–3 M"],
     ["M7–M9 · Expansion", "Billetterie ; cross-sell ; dashboard revenus.", "2–6 M"],
     ["M10–M12 · Optimisation", "Pricing/funnel ; reporting auto ; 1ᵉʳ deal data B2B.", "3–12 M"],
   ];
