@@ -1,10 +1,10 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowRight, Download } from "lucide-react";
+import { ArrowRight, Download, Printer } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { fetchTenantForManager } from "@/services/tenants";
-import { useTenantAnalytics } from "@/hooks/useCatalog";
+import { useTenantAnalytics, useTenantTraffic } from "@/hooks/useCatalog";
 import { PARTNER_NAV } from "@/components/partner/partnerNav";
 import { exportCsv } from "@/lib/exportCsv";
 import { SEOHead } from "@/seo/SEOHead";
@@ -23,8 +23,10 @@ export default function PartnerHome() {
     enabled: !!slug,
   });
   const analytics = useTenantAnalytics(slug);
+  const traffic = useTenantTraffic(slug);
   const accent = { color: "var(--tenant-accent, #007A5E)" };
   const a = analytics.data;
+  const t = traffic.data;
 
   const tiles: { label: string; value: string }[] = a
     ? [
@@ -72,9 +74,14 @@ export default function PartnerHome() {
           <h1 className="text-2xl font-extrabold sm:text-3xl" style={accent}>{tenant?.name ?? slug}</h1>
           <p className="mt-1 text-sm text-text-secondary dark:text-white/60">Vos indicateurs d'impact, en temps réel.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={!a}>
-          <Download className="h-4 w-4" /> Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-4 w-4" /> PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={!a}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+        </div>
       </header>
 
       {analytics.isLoading ? (
@@ -88,6 +95,27 @@ export default function PartnerHome() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Trafic réel GA4 (si configuré côté ops) */}
+      {t?.configured && (
+        <>
+          <h2 className="mb-3 mt-8 text-lg font-bold text-text-primary dark:text-white">Trafic (30 derniers jours)</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-2xl border border-border-soft bg-white p-4 dark:bg-white/5">
+              <p className="text-xl font-extrabold" style={accent}>{num(t.views ?? 0)}</p>
+              <p className="mt-0.5 text-xs text-text-secondary">Vues de pages</p>
+            </div>
+            <div className="rounded-2xl border border-border-soft bg-white p-4 dark:bg-white/5">
+              <p className="text-xl font-extrabold" style={accent}>{num(t.users ?? 0)}</p>
+              <p className="mt-0.5 text-xs text-text-secondary">Visiteurs</p>
+            </div>
+            <div className="rounded-2xl border border-border-soft bg-white p-4 dark:bg-white/5">
+              <p className="text-xl font-extrabold" style={accent}>{num(t.sessions ?? 0)}</p>
+              <p className="mt-0.5 text-xs text-text-secondary">Sessions</p>
+            </div>
+          </div>
+        </>
       )}
 
       <h2 className="mb-3 mt-8 text-lg font-bold text-text-primary dark:text-white">Gérer</h2>

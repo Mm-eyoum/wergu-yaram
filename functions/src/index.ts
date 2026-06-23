@@ -49,6 +49,13 @@ const CHATWOOT_ACCOUNT_ID = defineString("CHATWOOT_ACCOUNT_ID", { default: "" })
 const CHATWOOT_WEBSITE_INBOX_ID = defineString("CHATWOOT_WEBSITE_INBOX_ID", { default: "" });
 const BREVO_SENDER = defineString("BREVO_SENDER", { default: "Wergu Yaram <no-reply@werguyaram.org>" });
 
+// --- GA4 Data API (trafic réel par espace partenaire) ---
+//   GA4_PROPERTY_ID — id numérique de la propriété GA4 (param non secret).
+//   GA4_SA_KEY      — JSON du compte de service (secret) ayant accès en lecture
+//                     à la propriété (rôle Viewer). Absents ⇒ section "non configurée".
+const GA4_PROPERTY_ID = defineString("GA4_PROPERTY_ID", { default: "" });
+const GA4_SA_KEY = defineSecret("GA4_SA_KEY");
+
 const MIN_AMOUNT = 500; // XOF
 const MAX_AMOUNT = 5_000_000; // XOF — sanity ceiling for a single donation.
 const MAX_TIP = 1_000_000; // XOF — sanity ceiling for the optional platform tip.
@@ -1401,3 +1408,79 @@ export const aggregateTenantPageviews = onSchedule("every day 03:00", async () =
   for (const d of snap.docs) batch.delete(d.ref);
   await batch.commit();
 });
+
+/**
+ * Real per-tenant traffic from the GA4 Data API (page views / users / sessions
+ * for paths under /espace/<slug>). Caller must be a manager of the space or an
+ * admin. Cached in `tenantReports/<slug>_ga4` for 6 h to bound GA4 quota. Returns
+ * `{ configured: false }` (graceful) until GA4_PROPERTY_ID + GA4_SA_KEY are set.
+ */
+export const getTenantTraffic = onCall(
+  { secrets: [GA4_SA_KEY], cors: CORS_ORIGINS },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError("unauthenticated", "Connexion requise.");
+    const slug = String((request.data as { tenantSlug?: string } | undefined)?.tenantSlug ?? "");
+    if (!slug) throw new HttpsError("invalid-argument", "tenantSlug requis.");
+
+    // Authorisation: admin OU gestionnaire de l'espace.
+    const actor = (await db.collection("users").doc(uid).get()).data() as { role?: string } | undefined;
+    const isAdmin = actor?.role === "admin" || actor?.role === "super_admin";
+    if (!isAdmin) {
+      const t = (await db.collection("tenants").doc(slug).get()).data() as
+        | { ownerUid?: string; managerUids?: string[] }
+        | undefined;
+      const isManager = !!t && (t.ownerUid === uid || (t.managerUids ?? []).includes(uid));
+      if (!isManager) throw new HttpsError("permission-denied", "Accès réservé au gestionnaire de l'espace.");
+    }
+
+    const propertyId = GA4_PROPERTY_ID.value();
+    const saKey = GA4_SA_KEY.value();
+    if (!propertyId || !saKey) return { configured: false as const };
+
+    // Serve fresh cache (< 6 h) to bound GA4 quota.
+    const cacheRef = db.collection("tenantReports").doc(`${slug}_ga4`);
+    const cached = await cacheRef.get();
+    const cachedAt = (cached.data()?.updatedAt as Timestamp | undefined)?.toMillis?.() ?? 0;
+    if (cached.exists && Date.now() - cachedAt < 6 * 60 * 60 * 1000) {
+      return { configured: true as const, cached: true, ...(cached.data()?.data as object) };
+    }
+
+    try {
+      const { BetaAnalyticsDataClient } = await import("@google-analytics/data");
+      const client = new BetaAnalyticsDataClient({ credentials: JSON.parse(saKey) });
+      const [resp] = await client.runReport({
+        property: `properties/${propertyId}`,
+        dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
+        dimensions: [{ name: "date" }],
+        metrics: [{ name: "screenPageViews" }, { name: "activeUsers" }, { name: "sessions" }],
+        dimensionFilter: {
+          filter: { fieldName: "pagePath", stringFilter: { matchType: "BEGINS_WITH", value: `/espace/${slug}` } },
+        },
+        limit: 60,
+      });
+      let views = 0;
+      let users = 0;
+      let sessions = 0;
+      const daily: { date: string; views: number }[] = [];
+      for (const row of resp.rows ?? []) {
+        const v = Number(row.metricValues?.[0]?.value ?? 0);
+        views += v;
+        users += Number(row.metricValues?.[1]?.value ?? 0);
+        sessions += Number(row.metricValues?.[2]?.value ?? 0);
+        daily.push({ date: String(row.dimensionValues?.[0]?.value ?? ""), views: v });
+      }
+      const data = { views, users, sessions, daily };
+      await cacheRef.set(
+        { tenantSlug: slug, type: "ga4", data, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+      return { configured: true as const, cached: false, ...data };
+    } catch (err) {
+      logger.error("GA4 runReport échec", { slug, error: String(err) });
+      // Serve last cache if present, else signal unavailable.
+      if (cached.exists) return { configured: true as const, cached: true, ...(cached.data()?.data as object) };
+      throw new HttpsError("unavailable", "Trafic GA4 indisponible pour le moment.");
+    }
+  },
+);

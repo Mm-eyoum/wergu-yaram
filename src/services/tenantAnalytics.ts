@@ -13,8 +13,31 @@ import {
   where,
   type Query,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
+
+/** Real GA4 traffic for a tenant's pages (server-fetched + cached). */
+export interface TenantTraffic {
+  configured: boolean;
+  cached?: boolean;
+  views?: number;
+  users?: number;
+  sessions?: number;
+  daily?: { date: string; views: number }[];
+}
+
+export async function fetchTenantTraffic(slug: string): Promise<TenantTraffic> {
+  if (!functions || !slug) return { configured: false };
+  try {
+    const callable = httpsCallable<{ tenantSlug: string }, TenantTraffic>(functions, "getTenantTraffic");
+    const { data } = await callable({ tenantSlug: slug });
+    return data;
+  } catch (err) {
+    reportError(err, { scope: "tenantAnalytics.fetchTenantTraffic" });
+    return { configured: false };
+  }
+}
 
 export interface TenantAnalytics {
   communities: number;
