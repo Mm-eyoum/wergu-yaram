@@ -51,10 +51,13 @@ const BREVO_SENDER = defineString("BREVO_SENDER", { default: "Wergu Yaram <no-re
 
 // --- GA4 Data API (trafic réel par espace partenaire) ---
 //   GA4_PROPERTY_ID — id numérique de la propriété GA4 (param non secret).
-//   GA4_SA_KEY      — JSON du compte de service (secret) ayant accès en lecture
-//                     à la propriété (rôle Viewer). Absents ⇒ section "non configurée".
-const GA4_PROPERTY_ID = defineString("GA4_PROPERTY_ID", { default: "" });
-const GA4_SA_KEY = defineSecret("GA4_SA_KEY");
+//   GA4_SA_KEY      — JSON du compte de service (rôle Viewer sur la propriété),
+//                     lu depuis l'environnement (functions/.env*, non versionné)
+//                     plutôt qu'un secret déclaré, pour ne pas bloquer le déploiement
+//                     des autres functions tant qu'il n'est pas configuré.
+//   Absents ⇒ la section trafic s'affiche « non configurée » (dégradation propre).
+//   Tous deux lus depuis l'environnement (functions/.env*), pas de param/secret
+//   déclaré, pour ne jamais bloquer le déploiement des autres functions.
 
 const MIN_AMOUNT = 500; // XOF
 const MAX_AMOUNT = 5_000_000; // XOF — sanity ceiling for a single donation.
@@ -1416,7 +1419,7 @@ export const aggregateTenantPageviews = onSchedule("every day 03:00", async () =
  * `{ configured: false }` (graceful) until GA4_PROPERTY_ID + GA4_SA_KEY are set.
  */
 export const getTenantTraffic = onCall(
-  { secrets: [GA4_SA_KEY], cors: CORS_ORIGINS },
+  { cors: CORS_ORIGINS },
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError("unauthenticated", "Connexion requise.");
@@ -1434,8 +1437,8 @@ export const getTenantTraffic = onCall(
       if (!isManager) throw new HttpsError("permission-denied", "Accès réservé au gestionnaire de l'espace.");
     }
 
-    const propertyId = GA4_PROPERTY_ID.value();
-    const saKey = GA4_SA_KEY.value();
+    const propertyId = process.env.GA4_PROPERTY_ID ?? "";
+    const saKey = process.env.GA4_SA_KEY ?? "";
     if (!propertyId || !saKey) return { configured: false as const };
 
     // Serve fresh cache (< 6 h) to bound GA4 quota.
