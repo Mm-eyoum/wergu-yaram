@@ -9,6 +9,9 @@ import type { PricingPlan } from "@/types/domain";
  *
  * Ligne 2 — Pages structures : freemium → Vérifié → Pro (-20 % en annuel).
  * Ligne 1 — Dons : pourboire plateforme optionnel (non un plan).
+ * Ligne 7 — Espaces partenaires (Kit Digital) : palier d'abonnement public
+ *   (PME/associations) ; les institutions/bailleurs relèvent d'une
+ *   « Pacte-Convention » annuelle sur devis (hors catalogue, négociée).
  */
 export const pricingPlans: PricingPlan[] = [
   {
@@ -90,5 +93,42 @@ export const pricingPlans: PricingPlan[] = [
     isActive: true,
     sortOrder: 4,
     trialDays: 14,
+  },
+  {
+    id: "partner_kit_monthly",
+    name: "Espace partenaire (Kit Digital)",
+    slug: "kit-partenaire",
+    description:
+      "Espace en marque blanche : sous-domaine, CMS, communautés, campagnes SMS/WhatsApp, tableau de bord d'impact + Comité.",
+    lineOfBusiness: "partners",
+    model: "subscription",
+    price: 49000,
+    currency: "XOF",
+    billingPeriod: "monthly",
+    features: [
+      "Sous-domaine en marque blanche (<marque>.werguyaram.org)",
+      "CMS dédié + communautés par pathologie",
+      "Campagnes de prévention SMS / WhatsApp (consenties)",
+      "Tableau de bord d'impact + Comité de pilotage",
+      "Publication de formations & d'événements (sans surcoût)",
+    ],
+    isActive: true,
+    sortOrder: 5,
+    trialDays: null,
+  },
+  {
+    id: "partner_kit_yearly",
+    name: "Espace partenaire (Kit Digital, annuel)",
+    slug: "kit-partenaire-annuel",
+    description: "Le Kit Digital, facturé à l'année (-20 %).",
+    lineOfBusiness: "partners",
+    model: "subscription",
+    price: 470400, // 49 000 × 12 × 0,8
+    currency: "XOF",
+    billingPeriod: "yearly",
+    features: ["Tout le Kit Digital", "2 mois offerts (-20 %)"],
+    isActive: true,
+    sortOrder: 6,
+    trialDays: null,
   },
 ];

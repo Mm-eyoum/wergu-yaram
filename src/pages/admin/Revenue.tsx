@@ -17,6 +17,7 @@ const LINE_LABELS: Record<LineOfBusiness, string> = {
   events: "Billetterie",
   content: "Contenu / sponsoring",
   data: "Données / B2B",
+  partners: "Espaces partenaires (Kit)",
 };
 
 const TYPE_LABELS: Record<TxnType, string> = {

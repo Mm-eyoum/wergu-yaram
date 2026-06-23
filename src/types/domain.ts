@@ -614,7 +614,7 @@ export interface SearchFacets {
 // `transactions` est la source unique pour le reporting. Montants en XOF.
 
 /** Ligne de business à laquelle un revenu est rattaché (pour le reporting). */
-export type LineOfBusiness = "donations" | "pages" | "events" | "content" | "data";
+export type LineOfBusiness = "donations" | "pages" | "events" | "content" | "data" | "partners";
 
 /** Type de modèle économique porté par un plan tarifaire. */
 export type RevenueModel = "one_time" | "subscription" | "commission" | "freemium";
