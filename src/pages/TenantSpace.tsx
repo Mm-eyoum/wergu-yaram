@@ -19,6 +19,8 @@ import {
 } from "@/hooks/useCatalog";
 import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
+import { useAuth } from "@/hooks/useAuth";
+import { Settings } from "lucide-react";
 
 /**
  * Espace partenaire brandé (multi-tenant). Servi sur `<slug>.werguyaram.org` ou
@@ -42,7 +44,10 @@ export default function TenantSpace() {
   const { data: ownedEvents = [] } = useTenantEvents(slug);
   const { data: ownedArticles = [] } = useTenantArticles(slug);
 
+  const { user } = useAuth();
   const tenant = tenantQuery.data;
+  const isManager =
+    !!user && !!tenant && (tenant.ownerUid === user.uid || !!tenant.managerUids?.includes(user.uid));
   const committee = useMemo(
     () => committees.find((c) => c.tenantSlug === tenant?.slug),
     [committees, tenant],
@@ -124,6 +129,15 @@ export default function TenantSpace() {
             >
               <Globe className="h-4 w-4" /> Site officiel
             </a>
+          )}
+          {isManager && (
+            <Link
+              to={`/espace/${tenant.slug}/gestion`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-current px-4 py-2.5 text-sm font-semibold"
+              style={accent}
+            >
+              <Settings className="h-4 w-4" /> Gérer mon espace
+            </Link>
           )}
         </div>
       </section>

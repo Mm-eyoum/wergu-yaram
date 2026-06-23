@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { RequirePermission } from "@/components/admin/PermissionGate";
+import { PartnerProtectedRoute } from "@/components/partner/PartnerProtectedRoute";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
@@ -33,6 +34,13 @@ const Soutenir = lazy(() => import("@/pages/Soutenir"));
 const Formations = lazy(() => import("@/pages/Formations"));
 const FormationDetail = lazy(() => import("@/pages/FormationDetail"));
 const TenantSpace = lazy(() => import("@/pages/TenantSpace"));
+const PartnerShell = lazy(() => import("@/components/partner/PartnerShell").then((m) => ({ default: m.PartnerShell })));
+const PartnerHome = lazy(() => import("@/pages/partner/PartnerHome"));
+const PartnerContentHub = lazy(() => import("@/pages/partner/PartnerContentHub"));
+const PartnerContentList = lazy(() => import("@/pages/partner/PartnerContentList"));
+const PartnerContentEditor = lazy(() => import("@/pages/partner/PartnerContentEditor"));
+const PartnerSettings = lazy(() => import("@/pages/partner/PartnerSettings"));
+const PartnerCampaigns = lazy(() => import("@/pages/partner/PartnerCampaigns"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -126,6 +134,23 @@ export default function App() {
         <Route path="/formations" element={<Formations />} />
         <Route path="/formations/:slug" element={<FormationDetail />} />
         <Route path="/espace/:slug" element={<TenantSpace />} />
+        {/* Partner sub-platform management (data-driven access: tenant owner/manager). */}
+        <Route
+          path="/espace/:slug/gestion"
+          element={
+            <PartnerProtectedRoute>
+              <PartnerShell />
+            </PartnerProtectedRoute>
+          }
+        >
+          <Route index element={<PartnerHome />} />
+          <Route path="contenus" element={<PartnerContentHub />} />
+          <Route path="contenus/:type" element={<PartnerContentList />} />
+          <Route path="contenus/:type/new" element={<PartnerContentEditor />} />
+          <Route path="contenus/:type/:id/edit" element={<PartnerContentEditor />} />
+          <Route path="campagnes" element={<PartnerCampaigns />} />
+          <Route path="parametres" element={<PartnerSettings />} />
+        </Route>
         <Route path="/connexion" element={<Login />} />
         <Route path="/inscription" element={<Register />} />
         <Route path="/conditions" element={<Terms />} />
