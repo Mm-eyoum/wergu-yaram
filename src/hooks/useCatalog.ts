@@ -25,6 +25,11 @@ import {
   getFormations,
   getFormationBySlug,
   getCommittees,
+  getTenantCommunities,
+  getTenantEvents,
+  getTenantArticles,
+  getTenantFormations,
+  getTenantEquipmentNeeds,
 } from "@/services/catalog";
 
 /** Query keys for catalog data — invalidate these after admin content edits. */
@@ -48,6 +53,7 @@ export const catalogKeys = {
   formations: ["catalog", "formations"] as const,
   formation: (slug: string) => ["catalog", "formation", slug] as const,
   committees: ["catalog", "committees"] as const,
+  tenantContent: (slug: string, kind: string) => ["catalog", "tenant", slug, kind] as const,
 };
 
 // --- Lists ---
@@ -70,6 +76,18 @@ export const useFormations = () =>
   useQuery({ queryKey: catalogKeys.formations, queryFn: getFormations });
 export const useCommittees = () =>
   useQuery({ queryKey: catalogKeys.committees, queryFn: getCommittees });
+
+// --- Tenant-scoped public lists (partner space aggregates by tenantSlug) ---
+export const useTenantCommunities = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "communities"), queryFn: () => getTenantCommunities(slug), enabled: !!slug });
+export const useTenantEvents = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "events"), queryFn: () => getTenantEvents(slug), enabled: !!slug });
+export const useTenantArticles = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "articles"), queryFn: () => getTenantArticles(slug), enabled: !!slug });
+export const useTenantFormations = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "formations"), queryFn: () => getTenantFormations(slug), enabled: !!slug });
+export const useTenantEquipmentNeeds = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "equipmentNeeds"), queryFn: () => getTenantEquipmentNeeds(slug), enabled: !!slug });
 
 // --- Single items (enabled only when the route param is present) ---
 export const useMedication = (slug: string | undefined) =>

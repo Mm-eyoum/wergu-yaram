@@ -64,7 +64,7 @@ async function main() {
 
   const taken = new Set<string>();
   const mapping: { orgId: string; slug: string; subMigrated: boolean }[] = [];
-  let skipped = 0;
+  const skipped = 0;
 
   for (const docSnap of snap.docs) {
     const o = docSnap.data();

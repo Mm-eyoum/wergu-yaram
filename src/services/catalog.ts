@@ -12,7 +12,7 @@
  * `slug` (or `id` for events/equipment needs), so single-item lookups can
  * read the document directly.
  */
-import { collection, doc, getDoc, getDocs, limit, query } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 import type {
@@ -167,5 +167,29 @@ export const getTenants = () => listOrMock<Tenant>("tenants", tenants);
 export const getTenantBySlug = (slug?: string) =>
   oneOrMock<Tenant>("tenants", slug, slug ? () => tenantBySlug(slug) : undefined);
 export const getCommittees = () => listOrMock<Committee>("committees", committees);
+
+/**
+ * Tenant-scoped public lists — published content tagged to a partner space
+ * (`tenantSlug == slug`). Single-field filter (auto-indexed). Empty when
+ * Firestore is absent (no mock fallback: scoping is meaningless on bundled mock).
+ */
+async function listByTenant<T>(collectionName: string, slug: string | undefined): Promise<T[]> {
+  if (!db || !slug) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, collectionName), where("tenantSlug", "==", slug), limit(CATALOG_PAGE_SIZE)),
+    );
+    return snap.docs.map((d) => d.data() as T).filter(isPublic);
+  } catch (err) {
+    reportError(err, { scope: "catalog.listByTenant", collection: collectionName });
+    return [];
+  }
+}
+
+export const getTenantCommunities = (slug?: string) => listByTenant<Community>("communities", slug);
+export const getTenantEvents = (slug?: string) => listByTenant<HealthEvent>("events", slug);
+export const getTenantArticles = (slug?: string) => listByTenant<Article>("articles", slug);
+export const getTenantFormations = (slug?: string) => listByTenant<Formation>("formations", slug);
+export const getTenantEquipmentNeeds = (slug?: string) => listByTenant<EquipmentNeed>("equipmentNeeds", slug);
 export const getCommitteeBySlug = (slug?: string) =>
   oneOrMock<Committee>("committees", slug, slug ? () => committeeBySlug(slug) : undefined);

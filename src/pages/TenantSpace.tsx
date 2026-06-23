@@ -8,7 +8,15 @@ import { EventCard } from "@/components/cards/EventCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getTenantBySlug } from "@/services/catalog";
-import { useArticles, useCommunities, useEvents, useCommittees } from "@/hooks/useCatalog";
+import {
+  useArticles,
+  useCommunities,
+  useEvents,
+  useCommittees,
+  useTenantCommunities,
+  useTenantEvents,
+  useTenantArticles,
+} from "@/hooks/useCatalog";
 import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 
@@ -28,6 +36,11 @@ export default function TenantSpace() {
   const { data: events = [] } = useEvents();
   const { data: articles = [] } = useArticles();
   const { data: committees = [] } = useCommittees();
+  // Ownership model: content tagged with tenantSlug. We UNION it with the legacy
+  // curated lists so both migrated and admin-curated content show (transition).
+  const { data: ownedCommunities = [] } = useTenantCommunities(slug);
+  const { data: ownedEvents = [] } = useTenantEvents(slug);
+  const { data: ownedArticles = [] } = useTenantArticles(slug);
 
   const tenant = tenantQuery.data;
   const committee = useMemo(
@@ -35,16 +48,25 @@ export default function TenantSpace() {
     [committees, tenant],
   );
   const spaceCommunities = useMemo(
-    () => communities.filter((c) => tenant?.communitySlugs?.includes(c.slug)),
-    [communities, tenant],
+    () => dedupeBy(
+      [...ownedCommunities, ...communities.filter((c) => tenant?.communitySlugs?.includes(c.slug))],
+      (c) => c.slug,
+    ),
+    [ownedCommunities, communities, tenant],
   );
   const spaceEvents = useMemo(
-    () => events.filter((e) => tenant?.eventIds?.includes(e.id)),
-    [events, tenant],
+    () => dedupeBy(
+      [...ownedEvents, ...events.filter((e) => tenant?.eventIds?.includes(e.id))],
+      (e) => e.id,
+    ),
+    [ownedEvents, events, tenant],
   );
   const spaceArticles = useMemo(
-    () => articles.filter((a) => tenant?.articleSlugs?.includes(a.slug)),
-    [articles, tenant],
+    () => dedupeBy(
+      [...ownedArticles, ...articles.filter((a) => tenant?.articleSlugs?.includes(a.slug))],
+      (a) => a.slug,
+    ),
+    [ownedArticles, articles, tenant],
   );
 
   if (tenantQuery.isLoading) {
@@ -188,6 +210,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       {children}
     </section>
   );
+}
+
+/** Merge lists keeping first occurrence per key (owned content wins over curated). */
+function dedupeBy<T>(items: T[], key: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  return items.filter((it) => {
+    const k = key(it);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 function ImpactTile({ label, value }: { label: string; value: string | number }) {

@@ -153,6 +153,12 @@ export interface Tenant {
   logo?: string | null;
   /** Page/organisation propriétaire (partenaire), optionnel. */
   partnerOrgId?: string;
+  /** Compte partenaire propriétaire de l'espace (gère le contenu en autonomie). */
+  ownerUid?: string;
+  /** Co-gestionnaires de l'espace (en plus du propriétaire). */
+  managerUids?: string[];
+  /** Quota mensuel de campagnes self-service (anti-abus). `periodKey` = "YYYY-MM". */
+  campaignQuota?: { monthly: number; sentThisMonth: number; periodKey: string };
   /** Personnalisation visuelle légère (la charte globale reste le socle). */
   theme?: { accent?: string; banner?: string };
   /** Contenu curé agrégé dans l'espace (slugs/ids existants). */
@@ -185,6 +191,8 @@ export interface Campaign {
   sentCount?: number;
   createdByUid?: string;
   createdAt?: string;
+  /** Espace partenaire émetteur (campagnes self-service scopées). Vide = campagne admin globale. */
+  tenantSlug?: string;
 }
 
 /**
@@ -198,6 +206,8 @@ export interface Committee {
   mission?: string;
   /** Espace partenaire rattaché (optionnel) — relie le comité à un tenant. */
   tenantSlug?: string;
+  /** Compte partenaire propriétaire (gestion autonome). */
+  ownerUid?: string;
   members: { name: string; role?: string; org?: string }[];
   /** Indicateurs d'impact suivis (mesurables) — ex. « Personnes dépistées » : « 1 200 ». */
   indicators: { label: string; value: string }[];
@@ -341,6 +351,10 @@ export interface Pathology {
 export interface Article {
   slug: string;
   published?: boolean;
+  /** Espace partenaire propriétaire (multi-tenant). Vide = contenu global éditorial. */
+  tenantSlug?: string;
+  /** Compte partenaire ayant créé/possédant ce contenu (gestion autonome). */
+  ownerUid?: string;
   title: string;
   excerpt: string;
   category: string;
@@ -436,6 +450,10 @@ export interface CommunityPost {
 export interface Community {
   slug: string;
   published?: boolean;
+  /** Espace partenaire propriétaire (multi-tenant). Vide = contenu global éditorial. */
+  tenantSlug?: string;
+  /** Compte partenaire ayant créé/possédant ce contenu (gestion autonome). */
+  ownerUid?: string;
   name: string;
   topic: string;
   description: string;
@@ -459,6 +477,10 @@ export interface EquipmentNeed {
   id: string;
   /** CMS publish state (distinct from `status`, which is the funding state). */
   published?: boolean;
+  /** Espace partenaire propriétaire (multi-tenant). Vide = contenu global éditorial. */
+  tenantSlug?: string;
+  /** Compte partenaire ayant créé/possédant ce contenu (gestion autonome). */
+  ownerUid?: string;
   title: string;
   facilitySlug: string;
   facilityName: string;
@@ -483,6 +505,10 @@ export interface EquipmentNeed {
 export interface HealthEvent {
   id: string;
   published?: boolean;
+  /** Espace partenaire propriétaire (multi-tenant). Vide = contenu global éditorial. */
+  tenantSlug?: string;
+  /** Compte partenaire ayant créé/possédant ce contenu (gestion autonome). */
+  ownerUid?: string;
   title: string;
   cover: string;
   summary: string;
@@ -524,6 +550,10 @@ export type FormationFormat = "e-learning" | "webinaire" | "presentiel" | "hybri
 export interface Formation {
   slug: string;
   published?: boolean;
+  /** Espace partenaire propriétaire (multi-tenant). Vide = contenu global éditorial. */
+  tenantSlug?: string;
+  /** Compte partenaire ayant créé/possédant ce contenu (gestion autonome). */
+  ownerUid?: string;
   title: string;
   excerpt: string;
   cover?: string;

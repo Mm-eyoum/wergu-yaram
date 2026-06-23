@@ -41,6 +41,38 @@ service cloud.firestore {
       return value is string && value.size() >= min && value.size() <= max;
     }
 
+    // --- Multi-tenant partner spaces ---
+    // A signed-in user who owns or co-manages the tenant `slug`. The size()>0
+    // guard means an empty/absent tenantSlug NEVER matches — global editorial
+    // content (no tenantSlug) stays editor-only.
+    function tenantData(slug) {
+      return get(/databases/$(database)/documents/tenants/$(slug)).data;
+    }
+    function isTenantManager(slug) {
+      return isSignedIn()
+        && slug is string && slug.size() > 0
+        && exists(/databases/$(database)/documents/tenants/$(slug))
+        && (request.auth.uid == tenantData(slug).get('ownerUid', '')
+            || request.auth.uid in tenantData(slug).get('managerUids', []));
+    }
+    // Tenant managers create/edit/publish their own content immediately
+    // (autonomy; moderation a posteriori). On create the doc must be tagged to a
+    // tenant they manage and owned by them; on update the tenant/owner are
+    // immutable (no cross-tenant move, no owner change). `isEditor()` is checked
+    // first by callers so admins/editors short-circuit before the tenant get().
+    function tenantCreateOk() {
+      return isTenantManager(request.resource.data.get('tenantSlug', ''))
+        && request.resource.data.get('ownerUid', '') == request.auth.uid;
+    }
+    function tenantUpdateOk() {
+      return isTenantManager(resource.data.get('tenantSlug', ''))
+        && request.resource.data.get('tenantSlug', '') == resource.data.get('tenantSlug', '')
+        && request.resource.data.get('ownerUid', '') == resource.data.get('ownerUid', '');
+    }
+    function tenantDeleteOk() {
+      return isTenantManager(resource.data.get('tenantSlug', ''));
+    }
+
     // Guards which role transitions an admin may perform on a user profile.
     function roleChangeAuthorized(uid, oldRole, newRole) {
       return
@@ -90,7 +122,14 @@ service cloud.firestore {
     // Writes go through the admin CMS: editors + admins may manage content.
     match /medications/{doc}    { allow read: if true; allow write: if isEditor(); }
     match /pathologies/{doc}    { allow read: if true; allow write: if isEditor(); }
-    match /articles/{doc}       { allow read: if true; allow write: if isEditor(); }
+    // Articles : éditorial global (editor) OU contenu d'un espace partenaire
+    // (le manager du tenant crée/édite/publie le sien — autonomie).
+    match /articles/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
     // Facilities are THE single model for a health establishment. An editor
     // manages editorial entries; an active user may also create one they own
     // (source:"user"), and a claimed directory listing carries an `ownerUid`.
@@ -126,13 +165,55 @@ service cloud.firestore {
             && request.resource.data.get('subscribedUntil', '') == resource.data.get('subscribedUntil', ''));
     }
     match /partners/{doc}       { allow read: if true; allow write: if isEditor(); }
-    match /events/{doc}         { allow read: if true; allow write: if isEditor(); }
-    match /equipmentNeeds/{doc} { allow read: if true; allow write: if isEditor(); }
-    match /formations/{doc}     { allow read: if true; allow write: if isEditor(); }
-    // Espaces partenaires multi-tenant (config de marque + contenu curé).
-    match /tenants/{doc}        { allow read: if true; allow write: if isEditor(); }
-    // Comités (gouvernance + indicateurs d'impact).
-    match /committees/{doc}     { allow read: if true; allow write: if isEditor(); }
+    // Événements : éditorial global OU contenu d'un espace partenaire.
+    match /events/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Besoins d'équipement : comme ci-dessus, mais les montants/état de collecte
+    // sont écrits EXCLUSIVEMENT par le webhook de don — un manager ne peut ni
+    // créer un besoin déjà « financé » ni fausser les compteurs.
+    match /equipmentNeeds/{doc} {
+      allow read: if true;
+      allow create: if isEditor()
+        || (tenantCreateOk()
+            && request.resource.data.get('raisedAmount', 0) == 0
+            && request.resource.data.get('donorsCount', 0) == 0
+            && request.resource.data.get('status', 'en_cours') == 'en_cours');
+      allow update: if isEditor()
+        || (tenantUpdateOk()
+            && request.resource.data.get('raisedAmount', 0) == resource.data.get('raisedAmount', 0)
+            && request.resource.data.get('donorsCount', 0) == resource.data.get('donorsCount', 0)
+            && request.resource.data.get('status', 'en_cours') == resource.data.get('status', 'en_cours'));
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Formations : éditorial global OU contenu d'un espace partenaire.
+    match /formations/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Espaces partenaires multi-tenant : créés/supprimés par un admin ; un manager
+    // édite la marque/le profil mais jamais ownerUid ni campaignQuota (anti-abus).
+    match /tenants/{slug} {
+      allow read: if true;
+      allow create: if isEditor();
+      allow update: if isEditor()
+        || (isTenantManager(slug)
+            && request.resource.data.get('ownerUid', '') == resource.data.get('ownerUid', '')
+            && request.resource.data.get('campaignQuota', {}) == resource.data.get('campaignQuota', {}));
+      allow delete: if isEditor();
+    }
+    // Comités (gouvernance + indicateurs d'impact) : éditorial OU manager du tenant.
+    match /committees/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
 
     // --- Site configuration (navigation menus, global settings) ---
     // Public read (header/footer render from it); admin-only writes.
@@ -209,7 +290,9 @@ service cloud.firestore {
     // --- Community content (active members can contribute) ---
     match /communities/{community} {
       allow read: if true;
-      allow write: if isEditor();
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
 
       match /posts/{post} {
         allow read: if true;
@@ -335,9 +418,26 @@ service cloud.firestore {
     }
 
     // Campagnes de prévention (SMS/WhatsApp) : créées/envoyées par la Function
-    // sendCampaign (Admin SDK) ; lecture admin pour le suivi.
+    // sendCampaign (Admin SDK) ; lecture admin OU manager du tenant émetteur.
     match /campaigns/{campaign} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
+      allow write: if false;
+    }
+
+    // --- Analytiques par espace partenaire ---
+    // Journalisation interne des vues : création ouverte mais shape validée +
+    // bornée, SANS PII (pas d'uid/IP) ; jamais relue côté client (agrégée par une
+    // Cloud Function) ni mutée.
+    match /pageViews/{view} {
+      allow create: if isText(request.resource.data.tenantSlug, 1, 80)
+        && isText(request.resource.data.path, 1, 300)
+        && isText(request.resource.data.day, 10, 10);
+      allow read, update, delete: if false;
+    }
+    // Rapports agrégés par tenant (vues, trafic GA4, revenu) : écrits par les
+    // Cloud Functions ; lus par l'admin OU le manager du tenant.
+    match /tenantReports/{report} {
+      allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
       allow write: if false;
     }
 
