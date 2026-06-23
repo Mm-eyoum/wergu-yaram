@@ -1315,3 +1315,41 @@ export const aggregateRevenue = onSchedule("every day 02:00", async () => {
   }
   await batch.commit();
 });
+
+/**
+ * Rolls raw internal page-views into per-tenant daily report docs
+ * (`tenantReports/<slug>_views_<day>`, field `views` incremented) and deletes
+ * the processed raw `pageViews` to cap storage. Bounded per run (Firestore
+ * batch ≤ 500 writes); high-traffic spaces drain over successive runs.
+ */
+export const aggregateTenantPageviews = onSchedule("every day 03:00", async () => {
+  const snap = await db.collection("pageViews").limit(350).get();
+  if (snap.empty) return;
+
+  const groups = new Map<string, { tenantSlug: string; day: string; count: number }>();
+  for (const d of snap.docs) {
+    const v = d.data() as { tenantSlug?: string; day?: string };
+    if (!v.tenantSlug || !v.day) continue;
+    const key = `${v.tenantSlug}_views_${v.day}`;
+    const g = groups.get(key) ?? { tenantSlug: v.tenantSlug, day: v.day, count: 0 };
+    g.count += 1;
+    groups.set(key, g);
+  }
+
+  const batch = db.batch();
+  for (const [key, g] of groups) {
+    batch.set(
+      db.collection("tenantReports").doc(key),
+      {
+        tenantSlug: g.tenantSlug,
+        type: "views",
+        day: g.day,
+        views: FieldValue.increment(g.count),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  }
+  for (const d of snap.docs) batch.delete(d.ref);
+  await batch.commit();
+});

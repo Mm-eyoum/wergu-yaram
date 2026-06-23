@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Globe } from "lucide-react";
@@ -21,6 +21,7 @@ import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 import { useAuth } from "@/hooks/useAuth";
 import { Settings } from "lucide-react";
+import { logTenantPageview } from "@/lib/tenantPageview";
 
 /**
  * Espace partenaire brandé (multi-tenant). Servi sur `<slug>.werguyaram.org` ou
@@ -46,6 +47,11 @@ export default function TenantSpace() {
 
   const { user } = useAuth();
   const tenant = tenantQuery.data;
+
+  // Internal page-view logging (no PII) for partner analytics.
+  useEffect(() => {
+    if (tenant?.slug) logTenantPageview(tenant.slug, `/espace/${tenant.slug}`);
+  }, [tenant?.slug]);
   const isManager =
     !!user && !!tenant && (tenant.ownerUid === user.uid || !!tenant.managerUids?.includes(user.uid));
   const committee = useMemo(

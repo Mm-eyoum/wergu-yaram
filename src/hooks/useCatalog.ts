@@ -31,6 +31,7 @@ import {
   getTenantFormations,
   getTenantEquipmentNeeds,
 } from "@/services/catalog";
+import { getTenantAnalytics } from "@/services/tenantAnalytics";
 
 /** Query keys for catalog data — invalidate these after admin content edits. */
 export const catalogKeys = {
@@ -88,6 +89,8 @@ export const useTenantFormations = (slug?: string) =>
   useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "formations"), queryFn: () => getTenantFormations(slug), enabled: !!slug });
 export const useTenantEquipmentNeeds = (slug?: string) =>
   useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "equipmentNeeds"), queryFn: () => getTenantEquipmentNeeds(slug), enabled: !!slug });
+export const useTenantAnalytics = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "analytics"), queryFn: () => getTenantAnalytics(slug!), enabled: !!slug });
 
 // --- Single items (enabled only when the route param is present) ---
 export const useMedication = (slug: string | undefined) =>
