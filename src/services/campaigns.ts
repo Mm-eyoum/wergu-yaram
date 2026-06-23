@@ -5,7 +5,7 @@
  * qui résout l'audience consentante et dispatche via Chatwoot). Le client ne
  * fait que composer/lancer et lire l'historique.
  */
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "./firebase";
 import type { Campaign, CampaignChannel } from "@/types/domain";
@@ -15,6 +15,36 @@ export interface CampaignInput {
   channel: CampaignChannel;
   message: string;
   segment: { interest?: string; region?: string; communitySlug?: string };
+  /** When set, a tenant manager sends a campaign scoped to their space (quota-capped). */
+  tenantSlug?: string;
+}
+
+function toCampaign(id: string, data: Record<string, unknown>): Campaign {
+  const createdAt = data.createdAt as { toDate?: () => Date } | undefined;
+  return {
+    id,
+    title: (data.title as string) ?? "",
+    channel: (data.channel as CampaignChannel) ?? "sms",
+    message: (data.message as string) ?? "",
+    segment: (data.segment as Campaign["segment"]) ?? {},
+    status: (data.status as Campaign["status"]) ?? "sent",
+    targetedCount: (data.targetedCount as number) ?? 0,
+    sentCount: (data.sentCount as number) ?? 0,
+    createdByUid: data.createdByUid as string | undefined,
+    createdAt: createdAt?.toDate?.().toISOString(),
+    tenantSlug: (data.tenantSlug as string | undefined) ?? undefined,
+  };
+}
+
+/** Campaigns for one partner space (manager view). Sorted client-side (no index). */
+export async function fetchTenantCampaigns(tenantSlug: string, max = 100): Promise<Campaign[]> {
+  if (!db || !tenantSlug) return [];
+  const snap = await getDocs(
+    query(collection(db, "campaigns"), where("tenantSlug", "==", tenantSlug), limit(max)),
+  );
+  return snap.docs
+    .map((d) => toCampaign(d.id, d.data()))
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 }
 
 /** Launch a campaign (server resolves audience + dispatches). Returns counts. */
@@ -36,20 +66,5 @@ export async function fetchCampaigns(max = 100): Promise<Campaign[]> {
   const snap = await getDocs(
     query(collection(db, "campaigns"), orderBy("createdAt", "desc"), limit(max)),
   );
-  return snap.docs.map((d) => {
-    const data = d.data();
-    const createdAt = data.createdAt as { toDate?: () => Date } | undefined;
-    return {
-      id: d.id,
-      title: (data.title as string) ?? "",
-      channel: (data.channel as CampaignChannel) ?? "sms",
-      message: (data.message as string) ?? "",
-      segment: (data.segment as Campaign["segment"]) ?? {},
-      status: (data.status as Campaign["status"]) ?? "sent",
-      targetedCount: (data.targetedCount as number) ?? 0,
-      sentCount: (data.sentCount as number) ?? 0,
-      createdByUid: data.createdByUid as string | undefined,
-      createdAt: createdAt?.toDate?.().toISOString(),
-    } satisfies Campaign;
-  });
+  return snap.docs.map((d) => toCampaign(d.id, d.data()));
 }

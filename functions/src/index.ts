@@ -891,6 +891,10 @@ export const onSupportIntent = onDocumentCreated(
  * connecté). Le consentement (opt-in) est obligatoire ; dispatch gracieux (no-op)
  * si Chatwoot n'est pas configuré. Plafonné pour borner le coût.
  */
+// Default monthly campaign quota for a partner space (anti-abus). Overridable
+// per tenant via tenants/<slug>.campaignQuota.monthly (admin-set).
+const DEFAULT_CAMPAIGN_QUOTA = 1000;
+
 export const sendCampaign = onCall(
   { secrets: [CHATWOOT_API_TOKEN], cors: CORS_ORIGINS },
   async (request) => {
@@ -898,26 +902,38 @@ export const sendCampaign = onCall(
     if (!uid) throw new HttpsError("unauthenticated", "Connexion requise.");
     const actorSnap = await db.collection("users").doc(uid).get();
     const role = (actorSnap.data() as { role?: string } | undefined)?.role;
-    if (role !== "admin" && role !== "super_admin") {
-      throw new HttpsError("permission-denied", "Réservé aux administrateurs.");
-    }
+    const isAdmin = role === "admin" || role === "super_admin";
 
-    const { title, channel, message, segment } = (request.data ?? {}) as {
+    const { title, channel, message, segment, tenantSlug } = (request.data ?? {}) as {
       title?: string;
       channel?: "sms" | "whatsapp";
       message?: string;
       segment?: { interest?: string; region?: string; communitySlug?: string };
+      tenantSlug?: string;
     };
     if (!title || !message || (channel !== "sms" && channel !== "whatsapp")) {
       throw new HttpsError("invalid-argument", "Titre, canal (sms|whatsapp) et message requis.");
     }
+
+    // Authorisation: admins → global ; sinon le manager d'un tenant → campagne
+    // scopée à son espace (audience restreinte + quota).
+    let tenant: { slug: string } | null = null;
+    if (!isAdmin) {
+      if (!tenantSlug) throw new HttpsError("permission-denied", "Réservé aux administrateurs ou gestionnaires d'espace.");
+      const tSnap = await db.collection("tenants").doc(tenantSlug).get();
+      const t = tSnap.data() as { ownerUid?: string; managerUids?: string[] } | undefined;
+      const isManager = !!t && (t.ownerUid === uid || (t.managerUids ?? []).includes(uid));
+      if (!isManager) throw new HttpsError("permission-denied", "Vous ne gérez pas cet espace partenaire.");
+      tenant = { slug: tenantSlug };
+    }
+
     const seg = segment ?? {};
     const consentField = channel === "whatsapp" ? "whatsappConsent" : "smsConsent";
 
     // Audience : utilisateurs ayant consenti au canal (index simple), filtrés en
-    // mémoire par intérêt/région (évite un index composite + array-contains).
+    // mémoire par intérêt/région.
     const snap = await db.collection("users").where(consentField, "==", true).limit(2000).get();
-    const recipients = snap.docs
+    let recipients = snap.docs
       .map((d) => d.data() as { phone?: string; region?: string; displayName?: string; email?: string; interests?: string[] })
       .filter(
         (u) =>
@@ -926,31 +942,63 @@ export const sendCampaign = onCall(
           (!seg.region || u.region === seg.region),
       );
 
+    // Tenant scope: restreindre aux utilisateurs dont les intérêts recoupent les
+    // thèmes des communautés de l'espace (jamais la base globale).
+    if (tenant) {
+      const comms = await db.collection("communities").where("tenantSlug", "==", tenant.slug).get();
+      const interests = new Set<string>();
+      comms.forEach((c) => ((c.data().relatedInterests as string[] | undefined) ?? []).forEach((i) => interests.add(i)));
+      recipients = recipients.filter((u) => (u.interests ?? []).some((i) => interests.has(i)));
+    }
+
+    const capped = recipients.slice(0, 500);
+    const targeted = capped.length;
+
+    // Quota mensuel (tenant) — réservation atomique avant envoi.
+    if (tenant) {
+      const now = new Date();
+      const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+      const tenantRef = db.collection("tenants").doc(tenant.slug);
+      await db.runTransaction(async (tx) => {
+        const s = await tx.get(tenantRef);
+        const q = (s.data()?.campaignQuota ?? {}) as { monthly?: number; sentThisMonth?: number; periodKey?: string };
+        const monthly = q.monthly ?? DEFAULT_CAMPAIGN_QUOTA;
+        const sentThisMonth = q.periodKey === monthKey ? (q.sentThisMonth ?? 0) : 0;
+        if (sentThisMonth + targeted > monthly) {
+          throw new HttpsError("resource-exhausted", `Quota mensuel de campagnes atteint (${monthly} messages).`);
+        }
+        tx.update(tenantRef, {
+          campaignQuota: { monthly, sentThisMonth: sentThisMonth + targeted, periodKey: monthKey },
+        });
+      });
+    }
+
     const ref = await db.collection("campaigns").add({
       title,
       channel,
       message,
       segment: seg,
       status: "sent",
-      targetedCount: recipients.length,
+      targetedCount: targeted,
       sentCount: 0,
       createdByUid: uid,
+      tenantSlug: tenant?.slug ?? null,
       createdAt: FieldValue.serverTimestamp(),
     });
 
     let sent = 0;
-    for (const u of recipients.slice(0, 500)) {
+    for (const u of capped) {
       const ok = await pushToChatwoot({
         name: u.displayName ?? u.phone!,
         email: u.email ?? `${u.phone}@sms.local`,
         identifier: u.phone!,
         message,
-        customAttributes: { type: "campaign", channel, campaignId: ref.id },
+        customAttributes: { type: "campaign", channel, campaignId: ref.id, tenantSlug: tenant?.slug ?? null },
       });
       if (ok) sent++;
     }
     await ref.update({ sentCount: sent });
-    return { campaignId: ref.id, targeted: recipients.length, sent };
+    return { campaignId: ref.id, targeted, sent };
   },
 );
 
