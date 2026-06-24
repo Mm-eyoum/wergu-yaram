@@ -50,14 +50,14 @@ const CHATWOOT_WEBSITE_INBOX_ID = defineString("CHATWOOT_WEBSITE_INBOX_ID", { de
 const BREVO_SENDER = defineString("BREVO_SENDER", { default: "Wergu Yaram <no-reply@werguyaram.org>" });
 
 // --- GA4 Data API (trafic réel par espace partenaire) ---
-//   GA4_PROPERTY_ID — id numérique de la propriété GA4 (param non secret).
-//   GA4_SA_KEY      — JSON du compte de service (rôle Viewer sur la propriété),
-//                     lu depuis l'environnement (functions/.env*, non versionné)
-//                     plutôt qu'un secret déclaré, pour ne pas bloquer le déploiement
-//                     des autres functions tant qu'il n'est pas configuré.
-//   Absents ⇒ la section trafic s'affiche « non configurée » (dégradation propre).
-//   Tous deux lus depuis l'environnement (functions/.env*), pas de param/secret
-//   déclaré, pour ne jamais bloquer le déploiement des autres functions.
+//   GA4_PROPERTY_ID — id numérique de la propriété GA4 (REQUIS pour activer).
+//   GA4_SA_KEY      — JSON d'un compte de service (OPTIONNEL). Si absent, on
+//                     utilise l'ADC du SA d'exécution de la fonction (cas org
+//                     policy interdisant les clés) : ajouter ce SA en « Lecteur »
+//                     dans GA4. Lus depuis l'environnement (functions/.env*, non
+//                     versionné) — aucun secret déclaré, pour ne pas bloquer le
+//                     déploiement des autres functions.
+//   GA4_PROPERTY_ID absent ⇒ section trafic « non configurée » (dégradation propre).
 
 const MIN_AMOUNT = 500; // XOF
 const MAX_AMOUNT = 5_000_000; // XOF — sanity ceiling for a single donation.
@@ -1439,7 +1439,10 @@ export const getTenantTraffic = onCall(
 
     const propertyId = process.env.GA4_PROPERTY_ID ?? "";
     const saKey = process.env.GA4_SA_KEY ?? "";
-    if (!propertyId || !saKey) return { configured: false as const };
+    // GA4_SA_KEY est OPTIONNEL : sans clé, on utilise l'ADC du compte de service
+    // d'exécution de la fonction (utile quand l'org policy interdit les clés JSON).
+    // Il suffit alors d'ajouter ce SA d'exécution comme « Lecteur » dans GA4.
+    if (!propertyId) return { configured: false as const };
 
     // Serve fresh cache (< 6 h) to bound GA4 quota.
     const cacheRef = db.collection("tenantReports").doc(`${slug}_ga4`);
@@ -1451,7 +1454,9 @@ export const getTenantTraffic = onCall(
 
     try {
       const { BetaAnalyticsDataClient } = await import("@google-analytics/data");
-      const client = new BetaAnalyticsDataClient({ credentials: JSON.parse(saKey) });
+      const client = saKey
+        ? new BetaAnalyticsDataClient({ credentials: JSON.parse(saKey) })
+        : new BetaAnalyticsDataClient(); // ADC = compte de service d'exécution de la fonction
       const [resp] = await client.runReport({
         property: `properties/${propertyId}`,
         dateRanges: [{ startDate: "30daysAgo", endDate: "today" }],
