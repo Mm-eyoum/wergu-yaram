@@ -102,7 +102,13 @@
     "home": "Back to home"
   },
   "breadcrumb": {
-    "home": "Home"
+    "home": "Home",
+    "aria": "Breadcrumb"
+  },
+  "orgTypes": {
+    "healthcare_facility": "Health facility",
+    "partner": "Partner",
+    "partner_donor": "Donor"
   },
   "searchBar": {
     "placeholder": "Search a medication, a condition, a symptom, a facility…",

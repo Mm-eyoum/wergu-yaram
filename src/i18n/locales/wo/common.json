@@ -103,7 +103,13 @@
     "home": ""
   },
   "breadcrumb": {
-    "home": ""
+    "home": "",
+    "aria": ""
+  },
+  "orgTypes": {
+    "healthcare_facility": "",
+    "partner": "",
+    "partner_donor": ""
   },
   "searchBar": {
     "placeholder": "",

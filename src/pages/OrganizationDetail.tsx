@@ -1,5 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Building2, Clock, MapPin, Phone, Star } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { SectionCard } from "@/components/ui/Card";
@@ -9,7 +10,6 @@ import { LazyMapView } from "@/components/map/LazyMapView";
 import { DirectionsButton } from "@/components/map/DirectionsButton";
 import { fetchOrganization } from "@/services/organizations";
 import { fetchFacilityBySourceOrgId } from "@/services/facilities";
-import { ORG_TYPE_LABELS } from "@/lib/constants";
 import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 
@@ -19,6 +19,7 @@ import { breadcrumbJsonLd } from "@/seo/jsonld";
  * pointed at a migrated health structure is redirected there transparently.
  */
 export default function OrganizationDetail() {
+  const { t } = useTranslation(["organization", "common"]);
   const { id } = useParams();
 
   const orgQuery = useQuery({
@@ -46,8 +47,8 @@ export default function OrganizationDetail() {
   if (!org) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Page introuvable" noIndex />
-        <EmptyState title="Page introuvable" message="Cette page n'existe pas ou a été retirée." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -56,18 +57,18 @@ export default function OrganizationDetail() {
     <div className="container-page py-6">
       <SEOHead
         title={org.name}
-        description={org.description || `${org.name} — ${ORG_TYPE_LABELS[org.type]}`}
+        description={org.description || `${org.name} — ${t(`common:orgTypes.${org.type}`)}`}
         jsonLd={breadcrumbJsonLd([
-          { name: "Accueil", path: "/" },
-          { name: "Partenaires", path: "/partenaires" },
+          { name: t("common:breadcrumb.home"), path: "/" },
+          { name: t("common:contentTypes.partenaire"), path: "/partenaires" },
           { name: org.name, path: `/structures/${org.id}` },
         ])}
       />
 
-      <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-text-secondary" aria-label="Fil d'Ariane">
-        <Link to="/" className="hover:text-brand-green">Accueil</Link>
+      <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-text-secondary" aria-label={t("common:breadcrumb.aria")}>
+        <Link to="/" className="hover:text-brand-green">{t("common:breadcrumb.home")}</Link>
         <span>›</span>
-        <Link to="/partenaires" className="hover:text-brand-green">Partenaires</Link>
+        <Link to="/partenaires" className="hover:text-brand-green">{t("common:contentTypes.partenaire")}</Link>
         <span>›</span>
         <span className="text-text-primary">{org.name}</span>
       </nav>
@@ -81,7 +82,7 @@ export default function OrganizationDetail() {
             <div>
               <h1 className="text-2xl font-extrabold">{org.name}</h1>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <Badge tone="mint">{ORG_TYPE_LABELS[org.type]}</Badge>
+                <Badge tone="mint">{t(`common:orgTypes.${org.type}`)}</Badge>
               </div>
               {org.address && (
                 <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-text-secondary">
@@ -105,7 +106,7 @@ export default function OrganizationDetail() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
-          <SectionCard title="Informations pratiques">
+          <SectionCard title={t("practical")}>
             <ul className="space-y-2 text-sm text-text-secondary">
               {org.phone && (
                 <li className="inline-flex items-center gap-2">
@@ -128,7 +129,7 @@ export default function OrganizationDetail() {
 
         <aside className="space-y-5">
           {org.coords && (
-            <SectionCard title="Localisation">
+            <SectionCard title={t("location")}>
               <LazyMapView
                 className="h-48 w-full"
                 markers={[{ id: org.id, coords: org.coords, title: org.name }]}

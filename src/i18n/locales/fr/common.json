@@ -102,7 +102,13 @@
     "home": "Retour à l'accueil"
   },
   "breadcrumb": {
-    "home": "Accueil"
+    "home": "Accueil",
+    "aria": "Fil d'Ariane"
+  },
+  "orgTypes": {
+    "healthcare_facility": "Structure de santé",
+    "partner": "Partenaire",
+    "partner_donor": "Donateur"
   },
   "searchBar": {
     "placeholder": "Rechercher un médicament, une pathologie, un symptôme, une structure…",
