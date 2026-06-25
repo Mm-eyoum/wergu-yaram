@@ -1,0 +1,62 @@
+{
+  "loading": "Chargement de la fiche…",
+  "notFoundTitle": "Médicament introuvable",
+  "notFoundMsg": "Cette fiche n'existe pas ou a été déplacée.",
+  "dci": "DCI",
+  "badges": {
+    "essential": "Médicament essentiel",
+    "awareAntibiotic": "Antibiotique AWaRe · {{cat}}",
+    "noPrescription": "Disponible sans ordonnance",
+    "prescription": "Sur ordonnance"
+  },
+  "table": {
+    "form": "Forme",
+    "dosage": "Dosage",
+    "available": "Disponible",
+    "unavailable": "Non disponible",
+    "note": "Niveaux de soins : CSPS · CM · CMA · CH. ✓ = produit prévu à ce niveau (Liste Nationale des Médicaments Essentiels)."
+  },
+  "care": {
+    "csps": "Centre de Santé et de Promotion Sociale",
+    "cm": "Centre Médical",
+    "cma": "Centre Médical avec Antenne chirurgicale",
+    "ch": "Centre Hospitalier"
+  },
+  "sections": {
+    "presentations": "Présentations et niveaux de soins",
+    "usage": "À quoi sert ce médicament ?",
+    "posology": "Posologie",
+    "contraindications": "Contre-indications",
+    "sideEffects": "Effets secondaires",
+    "precautions": "Précautions d'emploi",
+    "interactions": "Interactions médicamenteuses",
+    "advice": "Le conseil du professionnel de santé",
+    "clinicalInfo": "Information clinique"
+  },
+  "clinicalPending": "La fiche clinique détaillée (usage, posologie, contre-indications, interactions) de ce médicament essentiel est en cours de validation éditoriale. En attendant, demandez conseil à votre pharmacien ou à votre médecin avant toute utilisation. Aucun médicament ne doit être pris sans avis professionnel.",
+  "sourcesPrefix": "Sources cliniques : ",
+  "underReview": " — contenu en cours de revue médicale.",
+  "summary": {
+    "title": "Résumé",
+    "group": "Groupe",
+    "forms": "Formes",
+    "aware": "AWaRe",
+    "prescriptionLabel": "Ordonnance",
+    "prescriptionNo": "Non requise",
+    "prescriptionYes": "Requise",
+    "updated": "Mise à jour",
+    "source": "Source"
+  },
+  "findPharmacy": "Trouver en pharmacie",
+  "askQuestion": "Poser une question",
+  "askComingSoon": "Poser une question à un professionnel arrive bientôt.",
+  "regulatory": {
+    "title": "Cadre réglementaire",
+    "ref": "Référencé dans la {{edition}} ({{authority}}).",
+    "amm": "Toute commercialisation requiert une Autorisation de Mise sur le Marché (AMM){{validity}} — Règlement UEMOA N°04/2020.",
+    "ammValidity": ", valable {{years}} ans",
+    "nonPromo": "Information non promotionnelle, fournie à titre éducatif."
+  },
+  "relatedPathologies": "Pathologies liées",
+  "noRelated": "Aucune pathologie liée."
+}

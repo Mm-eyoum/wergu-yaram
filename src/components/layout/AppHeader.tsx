@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, LogOut, Menu, MessageCircle, ShieldCheck, User, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { PRIMARY_NAV } from "@/lib/constants";
@@ -8,10 +9,12 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { UniversalSearchBar } from "@/components/search/UniversalSearchBar";
 import { ExploreAccordion, ExploreMenu } from "@/components/layout/ExploreMenu";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
 import { useMenuConfig } from "@/hooks/useSiteConfig";
 
 export function AppHeader() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -112,6 +115,7 @@ export function AppHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <LanguageSwitcher className="hidden xl:block" />
           {user ? (
             <div ref={userMenuRef} className="relative hidden xl:block">
               <button
@@ -125,9 +129,9 @@ export function AppHeader() {
                     : "border-border-soft hover:border-brand-teal hover:bg-brand-soft",
                 )}
               >
-                <Avatar name={user.displayName ?? "Utilisateur"} src={user.photoURL} size="sm" />
+                <Avatar name={user.displayName ?? t("userMenu.userFallback")} src={user.photoURL} size="sm" />
                 <span className="max-w-[110px] truncate text-sm font-medium text-text-primary">
-                  {user.displayName?.split(" ")[0] ?? "Mon compte"}
+                  {user.displayName?.split(" ")[0] ?? t("userMenu.account")}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -141,10 +145,10 @@ export function AppHeader() {
                   role="menu"
                   className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-border-soft bg-white py-1.5 shadow-card animate-fade-in"
                 >
-                  <MenuItem to="/dashboard" icon={<User className="h-4 w-4" />} label="Mon tableau de bord" />
-                  <MenuItem to="/messages" icon={<MessageCircle className="h-4 w-4" />} label="Messages" />
+                  <MenuItem to="/dashboard" icon={<User className="h-4 w-4" />} label={t("userMenu.dashboard")} />
+                  <MenuItem to="/messages" icon={<MessageCircle className="h-4 w-4" />} label={t("userMenu.messages")} />
                   {isAdmin && (
-                    <MenuItem to="/admin" icon={<ShieldCheck className="h-4 w-4" />} label="Administration" />
+                    <MenuItem to="/admin" icon={<ShieldCheck className="h-4 w-4" />} label={t("userMenu.admin")} />
                   )}
                   <div className="my-1.5 border-t border-border-soft" />
                   <button
@@ -155,7 +159,7 @@ export function AppHeader() {
                     className="mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-danger transition-colors hover:bg-danger/10"
                   >
                     <LogOut className="h-4 w-4" />
-                    Se déconnecter
+                    {t("userMenu.logout")}
                   </button>
                 </div>
               )}
@@ -163,10 +167,10 @@ export function AppHeader() {
           ) : (
             <div className="hidden items-center gap-2 xl:flex">
               <ButtonLink to="/connexion" variant="outline" size="sm">
-                Se connecter
+                {t("auth.signIn")}
               </ButtonLink>
               <ButtonLink to="/inscription" size="sm">
-                Créer un compte
+                {t("auth.signUp")}
               </ButtonLink>
             </div>
           )}
@@ -174,7 +178,7 @@ export function AppHeader() {
           <button
             className="grid h-10 w-10 place-items-center rounded-xl border border-border-soft text-text-primary transition-colors hover:bg-brand-soft xl:hidden"
             onClick={() => setMobileOpen((o) => !o)}
-            aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-label={mobileOpen ? t("menu.close") : t("menu.open")}
             aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -187,7 +191,7 @@ export function AppHeader() {
         <>
           <button
             type="button"
-            aria-label="Fermer le menu"
+            aria-label={t("menu.close")}
             onClick={() => setMobileOpen(false)}
             className="fixed inset-0 top-16 z-30 cursor-default bg-brand-navy/20 backdrop-blur-sm animate-fade xl:hidden"
           />
@@ -217,17 +221,18 @@ export function AppHeader() {
                 ))}
               </nav>
               <div className="flex flex-col gap-2 border-t border-border-soft pt-4">
+                <LanguageSwitcher className="block" />
                 {user ? (
                   <>
                     <ButtonLink to="/dashboard" variant="outline" fullWidth>
-                      Mon tableau de bord
+                      {t("userMenu.dashboard")}
                     </ButtonLink>
                     <ButtonLink to="/messages" variant="ghost" fullWidth>
-                      Messages
+                      {t("userMenu.messages")}
                     </ButtonLink>
                     {isAdmin && (
                       <ButtonLink to="/admin" variant="ghost" fullWidth>
-                        Administration
+                        {t("userMenu.admin")}
                       </ButtonLink>
                     )}
                     <button
@@ -239,16 +244,16 @@ export function AppHeader() {
                       className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-danger hover:bg-danger/10"
                     >
                       <LogOut className="h-4 w-4" />
-                      Se déconnecter
+                      {t("userMenu.logout")}
                     </button>
                   </>
                 ) : (
                   <>
                     <ButtonLink to="/connexion" variant="outline" fullWidth>
-                      Se connecter
+                      {t("auth.signIn")}
                     </ButtonLink>
                     <ButtonLink to="/inscription" fullWidth>
-                      Créer un compte
+                      {t("auth.signUp")}
                     </ButtonLink>
                   </>
                 )}

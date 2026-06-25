@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, BadgeCheck, Building2, MapPin, Navigation, Star } from "lucide-react";
 import type { Facility } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
@@ -19,6 +20,7 @@ export function FacilityCard({
   /** Optional source badge (e.g. "Annuaire") shown over the cover. */
   badge?: string;
 }) {
+  const { t } = useTranslation("cards");
   const needsCount = facility.equipmentNeeds?.length ?? 0;
   const typeLabel = categoryLabel(facility.category) || facility.type;
   const sector = sectorLabel(facility.sector);
@@ -45,7 +47,7 @@ export function FacilityCard({
           {sector && <Badge tone="mint">{sector}</Badge>}
           {facility.verified && (
             <Badge tone="green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>
-              Vérifié
+              {t("verified")}
             </Badge>
           )}
         </div>
@@ -66,19 +68,19 @@ export function FacilityCard({
         <div className="mt-3 flex items-center justify-between border-t border-border-soft pt-3">
           {distanceKm != null ? (
             <MetaItem icon={<Navigation className="h-3.5 w-3.5" />} className="font-semibold text-brand-green">
-              à {formatDistance(distanceKm)}
+              {t("distanceAway", { distance: formatDistance(distanceKm) })}
             </MetaItem>
           ) : needsCount > 0 ? (
             <span className="text-xs font-semibold text-brand-green">
-              {needsCount} besoin{needsCount > 1 ? "s" : ""} d'équipement
+              {t("needs", { count: needsCount })}
             </span>
           ) : facility.reviewsCount > 0 ? (
-            <span className="text-xs text-text-secondary">{facility.reviewsCount} avis</span>
+            <span className="text-xs text-text-secondary">{t("reviews", { count: facility.reviewsCount })}</span>
           ) : (
             <span />
           )}
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-green group-hover:gap-1.5">
-            Voir <ArrowRight className="h-3.5 w-3.5" />
+            {t("view")} <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </div>
       </div>

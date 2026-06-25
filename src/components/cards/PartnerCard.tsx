@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { Partner } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
 import { initials } from "@/lib/format";
@@ -16,6 +17,7 @@ export function PartnerCard({
   /** Optional badge (e.g. "Annuaire") for non-catalog entries. */
   badge?: string;
 }) {
+  const { t } = useTranslation("cards");
   const inner = (
     <>
       <div className="mb-3 flex h-14 items-center justify-between">
@@ -46,7 +48,7 @@ export function PartnerCard({
           {partner.contributionsLabel || partner.zone}
         </span>
         <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-brand-green group-hover:gap-1.5">
-          En savoir plus <ArrowRight className="h-4 w-4" />
+          {t("learnMore")} <ArrowRight className="h-4 w-4" />
         </span>
       </div>
     </>

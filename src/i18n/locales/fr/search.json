@@ -1,0 +1,23 @@
+{
+  "seoTitleQuery": "Recherche : {{query}}",
+  "seoTitle": "Recherche santé",
+  "seoDesc": "Recherchez médicaments, pathologies, articles, établissements et communautés sur Wergu Yaram.",
+  "heroSubtitle": "Affinez votre recherche par type de contenu et par fiabilité.",
+  "resultsCount_one": "{{count}} résultat pour « {{query}} »",
+  "resultsCount_other": "{{count}} résultats pour « {{query}} »",
+  "browseAll": "Parcourez l'ensemble des contenus de la plateforme.",
+  "viewList": "Liste",
+  "viewMap": "Carte",
+  "reliability": "Fiabilité",
+  "reliabilityAll": "Tous les contenus",
+  "reliabilityVerified": "Contenus vérifiés",
+  "sortBy": "Trier par",
+  "loading": "Recherche en cours…",
+  "emptyTitle": "Aucun résultat",
+  "emptyMessage": "Essayez un autre mot-clé, élargissez la catégorie ou réinitialisez vos filtres.",
+  "resetFilters": "Réinitialiser les filtres",
+  "explorePathologies": "Explorer les pathologies",
+  "mapUnavailableTitle": "Localisation indisponible",
+  "mapUnavailableMessage": "Ces structures n'ont pas encore de coordonnées géographiques.",
+  "unclaimed": "Non réclamée"
+}

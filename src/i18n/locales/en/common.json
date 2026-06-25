@@ -1,0 +1,137 @@
+{
+  "actions": {
+    "search": "Search",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "share": "Share",
+    "close": "Close",
+    "seeMore": "See more",
+    "loading": "Loading…"
+  },
+  "states": {
+    "errorTitle": "Something went wrong",
+    "errorMessage": "Unable to load this data right now.",
+    "emptyTitle": "No results",
+    "emptyMessage": "Try a different search.",
+    "emptyMessageFilters": "Try adjusting your search or filters."
+  },
+  "pagination": {
+    "label": "Pagination",
+    "prev": "Previous page",
+    "next": "Next page"
+  },
+  "share": {
+    "label": "Share",
+    "shareOn": "Share on {{network}}",
+    "copy": "Copy link",
+    "copyShort": "Copy",
+    "copiedShort": "Copied",
+    "copied": "Link copied ✓",
+    "copyError": "Could not copy the link."
+  },
+  "language": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English",
+    "wo": "Wolof"
+  },
+  "nav": {
+    "portal": "Health Portal",
+    "map": "Map",
+    "events": "Events",
+    "forum": "Forum",
+    "equipment": "Equipment",
+    "partners": "Partners",
+    "explore": "Explore"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Create an account"
+  },
+  "userMenu": {
+    "dashboard": "My dashboard",
+    "messages": "Messages",
+    "admin": "Administration",
+    "logout": "Sign out",
+    "account": "My account",
+    "userFallback": "User"
+  },
+  "menu": {
+    "open": "Open menu",
+    "close": "Close menu"
+  },
+  "footer": {
+    "newsletterTitle": "Stay informed",
+    "newsletterText": "Verified health tips, new content and campaigns to support — once a month, no spam.",
+    "disclaimer": "Educational information — not a substitute for professional medical advice.",
+    "terms": "Terms of use"
+  },
+  "contentTypes": {
+    "all": "All",
+    "pathologie": "Conditions",
+    "medicament": "Medications",
+    "symptome": "Symptoms",
+    "etablissement": "Facilities",
+    "article": "Articles",
+    "video": "Videos",
+    "communaute": "Communities",
+    "evenement": "Events",
+    "formation": "Courses",
+    "partenaire": "Partners",
+    "besoin": "Needs"
+  },
+  "explore": {
+    "trigger": "Explore",
+    "heading": "Explore health",
+    "seeAllPortal": "See the whole health portal",
+    "desc": {
+      "pathologie": "Understand a condition",
+      "medicament": "Essential reference (INN)",
+      "symptome": "Find your way by symptoms",
+      "etablissement": "Facilities nearby",
+      "article": "Verified content",
+      "video": "Short formats",
+      "formation": "Learn & get certified"
+    }
+  },
+  "notFound": {
+    "seoTitle": "Page not found",
+    "title": "Page not found",
+    "text": "The page you're looking for doesn't exist or has been moved. Try a health search.",
+    "home": "Back to home"
+  },
+  "breadcrumb": {
+    "home": "Home"
+  },
+  "searchBar": {
+    "placeholder": "Search a medication, a condition, a symptom, a facility…",
+    "aria": "Universal health search"
+  },
+  "hero": {
+    "titleLead": "Search reliable health information,",
+    "titleHighlight": "simply.",
+    "subtitle": "Your health search engine in Senegal"
+  },
+  "shortcuts": {
+    "diabetes": "Diabetes",
+    "hypertension": "Hypertension",
+    "paracetamol": "Paracetamol",
+    "asthma": "Asthma",
+    "findFacility": "Find a facility",
+    "supportNeed": "Support a need"
+  },
+  "contentTypesSingular": {
+    "pathologie": "Condition",
+    "medicament": "Medication",
+    "symptome": "Symptom",
+    "article": "Article",
+    "video": "Video",
+    "etablissement": "Facility",
+    "communaute": "Community",
+    "evenement": "Event",
+    "besoin": "Need",
+    "partenaire": "Partner",
+    "formation": "Course"
+  }
+}

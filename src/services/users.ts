@@ -124,3 +124,9 @@ export async function setUserRole(uid: string, role: Role): Promise<void> {
   if (!db) throw new Error("Firebase non configuré.");
   await updateDoc(doc(db, "users", uid), { role, updatedAt: serverTimestamp() });
 }
+
+/** Persist the user's preferred UI language (i18n) on their profile. */
+export async function updateUserLanguage(uid: string, language: string): Promise<void> {
+  if (!db) throw new Error("Firebase non configuré.");
+  await updateDoc(doc(db, "users", uid), { language, updatedAt: serverTimestamp() });
+}

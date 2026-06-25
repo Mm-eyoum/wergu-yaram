@@ -8,6 +8,7 @@
  */
 import { useState } from "react";
 import { Facebook, Linkedin, Link2, Mail, MessageCircle, Send, Share2, Twitter, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/useToast";
 import { absoluteUrl } from "@/seo/siteUrl";
 
@@ -25,6 +26,7 @@ function openPopup(shareUrl: string) {
 }
 
 export function ShareButtons({ url, title, description = "", hashtags = [], className = "" }: ShareButtonsProps) {
+  const { t } = useTranslation();
   const { notify } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -77,10 +79,10 @@ export function ShareButtons({ url, title, description = "", hashtags = [], clas
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
-      notify("Lien copié ✓", "success");
+      notify(t("share.copied"), "success");
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      notify("Impossible de copier le lien.", "error");
+      notify(t("share.copyError"), "error");
     }
   }
 
@@ -100,8 +102,8 @@ export function ShareButtons({ url, title, description = "", hashtags = [], clas
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       {canNativeShare && (
-        <button type="button" onClick={nativeShare} className={btn} aria-label="Partager">
-          <Share2 className="h-4 w-4" /> Partager
+        <button type="button" onClick={nativeShare} className={btn} aria-label={t("share.label")}>
+          <Share2 className="h-4 w-4" /> {t("share.label")}
         </button>
       )}
       {networks.map((n) => (
@@ -110,16 +112,16 @@ export function ShareButtons({ url, title, description = "", hashtags = [], clas
           type="button"
           onClick={() => (n.href.startsWith("mailto:") ? (window.location.href = n.href) : openPopup(n.href))}
           className={btn}
-          aria-label={`Partager sur ${n.label}`}
+          aria-label={t("share.shareOn", { network: n.label })}
           title={n.label}
         >
           {n.icon}
           <span className="hidden sm:inline">{n.label}</span>
         </button>
       ))}
-      <button type="button" onClick={copyLink} className={btn} aria-label="Copier le lien">
+      <button type="button" onClick={copyLink} className={btn} aria-label={t("share.copy")}>
         {copied ? <Check className="h-4 w-4 text-brand-green" /> : <Link2 className="h-4 w-4" />}
-        <span className="hidden sm:inline">{copied ? "Copié" : "Copier"}</span>
+        <span className="hidden sm:inline">{copied ? t("share.copiedShort") : t("share.copyShort")}</span>
       </button>
     </div>
   );

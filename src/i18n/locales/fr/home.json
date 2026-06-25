@@ -1,0 +1,40 @@
+{
+  "seoTitle": "Wergu Yaram — Portail santé du Sénégal",
+  "seeAll": "Voir tout",
+  "sortNearby": "Trier autour de moi",
+  "categories": {
+    "cardiology": "Cardiologie",
+    "diabetes": "Diabète",
+    "respiratory": "Respiratoire",
+    "nutrition": "Nutrition",
+    "mentalHealth": "Santé mentale",
+    "pediatrics": "Pédiatrie",
+    "medications": "Médicaments",
+    "facilities": "Établissements"
+  },
+  "sections": {
+    "categories": "Catégories de santé",
+    "articles": "Articles & vidéos recommandés",
+    "nearby": "Structures à proximité",
+    "communities": "Communautés actives",
+    "urgentNeeds": "Besoins urgents en équipement"
+  },
+  "why": {
+    "title": "Pourquoi Wergu Yaram ?",
+    "text": "Un portail santé simple et rassurant : comprendre, s'orienter, échanger et agir, au service de tous les Sénégalais.",
+    "cta": "Créer un compte gratuit",
+    "verifiedTitle": "Contenus vérifiés",
+    "verifiedText": "Des fiches médicales relues par un comité éditorial, avec sources et dates de mise à jour.",
+    "communityTitle": "Une communauté solidaire",
+    "communityText": "Échangez, posez vos questions et trouvez du soutien auprès de personnes qui vous comprennent.",
+    "actTitle": "Agir concrètement",
+    "actText": "Soutenez les besoins d'équipement des structures de santé près de chez vous."
+  },
+  "trust": {
+    "title": "Une plateforme de confiance, au service de tous",
+    "verifiedInfo": "Informations vérifiées",
+    "members": "Membres de la communauté",
+    "facilities": "Structures référencées",
+    "needs": "Besoins soutenus"
+  }
+}

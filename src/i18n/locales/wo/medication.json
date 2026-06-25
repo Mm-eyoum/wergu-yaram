@@ -1,0 +1,63 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "loading": "",
+  "notFoundTitle": "",
+  "notFoundMsg": "",
+  "dci": "",
+  "badges": {
+    "essential": "",
+    "awareAntibiotic": "",
+    "noPrescription": "",
+    "prescription": ""
+  },
+  "table": {
+    "form": "",
+    "dosage": "",
+    "available": "",
+    "unavailable": "",
+    "note": ""
+  },
+  "care": {
+    "csps": "",
+    "cm": "",
+    "cma": "",
+    "ch": ""
+  },
+  "sections": {
+    "presentations": "",
+    "usage": "",
+    "posology": "",
+    "contraindications": "",
+    "sideEffects": "",
+    "precautions": "",
+    "interactions": "",
+    "advice": "",
+    "clinicalInfo": ""
+  },
+  "clinicalPending": "",
+  "sourcesPrefix": "",
+  "underReview": "",
+  "summary": {
+    "title": "",
+    "group": "",
+    "forms": "",
+    "aware": "",
+    "prescriptionLabel": "",
+    "prescriptionNo": "",
+    "prescriptionYes": "",
+    "updated": "",
+    "source": ""
+  },
+  "findPharmacy": "",
+  "askQuestion": "",
+  "askComingSoon": "",
+  "regulatory": {
+    "title": "",
+    "ref": "",
+    "amm": "",
+    "ammValidity": "",
+    "nonPromo": ""
+  },
+  "relatedPathologies": "",
+  "noRelated": ""
+}

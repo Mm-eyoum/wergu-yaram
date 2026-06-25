@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Activity,
   ArrowRight,
@@ -42,6 +43,7 @@ function ExploreItem({
   active: boolean;
   onClick?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Link
       to={category.to}
@@ -62,8 +64,8 @@ function ExploreItem({
         {ICONS[category.key]}
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold text-text-primary">{category.label}</span>
-        <span className="block truncate text-xs text-text-secondary">{category.description}</span>
+        <span className="block text-sm font-semibold text-text-primary">{t(`contentTypes.${category.key}`)}</span>
+        <span className="block truncate text-xs text-text-secondary">{t(`explore.desc.${category.key}`)}</span>
       </span>
     </Link>
   );
@@ -71,6 +73,7 @@ function ExploreItem({
 
 /** Desktop "Explorer" trigger + animated 2-column mega-menu. */
 export function ExploreMenu() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -119,7 +122,7 @@ export function ExploreMenu() {
         )}
       >
         <Compass className="h-4 w-4" />
-        Explorer
+        {t("explore.trigger")}
         <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
       </button>
 
@@ -129,7 +132,7 @@ export function ExploreMenu() {
           className="absolute left-1/2 top-full z-40 mt-2 w-[480px] -translate-x-1/2 origin-top rounded-3xl border border-border-soft bg-white p-3 shadow-card animate-fade-in"
         >
           <p className="px-2.5 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-            Explorer la santé
+            {t("explore.heading")}
           </p>
           <div className="grid grid-cols-2 gap-1">
             {EXPLORE_CATEGORIES.map((cat) => (
@@ -146,7 +149,7 @@ export function ExploreMenu() {
             onClick={() => setOpen(false)}
             className="mt-2 flex items-center justify-between rounded-2xl bg-brand-soft px-3.5 py-2.5 text-sm font-semibold text-brand-green transition-colors hover:bg-brand-mint"
           >
-            Voir tout le portail santé
+            {t("explore.seeAllPortal")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -157,6 +160,7 @@ export function ExploreMenu() {
 
 /** Mobile collapsible "Explorer" section for the header drawer. */
 export function ExploreAccordion({ onNavigate }: { onNavigate?: () => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const activeType = useActiveType();
 
@@ -170,7 +174,7 @@ export function ExploreAccordion({ onNavigate }: { onNavigate?: () => void }) {
       >
         <span className="inline-flex items-center gap-2">
           <Compass className="h-4 w-4 text-brand-green" />
-          Explorer
+          {t("explore.trigger")}
         </span>
         <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
       </button>

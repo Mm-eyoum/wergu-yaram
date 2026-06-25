@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Check,
   Eye,
@@ -23,8 +24,6 @@ import { SENEGAL_REGIONS } from "@/lib/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { SEOHead } from "@/seo/SEOHead";
 
-const STEPS = ["Compte", "Profil santé", "Confirmation"];
-
 const LANGUAGES = [
   { value: "fr", label: "Français" },
   { value: "wo", label: "Wolof" },
@@ -42,17 +41,15 @@ function passwordScore(pwd: string): number {
   return Math.min(score, 4);
 }
 
-const STRENGTH_META = [
-  { label: "", color: "" },
-  { label: "Faible", color: "bg-danger" },
-  { label: "Moyen", color: "bg-warning" },
-  { label: "Bon", color: "bg-brand-teal" },
-  { label: "Fort", color: "bg-brand-green" },
-] as const;
+/** Bar colour per strength level (0 = empty). Labels are translated at render. */
+const STRENGTH_COLORS = ["", "bg-danger", "bg-warning", "bg-brand-teal", "bg-brand-green"] as const;
+const STRENGTH_KEYS = ["", "weak", "medium", "good", "strong"] as const;
 
 export default function Register() {
+  const { t } = useTranslation("auth");
   const { user, register, loginWithGoogle, configured } = useAuth();
   const navigate = useNavigate();
+  const STEPS = [t("register.steps.account"), t("register.steps.health"), t("register.steps.confirm")];
 
   // Redirect only once the auth context has populated `user`. `register()` sets
   // it before resolving, but `loginWithGoogle()` does not — navigating from the
@@ -80,15 +77,15 @@ export default function Register() {
     setError("");
     if (step === 0) {
       if (!firstName || !lastName || !email || !password) {
-        setError("Veuillez remplir tous les champs obligatoires.");
+        setError(t("register.errRequired"));
         return;
       }
       if (password.length < 8) {
-        setError("Le mot de passe doit contenir au moins 8 caractères.");
+        setError(t("register.errPasswordShort"));
         return;
       }
       if (password !== confirm) {
-        setError("Les mots de passe ne correspondent pas.");
+        setError(t("register.errPasswordMismatch"));
         return;
       }
     }
@@ -98,7 +95,7 @@ export default function Register() {
   async function handleSubmit() {
     setError("");
     if (!accept) {
-      setError("Vous devez accepter les conditions d'utilisation.");
+      setError(t("register.errAcceptTerms"));
       return;
     }
     setLoading(true);
@@ -117,8 +114,8 @@ export default function Register() {
     } catch (e) {
       setError(
         e instanceof Error && e.message.includes("configuré")
-          ? "Firebase non configuré : renseignez .env.local."
-          : "Impossible de créer le compte. Cet email est peut-être déjà utilisé.",
+          ? t("register.errFirebase")
+          : t("register.errCreate"),
       );
       setLoading(false);
     }
@@ -126,19 +123,16 @@ export default function Register() {
 
   return (
     <>
-      <SEOHead title="Créer un compte" description="Rejoignez Wergu Yaram et accédez à une information santé fiable au Sénégal." noIndex />
+      <SEOHead title={t("register.seoTitle")} description={t("register.seoDesc")} noIndex />
       <AuthLayout
       aside={
         <div className="flex h-full flex-col">
           <h2 className="text-2xl font-extrabold leading-tight">
-            Rejoignez Wergu Yaram,
+            {t("register.asideTitleLead")}
             <br />
-            <span className="text-brand-green">votre allié santé</span> au Sénégal.
+            <span className="text-brand-green">{t("register.asideTitleHighlight")}</span> {t("register.asideTitleTail")}
           </h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Créez votre compte en quelques étapes et accédez à une information santé fiable,
-            une communauté et des actions solidaires.
-          </p>
+          <p className="mt-2 text-sm text-text-secondary">{t("register.asideText")}</p>
           <div className="mt-8 grid place-items-center">
             <span className="grid h-40 w-40 place-items-center rounded-full bg-white/60 text-brand-green shadow-soft">
               <Leaf className="h-20 w-20" />
@@ -175,8 +169,7 @@ export default function Register() {
         {error && <p className="mb-4 rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
         {!configured && step === 0 && (
           <p className="mb-4 rounded-xl bg-warning/10 px-3 py-2 text-xs text-[#8a5a10]">
-            Firebase n'est pas configuré : renseignez VITE_FIREBASE_* dans .env.local pour activer
-            la création de compte.
+            {t("register.firebaseNotConfigured")}
           </p>
         )}
 
@@ -184,23 +177,23 @@ export default function Register() {
         {step === 0 && (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormInput label="Prénom" required value={firstName} onChange={(e) => setFirstName(e.target.value)} leftIcon={<User className="h-4 w-4" />} />
-              <FormInput label="Nom" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              <FormInput label={t("fields.firstName")} required value={firstName} onChange={(e) => setFirstName(e.target.value)} leftIcon={<User className="h-4 w-4" />} />
+              <FormInput label={t("fields.lastName")} required value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
-            <FormInput label="Adresse email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} leftIcon={<Mail className="h-4 w-4" />} autoComplete="email" />
+            <FormInput label={t("fields.email")} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} leftIcon={<Mail className="h-4 w-4" />} autoComplete="email" />
             <div className="grid gap-4 sm:grid-cols-2">
               <FormInput
-                label="Téléphone"
+                label={t("fields.phone")}
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 leftIcon={<Phone className="h-4 w-4" />}
                 autoComplete="tel"
-                placeholder="+221 …"
+                placeholder={t("fields.phonePlaceholder")}
               />
               <div>
                 <label htmlFor="register-language" className="mb-1.5 block text-sm font-medium text-text-primary">
-                  Langue
+                  {t("fields.language")}
                 </label>
                 <div className="relative">
                   <Languages className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
@@ -219,7 +212,7 @@ export default function Register() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormInput
-                label="Mot de passe"
+                label={t("fields.password")}
                 type={showPwd ? "text" : "password"}
                 required
                 value={password}
@@ -230,14 +223,14 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
-                    aria-label={showPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    aria-label={showPwd ? t("register.hidePassword") : t("register.showPassword")}
                     className="grid h-7 w-7 place-items-center rounded-lg text-text-secondary hover:text-brand-green"
                   >
                     {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 }
               />
-              <FormInput label="Confirmer" type={showPwd ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+              <FormInput label={t("fields.confirm")} type={showPwd ? "text" : "password"} required value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
             </div>
             {password && (
               <div aria-live="polite">
@@ -248,21 +241,25 @@ export default function Register() {
                       className={cn(
                         "h-1.5 flex-1 rounded-full transition-colors",
                         i <= passwordScore(password)
-                          ? STRENGTH_META[passwordScore(password)].color
+                          ? STRENGTH_COLORS[passwordScore(password)]
                           : "bg-border-soft",
                       )}
                     />
                   ))}
                 </div>
                 <p className="mt-1 text-xs text-text-secondary">
-                  Robustesse : {STRENGTH_META[passwordScore(password)].label || "—"}
+                  {t("register.strengthLabel", {
+                    level: STRENGTH_KEYS[passwordScore(password)]
+                      ? t(`register.strength.${STRENGTH_KEYS[passwordScore(password)]}`)
+                      : "—",
+                  })}
                 </p>
               </div>
             )}
             <Button fullWidth size="lg" onClick={next}>
-              Continuer
+              {t("register.continue")}
             </Button>
-            <GoogleButton onClick={() => loginWithGoogle().catch(() => setError("Connexion Google impossible."))} />
+            <GoogleButton onClick={() => loginWithGoogle().catch(() => setError(t("register.errGoogle")))} />
           </div>
         )}
 
@@ -270,7 +267,7 @@ export default function Register() {
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <label htmlFor="register-region" className="mb-1.5 block text-sm font-medium text-text-primary">Région</label>
+              <label htmlFor="register-region" className="mb-1.5 block text-sm font-medium text-text-primary">{t("fields.region")}</label>
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                 <select
@@ -286,15 +283,15 @@ export default function Register() {
               </div>
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium text-text-primary">Centres d'intérêt santé</p>
+              <p className="mb-2 text-sm font-medium text-text-primary">{t("register.interests")}</p>
               <InterestSelector value={interests} onChange={setInterests} />
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(0)}>
-                Retour
+                {t("register.back")}
               </Button>
               <Button fullWidth onClick={next}>
-                Continuer
+                {t("register.continue")}
               </Button>
             </div>
           </div>
@@ -304,50 +301,50 @@ export default function Register() {
         {step === 2 && (
           <div className="space-y-5">
             <div className="rounded-2xl bg-brand-mint p-4 text-sm">
-              <p className="font-bold text-text-primary">Récapitulatif</p>
+              <p className="font-bold text-text-primary">{t("register.summary")}</p>
               <dl className="mt-2 space-y-1 text-text-secondary">
-                <div className="flex justify-between"><dt>Nom</dt><dd className="font-medium text-text-primary">{firstName} {lastName}</dd></div>
-                <div className="flex justify-between"><dt>Email</dt><dd className="font-medium text-text-primary">{email}</dd></div>
-                {phone && <div className="flex justify-between"><dt>Téléphone</dt><dd className="font-medium text-text-primary">{phone}</dd></div>}
-                <div className="flex justify-between"><dt>Région</dt><dd className="font-medium text-text-primary">{region}</dd></div>
-                <div className="flex justify-between"><dt>Intérêts</dt><dd className="font-medium text-text-primary">{interests.length || "—"}</dd></div>
+                <div className="flex justify-between"><dt>{t("register.sumName")}</dt><dd className="font-medium text-text-primary">{firstName} {lastName}</dd></div>
+                <div className="flex justify-between"><dt>{t("register.sumEmail")}</dt><dd className="font-medium text-text-primary">{email}</dd></div>
+                {phone && <div className="flex justify-between"><dt>{t("register.sumPhone")}</dt><dd className="font-medium text-text-primary">{phone}</dd></div>}
+                <div className="flex justify-between"><dt>{t("register.sumRegion")}</dt><dd className="font-medium text-text-primary">{region}</dd></div>
+                <div className="flex justify-between"><dt>{t("register.sumInterests")}</dt><dd className="font-medium text-text-primary">{interests.length || "—"}</dd></div>
               </dl>
             </div>
             <label className="flex items-start gap-2.5 text-sm text-text-secondary">
               <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 accent-brand-green" />
               <span>
-                J'accepte les{" "}
+                {t("register.acceptPre")}{" "}
                 <Link
                   to="/conditions"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-semibold text-brand-green hover:underline"
                 >
-                  conditions d'utilisation
+                  {t("register.acceptTerms")}
                 </Link>{" "}
-                et la politique de confidentialité de Wergu Yaram.
+                {t("register.acceptPost")}
               </span>
             </label>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(1)}>
-                Retour
+                {t("register.back")}
               </Button>
               <Button fullWidth size="lg" onClick={handleSubmit} disabled={loading}>
-                {loading ? "Création…" : "Créer mon compte"}
+                {loading ? t("register.submitting") : t("register.submit")}
               </Button>
             </div>
           </div>
         )}
 
         <p className="mt-5 text-center text-sm text-text-secondary">
-          Vous avez déjà un compte ?{" "}
+          {t("register.haveAccount")}{" "}
           <Link to="/connexion" className="font-semibold text-brand-green hover:underline">
-            Se connecter
+            {t("register.signIn")}
           </Link>
         </p>
         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-text-secondary">
           <ShieldCheck className="h-4 w-4 text-brand-green" />
-          Vos données sont protégées et confidentielles.
+          {t("register.dataProtected")}
         </p>
       </div>
       </AuthLayout>

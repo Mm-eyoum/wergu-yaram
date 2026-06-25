@@ -1,0 +1,44 @@
+{
+  "allPrefix": "Toutes — {{label}}",
+  "titles": {
+    "famille": "Famille",
+    "aware": "Catégorie AWaRe",
+    "sansord": "Sans ordonnance",
+    "essentiel": "Médicament essentiel",
+    "categorie": "Catégorie",
+    "secteur": "Secteur",
+    "region": "Région",
+    "ville": "Ville",
+    "specialites": "Spécialités",
+    "theme": "Thème",
+    "public": "Communauté publique",
+    "mode": "Mode",
+    "urgence": "Urgence",
+    "statut": "Statut",
+    "zone": "Zone"
+  },
+  "sorts": {
+    "relevance": "Pertinence",
+    "title": "Ordre alphabétique",
+    "recent": "Plus récents",
+    "rating": "Mieux notés",
+    "distance": "Plus proches",
+    "members": "Plus de membres",
+    "date": "Date (à venir)",
+    "urgency": "Urgence",
+    "daysLeft": "Jours restants"
+  },
+  "options": {
+    "aware": { "Access": "Access", "Watch": "Watch", "Reserve": "Reserve" },
+    "urgency": { "urgent": "Urgent", "eleve": "Élevé", "modere": "Modéré" },
+    "needStatus": { "en_cours": "En cours", "finance": "Financé", "valide": "Validé" },
+    "mode": { "Présentiel": "Présentiel", "En ligne": "En ligne", "Hybride": "Hybride" },
+    "partnerCategory": {
+      "ong": "ONG",
+      "institution": "Institution",
+      "entreprise": "Entreprise",
+      "fondation": "Fondation",
+      "structure": "Structure"
+    }
+  }
+}

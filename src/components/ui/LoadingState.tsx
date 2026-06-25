@@ -1,7 +1,9 @@
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 
-export function LoadingState({ label = "Chargement…" }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
+  const { t } = useTranslation();
   return (
     <div
       role="status"
@@ -10,7 +12,7 @@ export function LoadingState({ label = "Chargement…" }: { label?: string }) {
       className="flex flex-col items-center justify-center gap-3 py-12 text-text-secondary"
     >
       <Loader2 className="h-7 w-7 animate-spin text-brand-green" aria-hidden="true" />
-      <p className="text-sm">{label}</p>
+      <p className="text-sm">{label ?? t("actions.loading")}</p>
     </div>
   );
 }

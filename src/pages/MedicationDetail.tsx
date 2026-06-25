@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   Ban,
@@ -44,24 +45,25 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-const CARE_LABELS: { key: keyof CareLevels; label: string; title: string }[] = [
-  { key: "csps", label: "CSPS", title: "Centre de Santé et de Promotion Sociale" },
-  { key: "cm", label: "CM", title: "Centre Médical" },
-  { key: "cma", label: "CMA", title: "Centre Médical avec Antenne chirurgicale" },
-  { key: "ch", label: "CH", title: "Centre Hospitalier" },
+const CARE_LABELS: { key: keyof CareLevels; label: string }[] = [
+  { key: "csps", label: "CSPS" },
+  { key: "cm", label: "CM" },
+  { key: "cma", label: "CMA" },
+  { key: "ch", label: "CH" },
 ];
 
 /** Tableau des présentations : forme, dosage et disponibilité par niveau de soins. */
 function PresentationsTable({ presentations }: { presentations: Presentation[] }) {
+  const { t } = useTranslation("medication");
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border-soft text-left text-xs uppercase tracking-wide text-text-secondary">
-            <th className="py-2 pr-3 font-semibold">Forme</th>
-            <th className="py-2 pr-3 font-semibold">Dosage</th>
+            <th className="py-2 pr-3 font-semibold">{t("table.form")}</th>
+            <th className="py-2 pr-3 font-semibold">{t("table.dosage")}</th>
             {CARE_LABELS.map((c) => (
-              <th key={c.key} className="px-2 py-2 text-center font-semibold" title={c.title}>
+              <th key={c.key} className="px-2 py-2 text-center font-semibold" title={t(`care.${c.key}`)}>
                 {c.label}
               </th>
             ))}
@@ -78,11 +80,11 @@ function PresentationsTable({ presentations }: { presentations: Presentation[] }
               {CARE_LABELS.map((c) => (
                 <td key={c.key} className="px-2 py-2 text-center">
                   {p.careLevels[c.key] ? (
-                    <span className="font-semibold text-brand-green" aria-label="Disponible">
+                    <span className="font-semibold text-brand-green" aria-label={t("table.available")}>
                       ✓
                     </span>
                   ) : (
-                    <span className="text-border" aria-label="Non disponible">
+                    <span className="text-border" aria-label={t("table.unavailable")}>
                       –
                     </span>
                   )}
@@ -92,10 +94,7 @@ function PresentationsTable({ presentations }: { presentations: Presentation[] }
           ))}
         </tbody>
       </table>
-      <p className="mt-2 text-xs text-text-secondary">
-        Niveaux de soins : CSPS · CM · CMA · CH. ✓ = produit prévu à ce niveau (Liste Nationale des Médicaments
-        Essentiels).
-      </p>
+      <p className="mt-2 text-xs text-text-secondary">{t("table.note")}</p>
     </div>
   );
 }
@@ -107,6 +106,7 @@ const AWARE_TONE: Record<string, "green" | "warning" | "danger"> = {
 };
 
 export default function MedicationDetail() {
+  const { t } = useTranslation(["medication", "common"]);
   const { slug } = useParams();
   const { data: med, isLoading } = useMedication(slug);
   const { data: pathologies = [] } = usePathologies();
@@ -115,7 +115,7 @@ export default function MedicationDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de la fiche…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -123,8 +123,8 @@ export default function MedicationDetail() {
   if (!med) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Médicament introuvable" noIndex />
-        <EmptyState title="Médicament introuvable" message="Cette fiche n'existe pas ou a été déplacée." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -153,16 +153,16 @@ export default function MedicationDetail() {
         jsonLd={[
           drugJsonLd(med),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Médicaments", path: "/recherche?type=medicament" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.medicament"), path: "/recherche?type=medicament" },
             { name: med.name, path: `/medicaments/${med.slug}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Médicaments", to: "/recherche?type=medicament" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.medicament"), to: "/recherche?type=medicament" },
           { label: med.name },
         ]}
       />
@@ -180,18 +180,18 @@ export default function MedicationDetail() {
             <TrustBadge kind="medical" />
           </div>
           <p className="mt-1 text-sm text-text-secondary">
-            DCI · {med.dci ?? med.name}
+            {t("dci")} · {med.dci ?? med.name}
             {med.family ? ` — ${med.family}` : ""}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {med.essentialMedicine && <Badge tone="mint">Médicament essentiel</Badge>}
+            {med.essentialMedicine && <Badge tone="mint">{t("badges.essential")}</Badge>}
             {med.awareCategory && (
-              <Badge tone={AWARE_TONE[med.awareCategory]}>Antibiotique AWaRe · {med.awareCategory}</Badge>
+              <Badge tone={AWARE_TONE[med.awareCategory]}>{t("badges.awareAntibiotic", { cat: med.awareCategory })}</Badge>
             )}
             {med.withoutPrescription ? (
-              <Badge tone="green">Disponible sans ordonnance</Badge>
+              <Badge tone="green">{t("badges.noPrescription")}</Badge>
             ) : (
-              <Badge tone="neutral">Sur ordonnance</Badge>
+              <Badge tone="neutral">{t("badges.prescription")}</Badge>
             )}
             {(med.forms ?? []).map((form) => (
               <Badge key={form} tone="neutral">
@@ -222,49 +222,49 @@ export default function MedicationDetail() {
           <MedicalDisclaimer />
 
           {med.presentations && med.presentations.length > 0 && (
-            <SectionCard title="Présentations et niveaux de soins" icon={<Pill className="h-5 w-5" />}>
+            <SectionCard title={t("sections.presentations")} icon={<Pill className="h-5 w-5" />}>
               <PresentationsTable presentations={med.presentations} />
             </SectionCard>
           )}
 
           {med.usage && (
-            <SectionCard title="À quoi sert ce médicament ?" icon={<Info className="h-5 w-5" />}>
+            <SectionCard title={t("sections.usage")} icon={<Info className="h-5 w-5" />}>
               <p className="text-sm leading-relaxed text-text-secondary">{med.usage}</p>
             </SectionCard>
           )}
 
           {med.posology && (
-            <SectionCard title="Posologie" icon={<Target className="h-5 w-5" />}>
+            <SectionCard title={t("sections.posology")} icon={<Target className="h-5 w-5" />}>
               <p className="text-sm leading-relaxed text-text-secondary">{med.posology}</p>
             </SectionCard>
           )}
 
           {(med.contraindications?.length ?? 0) > 0 && (
-            <SectionCard title="Contre-indications" icon={<Ban className="h-5 w-5" />}>
+            <SectionCard title={t("sections.contraindications")} icon={<Ban className="h-5 w-5" />}>
               <BulletList items={med.contraindications!} />
             </SectionCard>
           )}
 
           {(med.sideEffects?.length ?? 0) > 0 && (
-            <SectionCard title="Effets secondaires" icon={<AlertTriangle className="h-5 w-5" />}>
+            <SectionCard title={t("sections.sideEffects")} icon={<AlertTriangle className="h-5 w-5" />}>
               <BulletList items={med.sideEffects!} />
             </SectionCard>
           )}
 
           {(med.precautions?.length ?? 0) > 0 && (
-            <SectionCard title="Précautions d'emploi" icon={<ShieldAlert className="h-5 w-5" />}>
+            <SectionCard title={t("sections.precautions")} icon={<ShieldAlert className="h-5 w-5" />}>
               <BulletList items={med.precautions!} />
             </SectionCard>
           )}
 
           {(med.interactions?.length ?? 0) > 0 && (
-            <SectionCard title="Interactions médicamenteuses" icon={<HeartPulse className="h-5 w-5" />}>
+            <SectionCard title={t("sections.interactions")} icon={<HeartPulse className="h-5 w-5" />}>
               <BulletList items={med.interactions!} />
             </SectionCard>
           )}
 
           {med.professionalAdvice && (
-            <SectionCard title="Le conseil du professionnel de santé" icon={<Stethoscope className="h-5 w-5" />}>
+            <SectionCard title={t("sections.advice")} icon={<Stethoscope className="h-5 w-5" />}>
               <div className="rounded-2xl bg-brand-mint p-4 text-sm leading-relaxed text-text-primary">
                 {med.professionalAdvice}
               </div>
@@ -272,20 +272,15 @@ export default function MedicationDetail() {
           )}
 
           {!hasClinical && (
-            <SectionCard title="Information clinique" icon={<Info className="h-5 w-5" />}>
-              <p className="text-sm leading-relaxed text-text-secondary">
-                La fiche clinique détaillée (usage, posologie, contre-indications, interactions) de ce médicament
-                essentiel est <strong>en cours de validation éditoriale</strong>. En attendant, demandez conseil à
-                votre pharmacien ou à votre médecin avant toute utilisation. Aucun médicament ne doit être pris sans
-                avis professionnel.
-              </p>
+            <SectionCard title={t("sections.clinicalInfo")} icon={<Info className="h-5 w-5" />}>
+              <p className="text-sm leading-relaxed text-text-secondary">{t("clinicalPending")}</p>
             </SectionCard>
           )}
 
           {(med.clinicalSources?.length ?? 0) > 0 && (
             <p className="text-xs text-text-secondary">
-              Sources cliniques : {med.clinicalSources!.join(" · ")}
-              {med.clinicalReviewStatus === "draft" && " — contenu en cours de revue médicale."}
+              {t("sourcesPrefix")}{med.clinicalSources!.join(" · ")}
+              {med.clinicalReviewStatus === "draft" && t("underReview")}
             </p>
           )}
         </div>
@@ -293,61 +288,59 @@ export default function MedicationDetail() {
         {/* Sidebar */}
         <aside className="space-y-5 lg:sticky lg:top-20 lg:h-fit">
           <div className="card-surface p-5">
-            <h2 className="text-sm font-bold text-text-primary">Résumé</h2>
+            <h2 className="text-sm font-bold text-text-primary">{t("summary.title")}</h2>
             <dl className="mt-3 space-y-3 text-sm">
               {med.pharmacoTherapeuticGroup && (
-                <SummaryRow label="Groupe" value={med.pharmacoTherapeuticGroup} />
+                <SummaryRow label={t("summary.group")} value={med.pharmacoTherapeuticGroup} />
               )}
-              {(med.forms?.length ?? 0) > 0 && <SummaryRow label="Formes" value={med.forms.join(", ")} />}
-              {med.awareCategory && <SummaryRow label="AWaRe" value={med.awareCategory} />}
-              <SummaryRow label="Ordonnance" value={med.withoutPrescription ? "Non requise" : "Requise"} />
-              {med.trust.updatedAt && <SummaryRow label="Mise à jour" value={formatDate(med.trust.updatedAt)} />}
-              {med.trust.source && <SummaryRow label="Source" value={med.trust.source} />}
+              {(med.forms?.length ?? 0) > 0 && <SummaryRow label={t("summary.forms")} value={med.forms.join(", ")} />}
+              {med.awareCategory && <SummaryRow label={t("summary.aware")} value={med.awareCategory} />}
+              <SummaryRow label={t("summary.prescriptionLabel")} value={med.withoutPrescription ? t("summary.prescriptionNo") : t("summary.prescriptionYes")} />
+              {med.trust.updatedAt && <SummaryRow label={t("summary.updated")} value={formatDate(med.trust.updatedAt)} />}
+              {med.trust.source && <SummaryRow label={t("summary.source")} value={med.trust.source} />}
             </dl>
             <div className="mt-4 space-y-2">
               <ButtonLink to="/recherche?type=etablissement" fullWidth>
-                <MapPin className="h-4 w-4" /> Trouver en pharmacie
+                <MapPin className="h-4 w-4" /> {t("findPharmacy")}
               </ButtonLink>
               <Button
                 variant="outline"
                 fullWidth
-                onClick={() => comingSoon("Poser une question à un professionnel arrive bientôt.")}
+                onClick={() => comingSoon(t("askComingSoon"))}
               >
-                <MessageCircleQuestion className="h-4 w-4" /> Poser une question
+                <MessageCircleQuestion className="h-4 w-4" /> {t("askQuestion")}
               </Button>
             </div>
           </div>
 
           {med.regulatory && (
-            <SidebarPanel title="Cadre réglementaire">
+            <SidebarPanel title={t("regulatory.title")}>
               <div className="flex gap-2 text-sm text-text-secondary">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-green" />
                 <div className="space-y-1">
-                  <p>
-                    Référencé dans la <strong>{med.regulatory.listEdition}</strong> ({med.regulatory.authority}).
-                  </p>
+                  <p>{t("regulatory.ref", { edition: med.regulatory.listEdition, authority: med.regulatory.authority })}</p>
                   {med.regulatory.ammRequired && (
                     <p>
-                      Toute commercialisation requiert une Autorisation de Mise sur le Marché (AMM)
-                      {med.regulatory.ammValidityYears
-                        ? `, valable ${med.regulatory.ammValidityYears} ans`
-                        : ""}{" "}
-                      — Règlement UEMOA N°04/2020.
+                      {t("regulatory.amm", {
+                        validity: med.regulatory.ammValidityYears
+                          ? t("regulatory.ammValidity", { years: med.regulatory.ammValidityYears })
+                          : "",
+                      })}
                     </p>
                   )}
-                  <p className="text-xs">Information non promotionnelle, fournie à titre éducatif.</p>
+                  <p className="text-xs">{t("regulatory.nonPromo")}</p>
                 </div>
               </div>
             </SidebarPanel>
           )}
 
-          <SidebarPanel title="Pathologies liées">
+          <SidebarPanel title={t("relatedPathologies")}>
             {relatedPathologies.length > 0 ? (
               <div className="space-y-2">
                 {relatedPathologies.map((p) => p && <PathologyCard key={p.slug} pathology={p} />)}
               </div>
             ) : (
-              <p className="text-sm text-text-secondary">Aucune pathologie liée.</p>
+              <p className="text-sm text-text-secondary">{t("noRelated")}</p>
             )}
           </SidebarPanel>
         </aside>

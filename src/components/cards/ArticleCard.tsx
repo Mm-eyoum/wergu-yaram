@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BadgeCheck, Clock, Newspaper, PlayCircle } from "lucide-react";
 import type { Article } from "@/types/domain";
 import { Avatar } from "@/components/ui/Avatar";
@@ -6,6 +7,7 @@ import { formatDate } from "@/lib/format";
 import { CardMedia, OverlayBadge, MetaItem, cardInteractive } from "./primitives";
 
 export function ArticleCard({ article }: { article: Article }) {
+  const { t } = useTranslation("cards");
   const isVideo = article.type === "video";
   return (
     <Link to={`/articles/${article.slug}`} className={`${cardInteractive} block overflow-hidden`}>
@@ -17,7 +19,7 @@ export function ArticleCard({ article }: { article: Article }) {
         overlayTopRight={
           article.trust?.verified ? (
             <OverlayBadge className="text-brand-green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>
-              Vérifié
+              {t("verified")}
             </OverlayBadge>
           ) : undefined
         }
@@ -42,7 +44,7 @@ export function ArticleCard({ article }: { article: Article }) {
             <p className="truncate text-[11px] text-text-secondary">{article.author.role}</p>
           </div>
           <MetaItem icon={<Clock className="h-3.5 w-3.5" />}>
-            {isVideo ? article.videoDurationLabel : `${article.readingMinutes} min`}
+            {isVideo ? article.videoDurationLabel : t("readingMinutes", { count: article.readingMinutes })}
           </MetaItem>
         </div>
         <p className="mt-1.5 text-[11px] text-text-secondary">{formatDate(article.publishedAt)}</p>

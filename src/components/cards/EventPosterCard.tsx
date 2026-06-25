@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
 import type { HealthEvent } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
@@ -11,21 +12,21 @@ function eventIsFree(event: HealthEvent): boolean {
   return /gratuit|free|^0/i.test(event.price.trim());
 }
 
-function priceLabel(event: HealthEvent): string {
-  if (eventIsFree(event)) return "Gratuit";
-  if (typeof event.priceAmount === "number" && event.priceAmount > 0) return formatFcfa(event.priceAmount);
-  return event.price;
-}
-
 /**
  * Eventbrite-style poster card: cover image, date chip, title, place, price.
  * Built on the shared card primitives so it matches the platform charter.
  */
 export function EventPosterCard({ event }: { event: HealthEvent }) {
+  const { t } = useTranslation("cards");
   const chip = dateChip(event.startAt);
   const free = eventIsFree(event);
   const lowSeats = event.seatsLeft > 0 && event.seatsLeft <= 20;
   const place = event.mode === "En ligne" ? "En ligne" : `${event.city}`;
+  const priceText = free
+    ? t("free")
+    : typeof event.priceAmount === "number" && event.priceAmount > 0
+      ? formatFcfa(event.priceAmount)
+      : event.price;
 
   return (
     <Link to={`/evenements/${event.id}`} className={`${cardInteractive} flex flex-col overflow-hidden`}>
@@ -52,17 +53,17 @@ export function EventPosterCard({ event }: { event: HealthEvent }) {
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           <Badge tone={free ? "green" : "mint"} icon={<Ticket className="h-3.5 w-3.5" />}>
-            {priceLabel(event)}
+            {priceText}
           </Badge>
           {lowSeats && (
             <Badge tone="warning" icon={<Users className="h-3.5 w-3.5" />}>
-              {event.seatsLeft} places
+              {t("seats", { count: event.seatsLeft })}
             </Badge>
           )}
         </div>
 
         <div className="mt-4 flex items-center justify-end pt-1">
-          <CardCta>{free ? "Voir l'événement" : "Réserver"}</CardCta>
+          <CardCta>{free ? t("viewEvent") : t("book")}</CardCta>
         </div>
       </div>
     </Link>

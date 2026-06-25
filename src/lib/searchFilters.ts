@@ -59,8 +59,11 @@ interface TypeFilterConfig {
   reliability: boolean;
 }
 
-const SORT_RELEVANCE: SortDef = { value: "relevance", label: "Pertinence" };
-const SORT_TITLE: SortDef = { value: "title", label: "Ordre alphabétique" };
+// Labels below are i18n keys (namespace-qualified, "filters:…"), resolved at
+// render by buildFacetGroups / the page (see translateGroupLabels). Region/city
+// option labels stay raw data (proper nouns) and pass through untranslated.
+const SORT_RELEVANCE: SortDef = { value: "relevance", label: "filters:sorts.relevance" };
+const SORT_TITLE: SortDef = { value: "title", label: "filters:sorts.title" };
 const DEFAULT_SORTS: SortDef[] = [SORT_RELEVANCE, SORT_TITLE];
 
 const REGION_OPTIONS: FilterOption[] = SENEGAL_REGIONS.slice(1).map((r) => ({
@@ -70,21 +73,21 @@ const REGION_OPTIONS: FilterOption[] = SENEGAL_REGIONS.slice(1).map((r) => ({
 
 const AWARE_OPTIONS: FilterOption[] = (
   Object.keys(AWARE_LABELS) as (keyof typeof AWARE_LABELS)[]
-).map((k) => ({ value: k, label: AWARE_LABELS[k] }));
+).map((k) => ({ value: k, label: `filters:options.aware.${k}` }));
 
 const URGENCY_OPTIONS: FilterOption[] = (
   Object.keys(URGENCY_LABELS) as (keyof typeof URGENCY_LABELS)[]
-).map((k) => ({ value: k, label: URGENCY_LABELS[k] }));
+).map((k) => ({ value: k, label: `filters:options.urgency.${k}` }));
 
 const NEED_STATUS_OPTIONS: FilterOption[] = (
   Object.keys(NEED_STATUS_LABELS) as (keyof typeof NEED_STATUS_LABELS)[]
-).map((k) => ({ value: k, label: NEED_STATUS_LABELS[k] }));
+).map((k) => ({ value: k, label: `filters:options.needStatus.${k}` }));
 
-const MODE_OPTIONS: FilterOption[] = EVENT_MODES.map((m) => ({ value: m, label: m }));
+const MODE_OPTIONS: FilterOption[] = EVENT_MODES.map((m) => ({ value: m, label: `filters:options.mode.${m}` }));
 
 const PARTNER_CATEGORY_OPTIONS: FilterOption[] = (
   Object.keys(PARTNER_CATEGORY_LABELS) as (keyof typeof PARTNER_CATEGORY_LABELS)[]
-).map((k) => ({ value: k, label: PARTNER_CATEGORY_LABELS[k] }));
+).map((k) => ({ value: k, label: `filters:options.partnerCategory.${k}` }));
 
 /** Filters + sorts available per content type (and the "all" tab). */
 export const TYPE_FILTERS: Record<SearchScope, TypeFilterConfig> = {
@@ -94,84 +97,84 @@ export const TYPE_FILTERS: Record<SearchScope, TypeFilterConfig> = {
     reliability: true,
     sorts: DEFAULT_SORTS,
     facets: [
-      { param: "famille", label: "Famille", facetKey: "family", kind: "select" },
-      { param: "aware", label: "Catégorie AWaRe", facetKey: "awareCategory", kind: "multi", options: AWARE_OPTIONS },
-      { param: "sansord", label: "Sans ordonnance", facetKey: "withoutPrescription", kind: "toggle" },
-      { param: "essentiel", label: "Médicament essentiel", facetKey: "essentialMedicine", kind: "toggle" },
+      { param: "famille", label: "filters:titles.famille", facetKey: "family", kind: "select" },
+      { param: "aware", label: "filters:titles.aware", facetKey: "awareCategory", kind: "multi", options: AWARE_OPTIONS },
+      { param: "sansord", label: "filters:titles.sansord", facetKey: "withoutPrescription", kind: "toggle" },
+      { param: "essentiel", label: "filters:titles.essentiel", facetKey: "essentialMedicine", kind: "toggle" },
     ],
   },
   pathologie: {
     reliability: true,
     sorts: DEFAULT_SORTS,
-    facets: [{ param: "categorie", label: "Catégorie", facetKey: "category", kind: "select" }],
+    facets: [{ param: "categorie", label: "filters:titles.categorie", facetKey: "category", kind: "select" }],
   },
   article: {
     reliability: true,
-    sorts: [...DEFAULT_SORTS, { value: "recent", label: "Plus récents" }],
-    facets: [{ param: "categorie", label: "Catégorie", facetKey: "category", kind: "select" }],
+    sorts: [...DEFAULT_SORTS, { value: "recent", label: "filters:sorts.recent" }],
+    facets: [{ param: "categorie", label: "filters:titles.categorie", facetKey: "category", kind: "select" }],
   },
   video: {
     reliability: true,
-    sorts: [...DEFAULT_SORTS, { value: "recent", label: "Plus récents" }],
-    facets: [{ param: "categorie", label: "Catégorie", facetKey: "category", kind: "select" }],
+    sorts: [...DEFAULT_SORTS, { value: "recent", label: "filters:sorts.recent" }],
+    facets: [{ param: "categorie", label: "filters:titles.categorie", facetKey: "category", kind: "select" }],
   },
   etablissement: {
     reliability: true,
     sorts: [
       ...DEFAULT_SORTS,
-      { value: "rating", label: "Mieux notés" },
-      { value: "distance", label: "Plus proches" },
+      { value: "rating", label: "filters:sorts.rating" },
+      { value: "distance", label: "filters:sorts.distance" },
     ],
     facets: [
-      { param: "categorie", label: "Catégorie", facetKey: "facilityType", kind: "select" },
-      { param: "secteur", label: "Secteur", facetKey: "sector", kind: "select" },
-      { param: "region", label: "Région", facetKey: "region", kind: "select", options: REGION_OPTIONS },
-      { param: "ville", label: "Ville", facetKey: "city", kind: "select" },
-      { param: "specialites", label: "Spécialités", facetKey: "specialties", kind: "multi" },
+      { param: "categorie", label: "filters:titles.categorie", facetKey: "facilityType", kind: "select" },
+      { param: "secteur", label: "filters:titles.secteur", facetKey: "sector", kind: "select" },
+      { param: "region", label: "filters:titles.region", facetKey: "region", kind: "select", options: REGION_OPTIONS },
+      { param: "ville", label: "filters:titles.ville", facetKey: "city", kind: "select" },
+      { param: "specialites", label: "filters:titles.specialites", facetKey: "specialties", kind: "multi" },
     ],
   },
   communaute: {
     reliability: false,
-    sorts: [...DEFAULT_SORTS, { value: "members", label: "Plus de membres" }],
+    sorts: [...DEFAULT_SORTS, { value: "members", label: "filters:sorts.members" }],
     facets: [
-      { param: "theme", label: "Thème", facetKey: "topic", kind: "select" },
-      { param: "public", label: "Communauté publique", facetKey: "isPublic", kind: "toggle" },
+      { param: "theme", label: "filters:titles.theme", facetKey: "topic", kind: "select" },
+      { param: "public", label: "filters:titles.public", facetKey: "isPublic", kind: "toggle" },
     ],
   },
   evenement: {
     reliability: false,
-    sorts: [...DEFAULT_SORTS, { value: "date", label: "Date (à venir)" }],
+    sorts: [...DEFAULT_SORTS, { value: "date", label: "filters:sorts.date" }],
     facets: [
-      { param: "mode", label: "Mode", facetKey: "mode", kind: "multi", options: MODE_OPTIONS },
-      { param: "ville", label: "Ville", facetKey: "city", kind: "select" },
+      { param: "mode", label: "filters:titles.mode", facetKey: "mode", kind: "multi", options: MODE_OPTIONS },
+      { param: "ville", label: "filters:titles.ville", facetKey: "city", kind: "select" },
     ],
   },
   besoin: {
     reliability: false,
     sorts: [
       ...DEFAULT_SORTS,
-      { value: "urgency", label: "Urgence" },
-      { value: "daysLeft", label: "Jours restants" },
+      { value: "urgency", label: "filters:sorts.urgency" },
+      { value: "daysLeft", label: "filters:sorts.daysLeft" },
     ],
     facets: [
-      { param: "urgence", label: "Urgence", facetKey: "urgency", kind: "multi", options: URGENCY_OPTIONS },
-      { param: "statut", label: "Statut", facetKey: "needStatus", kind: "multi", options: NEED_STATUS_OPTIONS },
-      { param: "region", label: "Région", facetKey: "region", kind: "select", options: REGION_OPTIONS },
+      { param: "urgence", label: "filters:titles.urgence", facetKey: "urgency", kind: "multi", options: URGENCY_OPTIONS },
+      { param: "statut", label: "filters:titles.statut", facetKey: "needStatus", kind: "multi", options: NEED_STATUS_OPTIONS },
+      { param: "region", label: "filters:titles.region", facetKey: "region", kind: "select", options: REGION_OPTIONS },
     ],
   },
   partenaire: {
     reliability: false,
     sorts: DEFAULT_SORTS,
     facets: [
-      { param: "categorie", label: "Catégorie", facetKey: "partnerCategory", kind: "multi", options: PARTNER_CATEGORY_OPTIONS },
-      { param: "zone", label: "Zone", facetKey: "zone", kind: "select" },
+      { param: "categorie", label: "filters:titles.categorie", facetKey: "partnerCategory", kind: "multi", options: PARTNER_CATEGORY_OPTIONS },
+      { param: "zone", label: "filters:titles.zone", facetKey: "zone", kind: "select" },
     ],
   },
   formation: {
     reliability: true,
     sorts: DEFAULT_SORTS,
     facets: [
-      { param: "theme", label: "Thème", facetKey: "category", kind: "select" },
+      { param: "theme", label: "filters:titles.theme", facetKey: "category", kind: "select" },
     ],
   },
 };
@@ -227,22 +230,32 @@ export function applyFacets(
   );
 }
 
-/** Build the FilterSidebar groups for a type, with option counts. */
+/** Minimal translator shape (react-i18next's TFunction is compatible). */
+export type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+/** Build the FilterSidebar groups for a type, with option counts.
+ *  `t` resolves the namespaced label keys ("filters:…"); raw data labels
+ *  (regions, cities, families…) are passed through unchanged. */
 export function buildFacetGroups(
   scope: SearchScope,
   typeHits: SearchHit[],
   selected: Record<string, string | string[]>,
+  t: Translate,
 ): FilterGroup[] {
+  // A label is a translation key when namespace-prefixed ("filters:…"); raw
+  // data values (region/city names) stay verbatim.
+  const tr = (label: string) => (label.startsWith("filters:") ? t(label) : label);
   const defs = TYPE_FILTERS[scope]?.facets ?? [];
   return defs
     .map((def): FilterGroup | null => {
+      const title = tr(def.label);
       // Count against the pool filtered by every *other* active facet.
       const pool = applyFacets(typeHits, scope, selected, def.param);
 
       if (def.kind === "toggle") {
         const count = pool.filter((h) => h.facets?.[def.facetKey] === true).length;
         if (count === 0 && selected[def.param] !== "1") return null;
-        return { key: def.param, title: def.label, kind: "toggle", options: [{ value: "1", label: def.label, count }] };
+        return { key: def.param, title, kind: "toggle", options: [{ value: "1", label: title, count }] };
       }
 
       const counts = new Map<string, number>();
@@ -250,7 +263,7 @@ export function buildFacetGroups(
 
       let options: FilterOption[];
       if (def.options) {
-        options = def.options.map((o) => ({ ...o, count: counts.get(o.value) ?? 0 }));
+        options = def.options.map((o) => ({ ...o, label: tr(o.label), count: counts.get(o.value) ?? 0 }));
       } else {
         options = Array.from(counts.entries())
           .map(([value, count]) => ({ value, label: value, count }))
@@ -264,12 +277,12 @@ export function buildFacetGroups(
       if (def.kind === "select") {
         return {
           key: def.param,
-          title: def.label,
+          title,
           kind: "select",
-          options: [{ value: "", label: `Toutes — ${def.label}` }, ...options],
+          options: [{ value: "", label: t("filters:allPrefix", { label: title }) }, ...options],
         };
       }
-      return { key: def.param, title: def.label, kind: "checkbox", options };
+      return { key: def.param, title, kind: "checkbox", options };
     })
     .filter((g): g is FilterGroup => g !== null);
 }
