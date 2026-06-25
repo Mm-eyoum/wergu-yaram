@@ -61,14 +61,19 @@ sont centralisés dans `common:contentTypes.<ContentType>` et résolus par clé
 d'enum (voir `ExploreMenu`, onglets de `SearchResults`). Réutiliser ce bloc
 partout où un `ContentType` doit être affiché.
 
-- ✅ Pages détail : `MedicationDetail` (`medication`), `PathologyDetail`
-  (`pathology`), `FacilityDetail` (`facility`). Modèle établi pour les suivantes.
+- ✅ **Toutes les pages détail publiques** (un namespace par page) :
+  `MedicationDetail`, `PathologyDetail`, `FacilityDetail`, `EventDetail`,
+  `CommunityDetail`, `EquipmentDetail`, `PartnerDetail`, `ArticleDetail`,
+  `FormationDetail`, `OrganizationDetail`. → **Tout le parcours public est i18n.**
 
-## Surfaces restantes (ordre suggéré)
-0. Pages détail restantes (même modèle) : `EventDetail`, `CommunityDetail`,
-   `EquipmentDetail`, `PartnerDetail`, `ArticleDetail`, `FormationDetail`,
-   `OrganizationDetail`.
-1. `src/lib/searchFilters.ts` (titres de facettes + libellés de tri) et
+## Surfaces restantes (non publiques — priorité moindre)
+0. Libellés d'énum encore en dur dans des libs data : `src/lib/formationLabels.ts`
+   (format/niveau de formation), `src/lib/constants.ts` (régions, rôles, statuts
+   admin). Mêmes patterns que `facilityTaxonomy`/`searchFilters` (résoudre via
+   `t()`/helper au rendu).
+1. Listing pages publiques restantes (`Structures`, `Communities`, `Evenements`,
+   `Partners`, `EquipmentList`, `Formations`, `Soutenir`, `Carte`, `Forum`).
+2. `src/lib/searchFilters.ts` est déjà fait ; reste
    `src/lib/constants.ts` (régions, rôles, statuts, libellés
    urgence/besoin/partenaire). Résoudre les `label` via `t()`/helper au rendu.
 2. `UniversalSearchHero`/`UniversalSearchBar` (+ `QUICK_SHORTCUTS`), cartes (`*Card`).
