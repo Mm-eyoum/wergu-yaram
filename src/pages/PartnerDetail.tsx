@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Globe, HandHeart, MapPin } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
@@ -15,6 +16,7 @@ import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 
 export default function PartnerDetail() {
+  const { t } = useTranslation(["partner", "common"]);
   const { slug } = useParams();
   const { data: partner, isLoading } = usePartner(slug);
   const { data: partners = [] } = usePartners();
@@ -23,7 +25,7 @@ export default function PartnerDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement du partenaire…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -31,8 +33,8 @@ export default function PartnerDetail() {
   if (!partner) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Partenaire introuvable" noIndex />
-        <EmptyState title="Partenaire introuvable" message="Ce partenaire n'existe pas ou a été retiré." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -47,16 +49,16 @@ export default function PartnerDetail() {
         ogType="website"
         jsonLd={[
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Partenaires", path: "/partenaires" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.partenaire"), path: "/partenaires" },
             { name: partner.name, path: `/partenaires/${partner.slug}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Partenaires", to: "/partenaires" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.partenaire"), to: "/partenaires" },
           { label: partner.name },
         ]}
       />
@@ -83,8 +85,8 @@ export default function PartnerDetail() {
             <p className="mt-4 text-[15px] leading-relaxed text-text-secondary">{partner.description}</p>
             {partner.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {partner.tags.map((t) => (
-                  <Badge key={t} tone="neutral">{t}</Badge>
+                {partner.tags.map((tag) => (
+                  <Badge key={tag} tone="neutral">{tag}</Badge>
                 ))}
               </div>
             )}
@@ -99,7 +101,7 @@ export default function PartnerDetail() {
 
           {related.length > 0 && (
             <div>
-              <h2 className="mb-3 text-lg font-bold">Autres partenaires similaires</h2>
+              <h2 className="mb-3 text-lg font-bold">{t("relatedTitle")}</h2>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {related.map((p) => (
                   <PartnerCard key={p.slug} partner={p} href={`/partenaires/${p.slug}`} />
@@ -110,22 +112,20 @@ export default function PartnerDetail() {
         </div>
 
         <aside className="space-y-5">
-          <SidebarPanel title="Contribution" icon={<HandHeart className="h-4 w-4" />}>
+          <SidebarPanel title={t("contribution")} icon={<HandHeart className="h-4 w-4" />}>
             <p className="text-sm text-text-secondary">{partner.contributionsLabel}</p>
           </SidebarPanel>
 
           <div className="rounded-3xl bg-brand-gradient p-5 text-white">
             <Globe className="h-7 w-7" />
-            <h3 className="mt-2 font-bold">Travailler avec ce partenaire ?</h3>
-            <p className="mt-1 text-sm text-white/85">
-              Contactez l'équipe Wergu Yaram pour une mise en relation.
-            </p>
+            <h3 className="mt-2 font-bold">{t("ctaTitle")}</h3>
+            <p className="mt-1 text-sm text-white/85">{t("ctaText")}</p>
             <Button
               size="sm"
               className="mt-3 bg-white text-brand-green hover:bg-white"
-              onClick={() => comingSoon("La mise en relation avec les partenaires arrive bientôt.")}
+              onClick={() => comingSoon(t("ctaComingSoon"))}
             >
-              Demander un contact
+              {t("ctaButton")}
             </Button>
           </div>
         </aside>
