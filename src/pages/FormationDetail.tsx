@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BadgeCheck, CheckCircle2, Clock, GraduationCap, PlayCircle, Users } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
@@ -13,18 +14,19 @@ import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 
 export default function FormationDetail() {
+  const { t } = useTranslation(["formation", "common"]);
   const { slug } = useParams();
   const { data: formation, isLoading } = useFormation(slug);
   const comingSoon = useComingSoon();
 
   if (isLoading) {
-    return <div className="container-page py-16"><LoadingState label="Chargement de la formation…" /></div>;
+    return <div className="container-page py-16"><LoadingState label={t("loading")} /></div>;
   }
   if (!formation) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Formation introuvable" noIndex />
-        <EmptyState title="Formation introuvable" message="Cette formation n'existe pas ou n'est plus disponible." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -36,15 +38,15 @@ export default function FormationDetail() {
         description={formation.excerpt}
         ogImage={formation.cover}
         jsonLd={breadcrumbJsonLd([
-          { name: "Accueil", path: "/" },
-          { name: "Formations", path: "/formations" },
+          { name: t("common:breadcrumb.home"), path: "/" },
+          { name: t("common:contentTypes.formation"), path: "/formations" },
           { name: formation.title, path: `/formations/${formation.slug}` },
         ])}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Formations", to: "/formations" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.formation"), to: "/formations" },
           { label: formation.title },
         ]}
       />
@@ -62,7 +64,7 @@ export default function FormationDetail() {
               <Badge tone="navy">{FORMATION_FORMAT_LABELS[formation.format]}</Badge>
               <Badge tone="outline">{FORMATION_LEVEL_LABELS[formation.level]}</Badge>
               {formation.certification && (
-                <Badge tone="green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>Certifiante</Badge>
+                <Badge tone="green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>{t("certified")}</Badge>
               )}
               {formation.durationLabel && (
                 <span className="inline-flex items-center gap-1 text-sm text-text-secondary">
@@ -73,7 +75,7 @@ export default function FormationDetail() {
           </div>
 
           {formation.objectives.length > 0 && (
-            <SectionCard title="Objectifs pédagogiques">
+            <SectionCard title={t("objectives")}>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {formation.objectives.map((o) => (
                   <li key={o} className="flex gap-2 text-sm text-text-secondary">
@@ -85,7 +87,7 @@ export default function FormationDetail() {
           )}
 
           {formation.modules.length > 0 && (
-            <SectionCard title="Programme">
+            <SectionCard title={t("program")}>
               <ol className="space-y-3">
                 {formation.modules.map((m, i) => (
                   <li key={m.title} className="flex gap-3 rounded-2xl border border-border-soft p-3">
@@ -106,7 +108,7 @@ export default function FormationDetail() {
 
         <aside className="space-y-5">
           <div className="card-surface p-6 lg:sticky lg:top-20">
-            <h2 className="text-lg font-bold text-text-primary">S'inscrire</h2>
+            <h2 className="text-lg font-bold text-text-primary">{t("enroll")}</h2>
             {formation.audience.length > 0 && (
               <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-text-secondary">
                 <Users className="h-4 w-4" /> {formation.audience.join(", ")}
@@ -114,7 +116,7 @@ export default function FormationDetail() {
             )}
             {formation.provider?.name && (
               <p className="mt-2 text-sm text-text-secondary">
-                Par <span className="font-semibold text-text-primary">{formation.provider.name}</span>
+                {t("byPrefix")} <span className="font-semibold text-text-primary">{formation.provider.name}</span>
                 {formation.provider.role ? ` · ${formation.provider.role}` : ""}
               </p>
             )}
@@ -125,11 +127,11 @@ export default function FormationDetail() {
                 rel="noopener noreferrer"
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-green px-4 py-3 text-sm font-semibold text-white hover:bg-brand-greenDark"
               >
-                <GraduationCap className="h-5 w-5" /> Accéder à la formation
+                <GraduationCap className="h-5 w-5" /> {t("access")}
               </a>
             ) : (
-              <Button fullWidth size="lg" className="mt-4" onClick={() => comingSoon("Les inscriptions en ligne arrivent bientôt.")}>
-                <GraduationCap className="h-5 w-5" /> S'inscrire
+              <Button fullWidth size="lg" className="mt-4" onClick={() => comingSoon(t("enrollComingSoon"))}>
+                <GraduationCap className="h-5 w-5" /> {t("enroll")}
               </Button>
             )}
             {formation.relatedEventId && (
@@ -137,7 +139,7 @@ export default function FormationDetail() {
                 to={`/evenements/${formation.relatedEventId}`}
                 className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border-soft px-4 py-2.5 text-sm font-semibold text-text-secondary hover:border-brand-teal hover:text-brand-green"
               >
-                <PlayCircle className="h-4 w-4" /> Voir le webinaire associé
+                <PlayCircle className="h-4 w-4" /> {t("viewWebinar")}
               </Link>
             )}
           </div>
