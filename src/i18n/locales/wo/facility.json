@@ -1,0 +1,28 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "loading": "",
+  "notFoundTitle": "",
+  "notFoundMsg": "",
+  "verifiedBadge": "",
+  "reviewsCount": "",
+  "viewOnMap": "",
+  "contact": "",
+  "call": "",
+  "facts": {
+    "specialties": "",
+    "capacity": "",
+    "hours": "",
+    "facilityType": ""
+  },
+  "sections": {
+    "about": "",
+    "specialties": "",
+    "services": "",
+    "doctors": "",
+    "reviews": ""
+  },
+  "location": "",
+  "distanceFromYou": "",
+  "seeDistance": "",
+  "activeNeeds": ""
+}

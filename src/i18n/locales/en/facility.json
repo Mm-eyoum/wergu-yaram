@@ -1,0 +1,27 @@
+{
+  "loading": "Loading the facility…",
+  "notFoundTitle": "Facility not found",
+  "notFoundMsg": "This page doesn't exist or has been moved.",
+  "verifiedBadge": "Listed & verified",
+  "reviewsCount": "({{count}} reviews)",
+  "viewOnMap": "View on the map",
+  "contact": "Contact",
+  "call": "Call",
+  "facts": {
+    "specialties": "Specialties",
+    "capacity": "Capacity",
+    "hours": "Hours",
+    "facilityType": "Facility type"
+  },
+  "sections": {
+    "about": "About",
+    "specialties": "Specialties",
+    "services": "Available services",
+    "doctors": "Doctors & specialists",
+    "reviews": "Reviews & recommendations"
+  },
+  "location": "Location",
+  "distanceFromYou": "{{distance}} from you",
+  "seeDistance": "See the distance from my location",
+  "activeNeeds": "Active equipment needs"
+}
