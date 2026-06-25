@@ -5,24 +5,17 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/hooks/useToast";
-import { searchPlaces, importPlaces, IMPORT_CAP, type PlaceCandidate } from "@/services/places";
+import { searchPlaces, importPlaces, IMPORT_CAP, isOsmDirectorySource, type PlaceCandidate } from "@/services/places";
+import { DIRECTORY_FACILITY_TYPES } from "@/services/placesShared";
 import { SENEGAL_REGIONS } from "@/lib/constants";
 
-/** Health-structure categories used to scope the Places search. */
-const FACILITY_TYPES = [
-  "Hôpital",
-  "Centre de santé",
-  "Poste de santé",
-  "Clinique",
-  "Pharmacie",
-  "Cabinet médical",
-  "Maternité",
-];
+/** Health-structure types used to scope the directory search. */
+const FACILITY_TYPES = DIRECTORY_FACILITY_TYPES.map((t) => t.label);
 
 /**
- * Admin panel: search health structures by ZONE (région) + type via the Places
- * API (New), then import the selection as unclaimed directory pages. The search
- * query is built from the selected zone so results stay scoped to that area.
+ * Admin panel: search health structures by ZONE (région) + type via the active
+ * directory source (OpenStreetMap/Overpass by default, Google Places as
+ * fallback), then import the selection as unclaimed directory pages.
  */
 export function DirectoryImportPanel() {
   const { notify } = useToast();
@@ -33,11 +26,8 @@ export function DirectoryImportPanel() {
   const [candidates, setCandidates] = useState<PlaceCandidate[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Scope the Places text query to the chosen zone: "<type> <mot-clé> <région> Sénégal".
-  const buildQuery = () => [type, keyword.trim(), region, "Sénégal"].filter(Boolean).join(" ");
-
   const search = useMutation({
-    mutationFn: () => searchPlaces(buildQuery()),
+    mutationFn: () => searchPlaces({ region, type, keyword }),
     onSuccess: (res) => {
       setCandidates(res);
       setSelected(new Set(res.filter((c) => !c.alreadyImported).map((c) => c.placeId)));
@@ -71,6 +61,12 @@ export function DirectoryImportPanel() {
       <p className="text-sm text-text-secondary">
         Recherchez des structures de santé <strong>par zone</strong> et créez des fiches d'annuaire.
         Les fiches importées sont « non réclamées » jusqu'à ce qu'un responsable les revendique.
+        {isOsmDirectorySource && (
+          <>
+            {" "}Source : <strong>OpenStreetMap</strong> (données © contributeurs OpenStreetMap,
+            sous licence ODbL).
+          </>
+        )}
       </p>
 
       <div className="card-surface flex flex-wrap items-end gap-3 p-4">

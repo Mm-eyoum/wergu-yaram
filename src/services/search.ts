@@ -1,16 +1,24 @@
 /**
- * Search service — Typesense when configured, mock federated index otherwise.
+ * Search service.
  *
- * The browser uses a **search-only** Typesense API key (safe to expose).
- * Indexing is done server-side with an admin key (see scripts/typesense-index.ts).
- * When Typesense env vars are absent, we transparently fall back to the bundled
- * client-side index (services/content.searchContent) so search keeps working
- * locally and before the Typesense server is provisioned.
+ * Backend choisi par VITE_SEARCH_BACKEND :
+ *  - "local" (défaut) : index Orama in-browser chargé depuis /search-index.json
+ *    (gratuit, voir services/searchIndex). Aucun coût récurrent.
+ *  - "typesense" : Typesense Cloud (clé SEARCH-ONLY exposée, sûre), conservé en
+ *    fallback. Indexation serveur via scripts/typesense-index.ts.
+ *
+ * Dans les deux cas, si le backend est indisponible, on retombe sur l'index mock
+ * bundlé (services/content.searchContent) en dev — jamais d'invention en prod.
  */
 import type { Client as TypesenseClient } from "typesense";
 import type { SearchHit } from "@/types/domain";
 import { searchContent } from "./content";
+import { getLocalHits } from "./searchIndex";
 import { reportError } from "@/lib/errorReporting";
+
+const searchBackend = (import.meta.env.VITE_SEARCH_BACKEND as string | undefined) ?? "local";
+/** True quand l'index in-browser (Orama) est le backend actif. */
+export const isLocalSearchBackend = searchBackend !== "typesense";
 
 const host = import.meta.env.VITE_TYPESENSE_HOST as string | undefined;
 // Typesense Cloud Search Delivery Network: route to the geographically nearest
@@ -65,6 +73,16 @@ function getClient(): Promise<TypesenseClient> | null {
  * client-side by the page, mirroring the previous mock behaviour).
  */
 export async function searchAllHits(query: string): Promise<SearchHit[]> {
+  // Backend in-browser (défaut) : index Orama statique, aucun coût récurrent.
+  if (isLocalSearchBackend) {
+    try {
+      return await getLocalHits(query);
+    } catch (err) {
+      reportError(err, { scope: "search.getLocalHits" });
+      return localSearch(query);
+    }
+  }
+  // Backend Typesense (fallback, VITE_SEARCH_BACKEND=typesense).
   const clientP = getClient();
   if (!clientP) return localSearch(query);
   try {

@@ -8,6 +8,7 @@
  * Usage : `track("donation_succeeded", { needId, amount })`.
  */
 import { app, isFirebaseConfigured } from "@/services/firebase";
+import { captureEvent } from "./posthog";
 
 type Params = Record<string, string | number | boolean | undefined>;
 
@@ -40,4 +41,6 @@ export function track(name: string, params?: Params): void {
   } catch {
     /* never throw from instrumentation */
   }
+  // Miroir vers PostHog (no-op si non configuré) — complète GA4.
+  captureEvent(name, params);
 }

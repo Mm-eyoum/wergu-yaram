@@ -1,5 +1,6 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { capturePageview } from "@/lib/posthog";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { RequirePermission } from "@/components/admin/PermissionGate";
@@ -88,6 +89,10 @@ function HomeOrTenant() {
 
 export default function App() {
   const { pathname } = useLocation();
+  // PostHog : pageview SPA à chaque changement de route (no-op si non configuré).
+  useEffect(() => {
+    capturePageview(pathname);
+  }, [pathname]);
   // Auth pages use their own split layout (no global header/footer).
   const isAuthPage = pathname === "/connexion" || pathname === "/inscription";
   // Admin pages render inside their own AdminShell (sidebar + topbar).

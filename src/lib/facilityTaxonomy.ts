@@ -134,30 +134,35 @@ export const categoryStyle = (c?: string): CategoryStyle =>
 // --- Auto-categorisation -------------------------------------------------
 
 /**
- * Map a Google Places `types[]` array to a category. Returns null when no
+ * Map type tags to a category. Accepts both Google Places `types[]`
+ * (e.g. "hospital", "pharmacy") and OpenStreetMap tag values (`amenity`/
+ * `healthcare`, e.g. "doctors", "laboratory", "centre"). Returns null when no
  * health-relevant type is recognised (caller falls back to name inference).
  */
 export function placeTypesToCategory(types: string[] | undefined | null): FacilityCategory | null {
   if (!types?.length) return null;
-  const set = new Set(types.map((t) => t.toLowerCase()));
-  // Most specific first.
+  const set = new Set(types.filter(Boolean).map((t) => t.toLowerCase()));
+  // Most specific first. (Google type | OSM amenity/healthcare value)
   if (set.has("dentist") || set.has("dental_clinic")) return "cabinet_dentaire";
   if (set.has("pharmacy") || set.has("drugstore")) return "pharmacie";
   if (set.has("hospital")) return "hopital";
-  if (set.has("medical_lab")) return "laboratoire";
+  if (set.has("medical_lab") || set.has("laboratory")) return "laboratoire";
   if (set.has("optician") || set.has("optometrist")) return "optique";
-  if (set.has("physiotherapist") || set.has("doctor")) return "cabinet";
+  if (set.has("birthing_centre") || set.has("midwife")) return "maternite";
+  if (set.has("physiotherapist") || set.has("doctor") || set.has("doctors")) return "cabinet";
   if (set.has("clinic")) return "clinique";
-  if (set.has("health") || set.has("hospital_department")) return "centre_sante";
+  if (set.has("health") || set.has("hospital_department") || set.has("centre")) return "centre_sante";
   return null;
 }
 
 const NAME_RULES: { re: RegExp; category: FacilityCategory }[] = [
+  // NB: no trailing \b after accented endings (é/è) — JS \b is ASCII-only and
+  // would fail to match "…santé"/"…maternité".
   { re: /\bpharmacie|officine\b/i, category: "pharmacie" },
   { re: /\bh[oô]pital|chu|chn|chr\b/i, category: "hopital" },
-  { re: /\bposte de sant[eé]\b/i, category: "poste_sante" },
-  { re: /\bcentre de sant[eé]|case de sant[eé]\b/i, category: "centre_sante" },
-  { re: /\bmaternit[eé]\b/i, category: "maternite" },
+  { re: /\bposte de sant[eé]/i, category: "poste_sante" },
+  { re: /\b(?:centre|case) de sant[eé]/i, category: "centre_sante" },
+  { re: /\bmaternit[eé]/i, category: "maternite" },
   { re: /\blaboratoire|labo|analyses?\b/i, category: "laboratoire" },
   { re: /\bimagerie|radiologie|scanner|irm\b/i, category: "imagerie" },
   { re: /\bdentaire|dentiste|odonto\b/i, category: "cabinet_dentaire" },

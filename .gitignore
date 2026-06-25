@@ -20,3 +20,6 @@ coverage
 # Firebase / build caches
 .firebase
 *.tsbuildinfo
+
+# Generated search index (built from Firestore at deploy via `npm run search:index`)
+/public/search-index.json
