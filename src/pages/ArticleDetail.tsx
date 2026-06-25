@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BadgeCheck, Clock, MapPin, MessageCircle, PlayCircle, ShieldCheck, Stethoscope, Users } from "lucide-react";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FavoriteButton } from "@/components/content/FavoriteButton";
@@ -20,6 +21,7 @@ import { SEOHead } from "@/seo/SEOHead";
 import { articleJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
 
 export default function ArticleDetail() {
+  const { t } = useTranslation(["article", "common"]);
   const { slug } = useParams();
   const { data: article, isLoading } = useArticle(slug);
   const { data: articles = [] } = useArticles();
@@ -31,21 +33,21 @@ export default function ArticleDetail() {
   const editableStats = useSiteSettings().data?.stats;
   const trustStats: Stat[] = [
     platformStats?.members != null
-      ? { value: formatCount(platformStats.members)!, label: "Utilisateurs", icon: <Users className="h-5 w-5" /> }
+      ? { value: formatCount(platformStats.members)!, label: t("trust.users"), icon: <Users className="h-5 w-5" /> }
       : false,
     editableStats?.verifiedInfo
-      ? { value: editableStats.verifiedInfo, label: "Contenus vérifiés", icon: <BadgeCheck className="h-5 w-5" /> }
+      ? { value: editableStats.verifiedInfo, label: t("trust.verifiedContent"), icon: <BadgeCheck className="h-5 w-5" /> }
       : false,
     platformStats?.facilities != null
-      ? { value: formatCount(platformStats.facilities)!, label: "Établissements", icon: <MapPin className="h-5 w-5" /> }
+      ? { value: formatCount(platformStats.facilities)!, label: t("trust.facilities"), icon: <MapPin className="h-5 w-5" /> }
       : false,
-    { value: "100 %", label: "Sources fiables", icon: <ShieldCheck className="h-5 w-5" /> },
+    { value: "100 %", label: t("trust.reliableSources"), icon: <ShieldCheck className="h-5 w-5" /> },
   ].filter(Boolean) as Stat[];
 
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de l'article…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -53,8 +55,8 @@ export default function ArticleDetail() {
   if (!article) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Article introuvable" noIndex />
-        <EmptyState title="Article introuvable" message="Ce contenu n'existe pas ou a été déplacé." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -77,16 +79,16 @@ export default function ArticleDetail() {
         jsonLd={[
           articleJsonLd(article),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Articles", path: "/recherche?type=article" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.article"), path: "/recherche?type=article" },
             { name: article.title, path: `/articles/${article.slug}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Articles", to: "/recherche?type=article" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.article"), to: "/recherche?type=article" },
           { label: article.title },
         ]}
       />
@@ -95,9 +97,9 @@ export default function ArticleDetail() {
         {/* TOC */}
         <aside className="hidden lg:block">
           {article.toc.length > 0 && (
-            <nav className="sticky top-20 card-surface p-4" aria-label="Sommaire">
+            <nav className="sticky top-20 card-surface p-4" aria-label={t("toc")}>
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-text-secondary">
-                Sommaire
+                {t("toc")}
               </h2>
               <ul className="space-y-1.5">
                 {article.toc.map((item) => (
@@ -131,7 +133,7 @@ export default function ArticleDetail() {
             <div className="flex items-center gap-3 text-xs text-text-secondary">
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                {article.type === "video" ? article.videoDurationLabel : `${article.readingMinutes} min`}
+                {article.type === "video" ? article.videoDurationLabel : t("readingMinutes", { count: article.readingMinutes })}
               </span>
               <span>{formatDate(article.publishedAt)}</span>
             </div>
@@ -158,7 +160,7 @@ export default function ArticleDetail() {
               )}
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
-                  Contenu sponsorisé
+                  {t("sponsored")}
                 </p>
                 <p className="truncate text-sm font-bold text-text-primary">{article.sponsor.name}</p>
               </div>
@@ -206,7 +208,7 @@ export default function ArticleDetail() {
           {/* Sources */}
           <div className="mt-8 rounded-3xl bg-brand-mint p-5">
             <h2 className="flex items-center gap-2 text-sm font-bold text-text-primary">
-              <BadgeCheck className="h-4 w-4 text-brand-green" /> Sources médicales vérifiées
+              <BadgeCheck className="h-4 w-4 text-brand-green" /> {t("sources")}
             </h2>
             <ul className="mt-2 space-y-1 text-sm text-text-secondary">
               {article.sources.map((s) => (
@@ -221,14 +223,14 @@ export default function ArticleDetail() {
         {/* Right sidebar */}
         <aside className="space-y-5">
           {related.length > 0 && (
-            <SidebarPanel title="Articles liés">
+            <SidebarPanel title={t("relatedArticles")}>
               <div className="space-y-3">
                 {related.map((a) => a && <ArticleCard key={a.slug} article={a} />)}
               </div>
             </SidebarPanel>
           )}
           {meds.length > 0 && (
-            <SidebarPanel title="Médicaments fréquents">
+            <SidebarPanel title={t("commonMeds")}>
               <div className="space-y-2">
                 {meds.map((m) => m && <MedicationCard key={m.slug} medication={m} />)}
               </div>
@@ -236,7 +238,7 @@ export default function ArticleDetail() {
           )}
 
           {specialists.length > 0 && (
-            <SidebarPanel title="Spécialistes à proximité" icon={<Stethoscope className="h-4 w-4" />} action={{ label: "Carte", to: "/carte" }}>
+            <SidebarPanel title={t("nearbySpecialists")} icon={<Stethoscope className="h-4 w-4" />} action={{ label: t("mapAction"), to: "/carte" }}>
               <ul className="space-y-2">
                 {specialists.map((f) => (
                   <li key={f.slug}>
@@ -260,16 +262,14 @@ export default function ArticleDetail() {
 
           <div className="rounded-3xl bg-brand-gradient p-5 text-white">
             <Users className="h-7 w-7" />
-            <h3 className="mt-2 font-bold">Échangez avec la communauté</h3>
-            <p className="mt-1 text-sm text-white/85">
-              Posez vos questions et partagez votre expérience sur le forum santé.
-            </p>
+            <h3 className="mt-2 font-bold">{t("cta.title")}</h3>
+            <p className="mt-1 text-sm text-white/85">{t("cta.text")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link to="/forum" className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-brand-green">
-                <MessageCircle className="h-4 w-4" /> Forum
+                <MessageCircle className="h-4 w-4" /> {t("cta.forum")}
               </Link>
               <Link to="/communautes" className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3.5 py-2 text-sm font-semibold text-white">
-                Communautés
+                {t("cta.communities")}
               </Link>
             </div>
           </div>
@@ -280,8 +280,8 @@ export default function ArticleDetail() {
       <TrustStatsBar
         className="mt-10"
         variant="light"
-        title="Une plateforme de confiance"
-        subtitle="Des contenus vérifiés par des professionnels de santé."
+        title={t("trust.barTitle")}
+        subtitle={t("trust.barSubtitle")}
         stats={trustStats}
       />
     </div>
