@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, CheckCircle2, Compass, HeartHandshake, ShieldCheck, Users } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -23,6 +24,7 @@ import { ShareButtons } from "@/components/ShareButtons";
 type CommunityTab = "fil" | "membres" | "ressources" | "evenements" | "apropos";
 
 export default function CommunityDetail() {
+  const { t } = useTranslation(["community", "common"]);
   const { slug } = useParams();
   const [tab, setTab] = useState<CommunityTab>("fil");
   const { data: community, isLoading } = useCommunity(slug);
@@ -38,7 +40,7 @@ export default function CommunityDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de la communauté…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -46,8 +48,8 @@ export default function CommunityDetail() {
   if (!community) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Communauté introuvable" noIndex />
-        <EmptyState title="Communauté introuvable" message="Cette communauté n'existe pas ou a été retirée." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -71,11 +73,11 @@ export default function CommunityDetail() {
   const discover = communities.filter((c) => c.slug !== community.slug).slice(0, 4);
 
   const tabs = [
-    { key: "fil", label: "Fil", count: posts.length },
-    { key: "membres", label: "Membres", count: community.membersCount },
-    { key: "ressources", label: "Ressources", count: community.resources.length },
-    { key: "evenements", label: "Événements", count: events.length },
-    { key: "apropos", label: "À propos" },
+    { key: "fil", label: t("tabs.feed"), count: posts.length },
+    { key: "membres", label: t("tabs.members"), count: community.membersCount },
+    { key: "ressources", label: t("tabs.resources"), count: community.resources.length },
+    { key: "evenements", label: t("tabs.events"), count: events.length },
+    { key: "apropos", label: t("tabs.about") },
   ];
 
   return (
@@ -88,16 +90,16 @@ export default function CommunityDetail() {
         jsonLd={[
           communityJsonLd(community),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Communautés", path: "/communautes" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.communaute"), path: "/communautes" },
             { name: community.name, path: `/communautes/${community.slug}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Communautés", to: "/communautes" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.communaute"), to: "/communautes" },
           { label: community.name },
         ]}
       />
@@ -105,7 +107,7 @@ export default function CommunityDetail() {
       <div className="mt-4 grid gap-6 lg:grid-cols-[260px_1fr_300px]">
         {/* Left: communities list + discover + entraide promo */}
         <aside className="hidden space-y-5 lg:block">
-          <SidebarPanel title="Mes communautés" icon={<Users className="h-4 w-4" />}>
+          <SidebarPanel title={t("myCommunities")} icon={<Users className="h-4 w-4" />}>
             <ul className="space-y-1">
               {communities.map((c) => (
                 <li key={c.slug}>
@@ -129,9 +131,9 @@ export default function CommunityDetail() {
 
           {discover.length > 0 && (
             <SidebarPanel
-              title="Découvrir des communautés"
+              title={t("discover")}
               icon={<Compass className="h-4 w-4" />}
-              action={{ label: "Tout voir", to: "/communautes" }}
+              action={{ label: t("seeAll"), to: "/communautes" }}
             >
               <ul className="space-y-2">
                 {discover.map((c) => (
@@ -153,15 +155,13 @@ export default function CommunityDetail() {
 
           <div className="rounded-3xl bg-brand-gradient p-5 text-white">
             <HeartHandshake className="h-6 w-6" />
-            <h3 className="mt-3 text-base font-bold">Espace d'entraide</h3>
-            <p className="mt-1 text-sm text-white/85">
-              Posez vos questions et partagez votre expérience avec une communauté bienveillante.
-            </p>
+            <h3 className="mt-3 text-base font-bold">{t("entraideTitle")}</h3>
+            <p className="mt-1 text-sm text-white/85">{t("entraideText")}</p>
             <Link
               to="/forum"
               className="mt-3 inline-flex rounded-xl bg-white px-3.5 py-2 text-sm font-semibold text-brand-green"
             >
-              Rejoindre l'entraide
+              {t("joinEntraide")}
             </Link>
           </div>
         </aside>
@@ -177,10 +177,10 @@ export default function CommunityDetail() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-xl font-extrabold">{community.name}</h1>
-                    {community.isPublic && <Badge tone="green">Publique</Badge>}
+                    {community.isPublic && <Badge tone="green">{t("public")}</Badge>}
                   </div>
                   <p className="text-xs text-text-secondary">
-                    {formatCompact(community.membersCount)} membres · {formatCompact(community.postsCount)} publications
+                    {t("stats", { members: formatCompact(community.membersCount), posts: formatCompact(community.postsCount) })}
                   </p>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export default function CommunityDetail() {
                 {posts.length ? (
                   posts.map((post) => <PostCard key={post.id} post={post} />)
                 ) : (
-                  <EmptyState title="Aucune publication" message="Soyez le premier à partager dans cette communauté." />
+                  <EmptyState title={t("noPostsTitle")} message={t("noPostsMsg")} />
                 )}
               </div>
             </>
@@ -217,7 +217,7 @@ export default function CommunityDetail() {
 
           {tab === "membres" && (
             <div className="card-surface p-6">
-              <h2 className="text-base font-bold">Membres actifs</h2>
+              <h2 className="text-base font-bold">{t("membersActive")}</h2>
               {activeMembers.length ? (
                 <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                   {activeMembers.map((m) => (
@@ -231,14 +231,14 @@ export default function CommunityDetail() {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-text-secondary">Aucun membre actif pour le moment.</p>
+                <p className="mt-3 text-sm text-text-secondary">{t("noActiveMembers")}</p>
               )}
             </div>
           )}
 
           {tab === "ressources" && (
             <div className="card-surface p-6">
-              <h2 className="text-base font-bold">Ressources de la communauté</h2>
+              <h2 className="text-base font-bold">{t("resourcesTitle")}</h2>
               <ul className="mt-4 space-y-2">
                 {community.resources.map((r) => (
                   <li key={r.title} className="flex items-center justify-between gap-2 rounded-2xl border border-border-soft p-3 text-sm">
@@ -255,7 +255,7 @@ export default function CommunityDetail() {
               {events.length ? (
                 events.map((e) => e && <EventCard key={e.id} event={e} />)
               ) : (
-                <EmptyState title="Aucun événement" message="Aucun événement programmé pour cette communauté." />
+                <EmptyState title={t("noEventsTitle")} message={t("noEventsMsg")} />
               )}
             </div>
           )}
@@ -263,11 +263,11 @@ export default function CommunityDetail() {
           {tab === "apropos" && (
             <div className="card-surface space-y-4 p-6">
               <div>
-                <h2 className="text-base font-bold">À propos</h2>
+                <h2 className="text-base font-bold">{t("about")}</h2>
                 <p className="mt-2 text-sm text-text-secondary">{community.description}</p>
               </div>
               <div>
-                <h3 className="text-sm font-bold">Règles de la communauté</h3>
+                <h3 className="text-sm font-bold">{t("rulesTitle")}</h3>
                 <ul className="mt-2 space-y-2 text-sm text-text-secondary">
                   {community.rules.map((rule) => (
                     <li key={rule} className="flex gap-2">
@@ -284,9 +284,9 @@ export default function CommunityDetail() {
         {/* Right: active members + resources + events + rules */}
         <aside className="space-y-5">
           <SidebarPanel
-            title="Membres actifs"
+            title={t("membersActive")}
             icon={<Users className="h-4 w-4" />}
-            action={{ label: "Voir tout", to: `/communautes/${community.slug}` }}
+            action={{ label: t("seeAllShort"), to: `/communautes/${community.slug}` }}
           >
             {activeMembers.length ? (
               <>
@@ -296,17 +296,17 @@ export default function CommunityDetail() {
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-text-secondary">
-                  {formatCompact(community.membersCount)} membres au total
+                  {t("totalMembers", { count: formatCompact(community.membersCount) })}
                 </p>
               </>
             ) : (
               <p className="text-sm text-text-secondary">
-                {formatCompact(community.membersCount)} membres
+                {t("membersCount", { count: formatCompact(community.membersCount) })}
               </p>
             )}
           </SidebarPanel>
 
-          <SidebarPanel title="Ressources recommandées" icon={<BookOpen className="h-4 w-4" />}>
+          <SidebarPanel title={t("recommendedResources")} icon={<BookOpen className="h-4 w-4" />}>
             <ul className="space-y-2">
               {community.resources.map((r) => (
                 <li key={r.title} className="flex items-center justify-between gap-2 text-sm">
@@ -318,14 +318,14 @@ export default function CommunityDetail() {
           </SidebarPanel>
 
           {events.length > 0 && (
-            <SidebarPanel title="Événements à venir">
+            <SidebarPanel title={t("upcomingEvents")}>
               <div className="space-y-3">
                 {events.map((e) => e && <EventCard key={e.id} event={e} compact />)}
               </div>
             </SidebarPanel>
           )}
 
-          <SidebarPanel title="Règles de la communauté" icon={<ShieldCheck className="h-4 w-4" />}>
+          <SidebarPanel title={t("rulesTitle")} icon={<ShieldCheck className="h-4 w-4" />}>
             <ul className="space-y-2 text-sm text-text-secondary">
               {community.rules.map((rule) => (
                 <li key={rule} className="flex gap-2">
