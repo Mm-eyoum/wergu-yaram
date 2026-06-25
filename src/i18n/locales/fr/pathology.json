@@ -1,0 +1,22 @@
+{
+  "loading": "Chargement de la fiche…",
+  "notFoundTitle": "Pathologie introuvable",
+  "notFoundMsg": "Cette fiche n'existe pas ou a été déplacée.",
+  "sections": {
+    "understanding": "Comprendre la pathologie",
+    "symptoms": "Symptômes fréquents",
+    "causes": "Causes et facteurs de risque",
+    "prevention": "Prévention",
+    "treatments": "Traitements",
+    "whenToConsult": "Quand consulter ?",
+    "faq": "Questions fréquentes"
+  },
+  "sidebar": {
+    "meds": "Médicaments courants",
+    "noMeds": "Aucun médicament référencé.",
+    "articles": "Articles & vidéos",
+    "nearby": "Structures à proximité",
+    "community": "Communauté liée"
+  },
+  "verifiedUpdated": "Contenu vérifié · mis à jour le {{date}}"
+}

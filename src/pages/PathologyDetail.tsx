@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Activity,
   BookOpen,
@@ -53,6 +54,7 @@ function BulletList({ items, danger }: { items: string[]; danger?: boolean }) {
 }
 
 export default function PathologyDetail() {
+  const { t } = useTranslation(["pathology", "common"]);
   const { slug } = useParams();
   const { data: patho, isLoading } = usePathology(slug);
   const { data: medications = [] } = useMedications();
@@ -63,7 +65,7 @@ export default function PathologyDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de la fiche…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -71,8 +73,8 @@ export default function PathologyDetail() {
   if (!patho) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Pathologie introuvable" noIndex />
-        <EmptyState title="Pathologie introuvable" message="Cette fiche n'existe pas ou a été déplacée." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -96,16 +98,16 @@ export default function PathologyDetail() {
           pathologyJsonLd(patho),
           ...(patho.faq.length > 0 ? [faqJsonLd(patho.faq)] : []),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Pathologies", path: "/recherche?type=pathologie" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.pathologie"), path: "/recherche?type=pathologie" },
             { name: patho.name, path: `/pathologies/${patho.slug}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Pathologies", to: "/recherche?type=pathologie" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.pathologie"), to: "/recherche?type=pathologie" },
           { label: patho.name },
         ]}
       />
@@ -151,32 +153,32 @@ export default function PathologyDetail() {
         <div className="space-y-5">
           <MedicalDisclaimer />
 
-          <SectionCard title="Comprendre la pathologie" icon={<BookOpen className="h-5 w-5" />}>
+          <SectionCard title={t("sections.understanding")} icon={<BookOpen className="h-5 w-5" />}>
             <p className="text-sm leading-relaxed text-text-secondary">{patho.understanding}</p>
           </SectionCard>
 
-          <SectionCard title="Symptômes fréquents" icon={<Stethoscope className="h-5 w-5" />}>
+          <SectionCard title={t("sections.symptoms")} icon={<Stethoscope className="h-5 w-5" />}>
             <BulletList items={patho.symptoms} />
           </SectionCard>
 
-          <SectionCard title="Causes et facteurs de risque" icon={<Search className="h-5 w-5" />}>
+          <SectionCard title={t("sections.causes")} icon={<Search className="h-5 w-5" />}>
             <BulletList items={patho.causes} />
           </SectionCard>
 
-          <SectionCard title="Prévention" icon={<Leaf className="h-5 w-5" />}>
+          <SectionCard title={t("sections.prevention")} icon={<Leaf className="h-5 w-5" />}>
             <BulletList items={patho.prevention} />
           </SectionCard>
 
-          <SectionCard title="Traitements" icon={<Syringe className="h-5 w-5" />}>
+          <SectionCard title={t("sections.treatments")} icon={<Syringe className="h-5 w-5" />}>
             <BulletList items={patho.treatments} />
           </SectionCard>
 
-          <SectionCard title="Quand consulter ?" icon={<TriangleAlert className="h-5 w-5" />}>
+          <SectionCard title={t("sections.whenToConsult")} icon={<TriangleAlert className="h-5 w-5" />}>
             <BulletList items={patho.whenToConsult} danger />
           </SectionCard>
 
           {patho.faq.length > 0 && (
-            <SectionCard title="Questions fréquentes" icon={<HelpCircle className="h-5 w-5" />}>
+            <SectionCard title={t("sections.faq")} icon={<HelpCircle className="h-5 w-5" />}>
               <div className="space-y-3">
                 {patho.faq.map((item) => (
                   <details key={item.question} className="group rounded-2xl border border-border-soft p-4">
@@ -192,18 +194,18 @@ export default function PathologyDetail() {
         </div>
 
         <aside className="space-y-5">
-          <SidebarPanel title="Médicaments courants" icon={<Pill className="h-4 w-4" />}>
+          <SidebarPanel title={t("sidebar.meds")} icon={<Pill className="h-4 w-4" />}>
             <div className="space-y-2">
               {meds.length ? (
                 meds.map((m) => m && <MedicationCard key={m.slug} medication={m} />)
               ) : (
-                <p className="text-sm text-text-secondary">Aucun médicament référencé.</p>
+                <p className="text-sm text-text-secondary">{t("sidebar.noMeds")}</p>
               )}
             </div>
           </SidebarPanel>
 
           {relatedArticles.length > 0 && (
-            <SidebarPanel title="Articles & vidéos" icon={<BookOpen className="h-4 w-4" />}>
+            <SidebarPanel title={t("sidebar.articles")} icon={<BookOpen className="h-4 w-4" />}>
               <div className="space-y-3">
                 {relatedArticles.map((a) => a && <ArticleCard key={a.slug} article={a} />)}
               </div>
@@ -211,7 +213,7 @@ export default function PathologyDetail() {
           )}
 
           {nearby.length > 0 && (
-            <SidebarPanel title="Structures à proximité" icon={<Hospital className="h-4 w-4" />}>
+            <SidebarPanel title={t("sidebar.nearby")} icon={<Hospital className="h-4 w-4" />}>
               <div className="mb-3 overflow-hidden rounded-2xl">
                 <LazyMapView
                   className="h-44 w-full"
@@ -242,14 +244,14 @@ export default function PathologyDetail() {
           )}
 
           {community && (
-            <SidebarPanel title="Communauté liée">
+            <SidebarPanel title={t("sidebar.community")}>
               <CommunityCard community={community} />
             </SidebarPanel>
           )}
 
           {patho.trust.updatedAt && (
             <p className="px-1 text-xs text-text-secondary">
-              Contenu vérifié · mis à jour le {formatDate(patho.trust.updatedAt)}
+              {t("verifiedUpdated", { date: formatDate(patho.trust.updatedAt) })}
               {patho.trust.source ? ` · ${patho.trust.source}` : ""}
             </p>
           )}
