@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BookOpen, CalendarDays, CalendarPlus, Clock, MapPin, Users } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
@@ -22,6 +23,7 @@ import { ShareButtons } from "@/components/ShareButtons";
 import { FavoriteButton } from "@/components/content/FavoriteButton";
 
 export default function EventDetail() {
+  const { t } = useTranslation(["event", "common"]);
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const { data: event, isLoading } = useEvent(id);
@@ -37,7 +39,7 @@ export default function EventDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de l'événement…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -45,8 +47,8 @@ export default function EventDetail() {
   if (!event) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Événement introuvable" noIndex />
-        <EmptyState title="Événement introuvable" message="Cet événement n'existe pas ou a été retiré." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -67,16 +69,16 @@ export default function EventDetail() {
         jsonLd={[
           eventJsonLd(event),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Événements", path: "/evenements" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.evenement"), path: "/evenements" },
             { name: event.title, path: `/evenements/${event.id}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Événements", to: "/evenements" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.evenement"), to: "/evenements" },
           { label: event.title },
         ]}
       />
@@ -114,7 +116,7 @@ export default function EventDetail() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5">
-          <SectionCard title="À propos de l'événement">
+          <SectionCard title={t("sections.about")}>
             <p className="text-sm leading-relaxed text-text-secondary">{event.about}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {event.audience.map((a) => (
@@ -125,7 +127,7 @@ export default function EventDetail() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Programme">
+          <SectionCard title={t("sections.program")}>
             <ol className="space-y-3">
               {event.program.map((p) => (
                 <li key={p.time} className="flex gap-3">
@@ -136,7 +138,7 @@ export default function EventDetail() {
             </ol>
           </SectionCard>
 
-          <SectionCard title="Intervenants">
+          <SectionCard title={t("sections.speakers")}>
             <div className="grid gap-3 sm:grid-cols-2">
               {event.speakers.map((s) => (
                 <div key={s.name} className="flex items-center gap-3 rounded-2xl border border-border-soft p-3">
@@ -150,7 +152,7 @@ export default function EventDetail() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Informations pratiques">
+          <SectionCard title={t("sections.practical")}>
             <dl className="space-y-2 text-sm">
               {event.practicalInfo.map((info) => (
                 <div key={info.label} className="flex justify-between gap-3 border-b border-border-soft pb-2 last:border-0">
@@ -162,7 +164,7 @@ export default function EventDetail() {
           </SectionCard>
 
           {event.mode !== "En ligne" && (
-            <SectionCard title="Lieu">
+            <SectionCard title={t("sections.venue")}>
               <p className="mb-3 inline-flex items-start gap-1.5 text-sm text-text-secondary">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {event.location}, {event.city}
               </p>
@@ -178,7 +180,7 @@ export default function EventDetail() {
           )}
 
           {community && community.resources.length > 0 && (
-            <SectionCard title="Ressources associées">
+            <SectionCard title={t("sections.resources")}>
               <ul className="grid gap-3 sm:grid-cols-2">
                 {community.resources.map((r) => (
                   <li
@@ -208,13 +210,13 @@ export default function EventDetail() {
               rel="noopener noreferrer"
               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border-soft px-4 py-2.5 text-sm font-semibold text-text-secondary hover:border-brand-teal hover:text-brand-green"
             >
-              <CalendarPlus className="h-4 w-4" /> Ajouter au calendrier
+              <CalendarPlus className="h-4 w-4" /> {t("addToCalendar")}
             </a>
-            <p className="mt-2 text-center text-xs text-text-secondary">Confirmation immédiate par email</p>
+            <p className="mt-2 text-center text-xs text-text-secondary">{t("emailConfirm")}</p>
           </div>
 
           {related.length > 0 && (
-            <SidebarPanel title="Événements similaires">
+            <SidebarPanel title={t("similar")}>
               <div className="space-y-3">
                 {related.map((e) => e && <EventCard key={e.id} event={e} />)}
               </div>
@@ -222,7 +224,7 @@ export default function EventDetail() {
           )}
 
           {community && (
-            <SidebarPanel title="Communauté associée">
+            <SidebarPanel title={t("relatedCommunity")}>
               <CommunityCard community={community} />
             </SidebarPanel>
           )}

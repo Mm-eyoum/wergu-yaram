@@ -1,0 +1,18 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "loading": "",
+  "notFoundTitle": "",
+  "notFoundMsg": "",
+  "sections": {
+    "about": "",
+    "program": "",
+    "speakers": "",
+    "practical": "",
+    "venue": "",
+    "resources": ""
+  },
+  "addToCalendar": "",
+  "emailConfirm": "",
+  "similar": "",
+  "relatedCommunity": ""
+}
