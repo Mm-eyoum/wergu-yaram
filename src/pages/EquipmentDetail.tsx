@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   CalendarClock,
   CheckCircle2,
@@ -26,6 +27,7 @@ import { ShareButtons } from "@/components/ShareButtons";
 import { track } from "@/lib/analytics";
 
 export default function EquipmentDetail() {
+  const { t } = useTranslation(["equipment", "common"]);
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const { data: need, isLoading } = useEquipmentNeed(id);
@@ -42,7 +44,7 @@ export default function EquipmentDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de la campagne…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -50,8 +52,8 @@ export default function EquipmentDetail() {
   if (!need) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Besoin introuvable" noIndex />
-        <EmptyState title="Besoin introuvable" message="Cette campagne n'existe pas ou est terminée." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -69,16 +71,16 @@ export default function EquipmentDetail() {
         jsonLd={[
           equipmentNeedJsonLd(need),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Besoins", path: "/besoins" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.besoin"), path: "/besoins" },
             { name: need.title, path: `/besoins/${need.id}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Besoins", to: "/besoins" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.besoin"), to: "/besoins" },
           { label: need.title },
         ]}
       />
@@ -92,7 +94,7 @@ export default function EquipmentDetail() {
             </div>
             <div className="p-6">
               <div className="flex flex-wrap items-center gap-2">
-                {need.urgency === "urgent" && <Badge tone="danger">Urgent</Badge>}
+                {need.urgency === "urgent" && <Badge tone="danger">{t("urgent")}</Badge>}
                 <Badge tone="mint">{need.category}</Badge>
               </div>
               <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">{need.title}</h1>
@@ -103,10 +105,10 @@ export default function EquipmentDetail() {
               </p>
               <div className="mt-4 flex flex-wrap gap-5 text-sm text-text-secondary">
                 <span className="inline-flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-brand-green" /> {need.donorsCount} donateurs
+                  <Users className="h-4 w-4 text-brand-green" /> {t("donors", { count: need.donorsCount })}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Clock className="h-4 w-4 text-brand-green" /> {need.daysLeft} jours restants
+                  <Clock className="h-4 w-4 text-brand-green" /> {t("daysLeft", { count: need.daysLeft })}
                 </span>
               </div>
               <ShareButtons
@@ -119,11 +121,11 @@ export default function EquipmentDetail() {
             </div>
           </div>
 
-          <SectionCard title="À propos du projet">
+          <SectionCard title={t("sections.about")}>
             <p className="text-sm leading-relaxed text-text-secondary">{need.description}</p>
           </SectionCard>
 
-          <SectionCard title="Impact attendu">
+          <SectionCard title={t("sections.impact")}>
             <ul className="grid gap-2 sm:grid-cols-2">
               {need.impact.map((i) => (
                 <li key={i} className="flex gap-2 text-sm text-text-secondary">
@@ -133,7 +135,7 @@ export default function EquipmentDetail() {
             </ul>
           </SectionCard>
 
-          <SectionCard title="Répartition du budget">
+          <SectionCard title={t("sections.budget")}>
             <ul className="space-y-2">
               {need.budget.map((b) => (
                 <li key={b.label} className="flex items-center justify-between gap-3 text-sm">
@@ -142,14 +144,14 @@ export default function EquipmentDetail() {
                 </li>
               ))}
               <li className="flex items-center justify-between border-t border-border-soft pt-2 text-sm font-bold">
-                <span>Total</span>
+                <span>{t("total")}</span>
                 <span className="text-brand-green">{formatFcfa(budgetTotal)}</span>
               </li>
             </ul>
           </SectionCard>
 
           {need.updates.length > 0 && (
-            <SectionCard title="Mises à jour" icon={<CalendarClock className="h-5 w-5" />}>
+            <SectionCard title={t("sections.updates")} icon={<CalendarClock className="h-5 w-5" />}>
               <ol className="space-y-4">
                 {need.updates.map((u) => (
                   <li key={u.title} className="border-l-2 border-brand-green pl-4">
@@ -163,7 +165,7 @@ export default function EquipmentDetail() {
           )}
 
           {need.documents.length > 0 && (
-            <SectionCard title="Documents & transparence" icon={<FileText className="h-5 w-5" />}>
+            <SectionCard title={t("sections.documents")} icon={<FileText className="h-5 w-5" />}>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {need.documents.map((d) => (
                   <li
@@ -184,7 +186,7 @@ export default function EquipmentDetail() {
           )}
 
           {need.gallery.length > 0 && (
-            <SectionCard title="Photos">
+            <SectionCard title={t("sections.photos")}>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {need.gallery.map((src) => (
                   <img key={src} src={src} alt="" className="h-28 w-full rounded-2xl object-cover" loading="lazy" />
@@ -200,7 +202,7 @@ export default function EquipmentDetail() {
             <DonationWidget need={need} />
 
             {facility && (
-              <SectionCard title="Établissement bénéficiaire">
+              <SectionCard title={t("beneficiary")}>
                 <Link to={`/etablissements/${facility.slug}`} className="flex items-center gap-3 group">
                   <img src={facility.cover} alt="" className="h-14 w-14 rounded-2xl object-cover" loading="lazy" />
                   <div>
@@ -229,7 +231,7 @@ export default function EquipmentDetail() {
       {/* Other needs */}
       {others.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-4 text-lg font-bold">Autres besoins à soutenir</h2>
+          <h2 className="mb-4 text-lg font-bold">{t("otherNeeds")}</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((n) => (
               <EquipmentNeedCard key={n.id} need={n} />

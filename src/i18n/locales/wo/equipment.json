@@ -1,0 +1,20 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "loading": "",
+  "notFoundTitle": "",
+  "notFoundMsg": "",
+  "urgent": "",
+  "donors": "",
+  "daysLeft": "",
+  "sections": {
+    "about": "",
+    "impact": "",
+    "budget": "",
+    "updates": "",
+    "documents": "",
+    "photos": ""
+  },
+  "total": "",
+  "beneficiary": "",
+  "otherNeeds": ""
+}

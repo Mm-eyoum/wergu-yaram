@@ -1,0 +1,19 @@
+{
+  "loading": "Loading the campaign…",
+  "notFoundTitle": "Need not found",
+  "notFoundMsg": "This campaign doesn't exist or has ended.",
+  "urgent": "Urgent",
+  "donors": "{{count}} donors",
+  "daysLeft": "{{count}} days left",
+  "sections": {
+    "about": "About the project",
+    "impact": "Expected impact",
+    "budget": "Budget breakdown",
+    "updates": "Updates",
+    "documents": "Documents & transparency",
+    "photos": "Photos"
+  },
+  "total": "Total",
+  "beneficiary": "Beneficiary facility",
+  "otherNeeds": "Other needs to support"
+}
