@@ -61,14 +61,13 @@ sont centralisés dans `common:contentTypes.<ContentType>` et résolus par clé
 d'enum (voir `ExploreMenu`, onglets de `SearchResults`). Réutiliser ce bloc
 partout où un `ContentType` doit être affiché.
 
-- ✅ `medication` — `MedicationDetail` (en-tête, badges, tableau présentations,
-  sections cliniques, encadré résumé, cadre réglementaire). Modèle de référence
-  pour les autres pages détail.
+- ✅ Pages détail : `MedicationDetail` (`medication`), `PathologyDetail`
+  (`pathology`), `FacilityDetail` (`facility`). Modèle établi pour les suivantes.
 
 ## Surfaces restantes (ordre suggéré)
-0. Pages détail restantes (même modèle que `MedicationDetail`) : `PathologyDetail`,
-   `FacilityDetail`, `EventDetail`, `CommunityDetail`, `EquipmentDetail`,
-   `PartnerDetail`, `ArticleDetail`, `FormationDetail`.
+0. Pages détail restantes (même modèle) : `EventDetail`, `CommunityDetail`,
+   `EquipmentDetail`, `PartnerDetail`, `ArticleDetail`, `FormationDetail`,
+   `OrganizationDetail`.
 1. `src/lib/searchFilters.ts` (titres de facettes + libellés de tri) et
    `src/lib/constants.ts` (régions, rôles, statuts, libellés
    urgence/besoin/partenaire). Résoudre les `label` via `t()`/helper au rendu.
