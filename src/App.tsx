@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { capturePageview } from "@/lib/posthog";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
@@ -30,11 +30,10 @@ const EquipmentDetail = lazy(() => import("@/pages/EquipmentDetail"));
 const EventDetail = lazy(() => import("@/pages/EventDetail"));
 const Evenements = lazy(() => import("@/pages/Evenements"));
 const Partners = lazy(() => import("@/pages/Partners"));
-const PartnerDetail = lazy(() => import("@/pages/PartnerDetail"));
+const PartnerProfile = lazy(() => import("@/pages/PartnerProfile"));
 const Soutenir = lazy(() => import("@/pages/Soutenir"));
 const Formations = lazy(() => import("@/pages/Formations"));
 const FormationDetail = lazy(() => import("@/pages/FormationDetail"));
-const TenantSpace = lazy(() => import("@/pages/TenantSpace"));
 const PartnerShell = lazy(() => import("@/components/partner/PartnerShell").then((m) => ({ default: m.PartnerShell })));
 const PartnerHome = lazy(() => import("@/pages/partner/PartnerHome"));
 const PartnerContentHub = lazy(() => import("@/pages/partner/PartnerContentHub"));
@@ -81,10 +80,21 @@ function PageFallback() {
   );
 }
 
-/** On a partner-space host (`<slug>.werguyaram.org`), `/` lands on that space. */
+/**
+ * On a partner-space host (`<slug>.werguyaram.org`), `/` renders that partner's
+ * space IN PLACE (clean URL — no `/partenaires/<slug>` prefix, since the host
+ * already identifies the partner). PartnerProfile resolves the slug from the
+ * tenant context when there's no `:slug` route param. Main domain → Home.
+ */
 function HomeOrTenant() {
   const { tenant } = useTenant();
-  return tenant ? <Navigate to={`/espace/${tenant.slug}`} replace /> : <Home />;
+  return tenant ? <PartnerProfile /> : <Home />;
+}
+
+/** Legacy `/espace/:slug` public view → unified partner profile (canonical). */
+function EspaceRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/partenaires/${slug}`} replace />;
 }
 
 export default function App() {
@@ -134,11 +144,11 @@ export default function App() {
         <Route path="/evenements" element={<Evenements />} />
         <Route path="/evenements/:id" element={<EventDetail />} />
         <Route path="/partenaires" element={<Partners />} />
-        <Route path="/partenaires/:slug" element={<PartnerDetail />} />
+        <Route path="/partenaires/:slug" element={<PartnerProfile />} />
         <Route path="/soutenir" element={<Soutenir />} />
         <Route path="/formations" element={<Formations />} />
         <Route path="/formations/:slug" element={<FormationDetail />} />
-        <Route path="/espace/:slug" element={<TenantSpace />} />
+        <Route path="/espace/:slug" element={<EspaceRedirect />} />
         {/* Partner sub-platform management (data-driven access: tenant owner/manager). */}
         <Route
           path="/espace/:slug/gestion"
