@@ -85,10 +85,18 @@ function PageFallback() {
  * space IN PLACE (clean URL — no `/partenaires/<slug>` prefix, since the host
  * already identifies the partner). PartnerProfile resolves the slug from the
  * tenant context when there's no `:slug` route param. Main domain → Home.
+ *
+ * We branch on the resolved `slug` (known before any fetch), not on `tenant`:
+ * • no slug → main portal → Home.
+ * • slug + loading → neutral loader (never flash the portal Home).
+ * • slug resolved → PartnerProfile, which renders the space or a noindex 404
+ *   when the sub-domain matches no tenant nor catalogue partner.
  */
 function HomeOrTenant() {
-  const { tenant } = useTenant();
-  return tenant ? <PartnerProfile /> : <Home />;
+  const { slug, loading } = useTenant();
+  if (!slug) return <Home />;
+  if (loading) return <PageFallback />;
+  return <PartnerProfile />;
 }
 
 /** Legacy `/espace/:slug` public view → unified partner profile (canonical). */

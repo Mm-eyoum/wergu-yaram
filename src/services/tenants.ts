@@ -22,6 +22,13 @@ export async function fetchTenantForManager(slug: string): Promise<Tenant | null
   return snap.exists() ? (snap.data() as Tenant) : null;
 }
 
+/** True if a tenant doc already owns this slug (= sub-domain collision check). */
+export async function tenantSlugExists(slug: string): Promise<boolean> {
+  if (!db) return false;
+  const snap = await getDoc(doc(db, "tenants", slug));
+  return snap.exists();
+}
+
 export async function updateTenantAsManager(slug: string, patch: TenantManagerPatch): Promise<void> {
   if (!db) throw new Error("Firebase non configuré.");
   await updateDoc(doc(db, "tenants", slug), { ...patch, updatedAt: serverTimestamp() });

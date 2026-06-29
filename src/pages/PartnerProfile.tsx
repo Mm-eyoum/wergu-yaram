@@ -54,8 +54,11 @@ export default function PartnerProfile() {
   // rendered at `/` on a partner sub-domain (<slug>.werguyaram.org) there's no
   // param, so fall back to the tenant resolved from the host.
   const { slug: slugParam } = useParams();
-  const { tenant: hostTenant } = useTenant();
-  const slug = slugParam ?? hostTenant?.slug;
+  const { slug: hostSlug } = useTenant();
+  // On the sub-domain, fall back to the host-resolved slug — even when no tenant
+  // doc matched it — so the catalogue-partner lookup and the noindex 404 below
+  // can still run for that slug.
+  const slug = slugParam ?? hostSlug ?? undefined;
   const comingSoon = useComingSoon();
   const { user } = useAuth();
 
@@ -81,7 +84,9 @@ export default function PartnerProfile() {
   const { data: ownedArticles = [] } = useTenantArticles(isTenant ? slug : undefined);
 
   useEffect(() => {
-    if (tenant?.slug) logTenantPageview(tenant.slug, `/partenaires/${tenant.slug}`);
+    // Log the real URL: `/` on the sub-domain, `/partenaires/<slug>` on the
+    // main domain — not a fixed path, so analytics reflect actual traffic.
+    if (tenant?.slug) logTenantPageview(tenant.slug, window.location.pathname);
   }, [tenant?.slug]);
 
   const isManager =
@@ -311,7 +316,17 @@ export default function PartnerProfile() {
               )}
             </>
           ) : (
-            <EmptyState title="Espace en préparation" message="Le contenu de cet espace partenaire sera bientôt disponible." />
+            <div className="flex flex-col items-center gap-4">
+              <EmptyState title="Espace en préparation" message="Le contenu de cet espace partenaire sera bientôt disponible." />
+              {isManager && (
+                <Link
+                  to={`/espace/${slug}/gestion/contenus`}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-green/90"
+                >
+                  <Settings className="h-4 w-4" /> Ajouter du contenu
+                </Link>
+              )}
+            </div>
           ))}
 
         {/* ── Partenaires similaires (catalogue) ───────────────────── */}

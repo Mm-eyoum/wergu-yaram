@@ -47,13 +47,25 @@ export default function ContentEditor() {
 
   if (!entry) return <Navigate to="/admin/content" replace />;
 
-  function handleSave() {
+  async function handleSave() {
     if (!value) return;
     const idField = entry!.admin.resource.idField;
     const idVal = String(value[idField] ?? "").trim();
     if (!idVal) {
       notify("Le slug / identifiant est requis.", "error");
       return;
+    }
+    if (entry!.validate) {
+      try {
+        const error = await entry!.validate(value as Row, { isNew });
+        if (error) {
+          notify(error, "error");
+          return;
+        }
+      } catch {
+        notify("Validation impossible. Réessayez.", "error");
+        return;
+      }
     }
     save.mutate();
   }
@@ -91,7 +103,12 @@ export default function ContentEditor() {
         )}
       </header>
 
-      <SchemaForm schema={entry.schema} value={value} onChange={setValue} />
+      <SchemaForm
+        schema={entry.schema}
+        value={value}
+        onChange={setValue}
+        lockedFields={isNew ? [] : entry.lockOnEdit ?? []}
+      />
 
       {/* Sticky action bar */}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/5 bg-white/90 backdrop-blur dark:border-white/10 dark:bg-brand-navy/90">
