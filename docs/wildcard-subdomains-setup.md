@@ -118,3 +118,46 @@ gcloud compute url-maps invalidate-cdn-cache wy-urlmap --path="/*" --async
 - **Coût** : LB HTTPS ~18 $/mois + egress/CDN.
 - **SEO deep-links** : le bucket renvoie `index.html` en 404 (routing client OK) mais avec un statut HTTP 404 ; comme `build:seo` prérend un `index.html` par route, la plupart des URLs existent en fichier et se résolvent directement.
 - **Alternative backend** : Cloud Run (conteneur servant le build avec fallback `index.html`) au lieu du bucket — remplace l'étape A et le backend (`--backend-service` via un serverless NEG). Le bucket est plus simple/économe pour un SPA statique.
+
+---
+
+# Option B-bis — Wildcard via **Cloudflare** (recommandé, sans GCP)
+
+Atteint le même objectif (`*.werguyaram.org` automatique → sous-domaine créé tout
+seul à la création d'un espace) **sans Load Balancer GCP, sans IAM, sans migration
+de serving**. Le SPA reste sur Firebase Hosting ; Cloudflare proxifie les
+sous-domaines via un Worker (voir `infra/cloudflare/wildcard-worker.js`).
+
+## 1. Mettre le domaine sur Cloudflare
+1. Crée un compte Cloudflare → **Add a site** → `werguyaram.org` (plan Free OK).
+2. Cloudflare scanne le DNS existant : **vérifie que TOUT est réimporté**, surtout :
+   - **MX + SPF/email** (ton DNS est chez IONOS → `include:_spf-eu.ionos.com`) — sinon l'email casse.
+   - **`chat.werguyaram.org`** (Chatwoot) et tout autre service.
+   - L'apex `werguyaram.org` + `www` (Firebase) + le TXT `hosting-site=werguyaram`.
+3. **Change les nameservers chez IONOS** vers ceux que Cloudflare te donne. Attends l'activation.
+
+## 2. Enregistrements DNS dans Cloudflare
+- **Wildcard** : `*` → **CNAME** `werguyaram.web.app` — **Proxied (nuage orange)**.
+- **`chat`** (et autres services) : garde leur cible réelle en **DNS-only (nuage gris)** → le Worker ne s'exécutera PAS dessus.
+- **apex / www** : laisse-les sur Firebase comme configuré (le Worker ne route que les sous-domaines).
+
+## 3. SSL
+- **SSL/TLS → mode `Full`** (Cloudflare ↔ Firebase en HTTPS).
+- **Universal SSL** (activé par défaut) couvre `werguyaram.org` **et** `*.werguyaram.org` (un niveau) → certificat wildcard automatique, rien à gérer.
+
+## 4. Déployer le Worker
+- Dashboard Cloudflare → **Workers & Pages → Create Worker** → colle le contenu de
+  `infra/cloudflare/wildcard-worker.js` → Deploy.
+- **Triggers → Routes** : ajoute la route **`*.werguyaram.org/*`** → ce Worker.
+  *(Cette route matche les sous-domaines, pas l'apex.)*
+
+## 5. Tester
+- `https://assad.werguyaram.org` → sert l'espace ASSAD (l'app résout le slug `assad`).
+- `https://nimporte.werguyaram.org` → sert l'app ; si l'espace n'existe pas, l'app affiche « espace introuvable ».
+- **Création auto** : créer un `tenants/<slug>` côté admin suffit → `<slug>.werguyaram.org` marche immédiatement (aucune action DNS/cert par partenaire).
+
+## ⚠️ Points d'attention
+- **Connexion Firebase Auth sur les sous-domaines** : le login **email/mot de passe** fonctionne partout. En revanche le **sign-in Google (popup OAuth)** exige que le domaine soit dans **Firebase Auth → Authorized domains**, qui **ne supporte pas les wildcards**. → Les gestionnaires se connectent en email/mot de passe sur leur sous-domaine, ou on autorise quelques sous-domaines spécifiques.
+- **Ne pas proxifier `chat` ni les services** (garde-les DNS-only) — sinon le Worker les détourne vers l'app.
+- **Email** : revérifie MX/SPF après le changement de nameservers.
+- Le Worker (free tier) couvre 100 000 requêtes/jour ; au-delà, plan Workers payant.
