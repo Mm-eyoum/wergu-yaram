@@ -42,7 +42,8 @@ export default function ContentEditor() {
       notify(isNew ? "Contenu créé ✓" : "Contenu enregistré ✓", "success");
       navigate(`/admin/content/${type}`);
     },
-    onError: () => notify("Enregistrement impossible.", "error"),
+    onError: (err) =>
+      notify(err instanceof Error && err.message ? err.message : "Enregistrement impossible.", "error"),
   });
 
   if (!entry) return <Navigate to="/admin/content" replace />;

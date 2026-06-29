@@ -1,3 +1,4 @@
+import { ExternalLink } from "lucide-react";
 import { makeContentAdmin } from "@/services/admin/contentAdmin";
 import type { Tenant } from "@/types/domain";
 import type { ContentEntry } from "../registry";
@@ -7,20 +8,36 @@ import { tenantSlugExists } from "@/services/tenants";
 
 export const tenantsEntry: ContentEntry<Tenant> = {
   key: "tenants",
-  label: "Espaces partenaires",
+  label: "Espaces partenaires (sous-domaine)",
   singular: "Espace partenaire",
+  description: "Espace dédié avec sous-domaine slug.werguyaram.org, branding, contenu agrégé et espace de gestion.",
   group: "Partenaires",
   icon: "globe",
-  admin: makeContentAdmin<Tenant>({ collection: "tenants", idField: "slug", titleField: "name", resourceType: "tenant" }),
+  admin: makeContentAdmin<Tenant>({ collection: "tenants", idField: "slug", titleField: "name", resourceType: "tenant", verifyWrite: true }),
   columns: [
-    { key: "slug", label: "Sous-domaine", render: (t) => `${t.slug}.werguyaram.org` },
+    {
+      key: "slug",
+      label: "Sous-domaine",
+      render: (t) => (
+        <a
+          href={`https://${t.slug}.werguyaram.org`}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-1 font-medium text-brand-green hover:underline"
+        >
+          {t.slug}.werguyaram.org
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      ),
+    },
     { key: "communities", label: "Communautés", render: (t) => (t.communitySlugs?.length ?? 0) },
   ],
   schema: {
     groups: [
       { title: "Général", fields: [
         { name: "name", label: "Nom du partenaire", type: "text", required: true },
-        { name: "slug", label: "Sous-domaine (slug)", type: "slug", slugFrom: "name", required: true, subdomainPreview: true },
+        { name: "slug", label: "Sous-domaine (slug)", type: "slug", slugFrom: "name", required: true, subdomainPreview: true, help: "Ce slug crée le sous-domaine public de l'espace. Non modifiable après création." },
         { name: "description", label: "Description", type: "textarea" },
         { name: "website", label: "Site officiel (URL)", type: "text" },
         { name: "domain", label: "Domaine personnalisé (optionnel)", type: "text" },
@@ -46,7 +63,8 @@ export const tenantsEntry: ContentEntry<Tenant> = {
     communitySlugs: [], eventIds: [], articleSlugs: [], website: "", published: false,
     showOnPartnersPage: true,
   }),
-  publicHref: (t) => `/partenaires/${t.slug}`,
+  // Lien « Voir sur le site » de l'éditeur → le sous-domaine public absolu.
+  publicHref: (t) => `https://${t.slug}.werguyaram.org`,
   // Le slug = id de document = sous-domaine : verrouillé en édition, validé +
   // contrôlé en unicité à la création (évite l'écrasement silencieux d'un tenant).
   lockOnEdit: ["slug"],

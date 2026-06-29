@@ -55,10 +55,13 @@ export default function PartnerProfile() {
   // param, so fall back to the tenant resolved from the host.
   const { slug: slugParam } = useParams();
   const { slug: hostSlug } = useTenant();
-  // On the sub-domain, fall back to the host-resolved slug — even when no tenant
-  // doc matched it — so the catalogue-partner lookup and the noindex 404 below
-  // can still run for that slug.
+  // On the sub-domain, fall back to the host-resolved slug.
   const slug = slugParam ?? hostSlug ?? undefined;
+  // A sub-domain is reserved for real partner SPACES (tenants). When the page is
+  // reached via the host (no `:slug` route param), we do NOT fall back to an
+  // editorial partner fiche — an unmatched slug shows the noindex 404 instead.
+  // The fiche fallback stays on the main domain route `/partenaires/:slug`.
+  const onSubdomain = !slugParam && !!hostSlug;
   const comingSoon = useComingSoon();
   const { user } = useAuth();
 
@@ -69,7 +72,8 @@ export default function PartnerProfile() {
   });
   const partnerQuery = usePartner(slug);
   const tenant = tenantQuery.data;
-  const partner = partnerQuery.data;
+  // On a sub-domain, ignore any editorial-partner match (spaces only).
+  const partner = onSubdomain ? undefined : partnerQuery.data;
   const isTenant = !!tenant;
 
   // Catalogue : partenaires similaires (même catégorie).
@@ -112,7 +116,7 @@ export default function PartnerProfile() {
     [partners, partner],
   );
 
-  if (tenantQuery.isLoading || partnerQuery.isLoading) {
+  if (tenantQuery.isLoading || (!onSubdomain && partnerQuery.isLoading)) {
     return (
       <div className="container-page py-16">
         <LoadingState label="Chargement du partenaire…" />

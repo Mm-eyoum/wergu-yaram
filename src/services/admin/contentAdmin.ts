@@ -31,6 +31,13 @@ export interface ContentResource<T> {
   titleField: keyof T & string;
   /** Singular label for audit `resourceType`. */
   resourceType: string;
+  /**
+   * Relit le document juste après écriture pour confirmer qu'il a bien été
+   * persisté côté serveur. Détecte les écritures acceptées en local mais
+   * rejetées serveur (App Check / règles), qui afficheraient un faux succès.
+   * Réservé aux types critiques (ex. tenants = sous-domaine public).
+   */
+  verifyWrite?: boolean;
 }
 
 function idOf<T>(res: ContentResource<T>, item: T): string {
@@ -97,6 +104,17 @@ export function makeContentAdmin<T extends object>(
         ...scoped,
         updatedAt: serverTimestamp(),
       });
+      // Lecture de contrôle : un setDoc résolu localement mais rejeté serveur
+      // (App Check / règles) laisserait le doc absent — on lève alors une erreur
+      // explicite plutôt que de laisser l'UI annoncer un faux succès.
+      if (resource.verifyWrite) {
+        const check = await getDoc(doc(db, resource.collection, id));
+        if (!check.exists()) {
+          throw new Error(
+            "L'enregistrement n'a pas été confirmé côté serveur (droits insuffisants ou App Check). Vérifiez votre rôle éditeur.",
+          );
+        }
+      }
       void logAudit({
         action: opts?.isNew ? "create" : "update",
         resourceType: resource.resourceType,

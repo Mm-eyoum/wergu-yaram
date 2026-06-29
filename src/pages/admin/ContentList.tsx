@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/hooks/useToast";
 import { ContentTable } from "@/components/admin/ContentTable";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
-import { getContentEntry } from "@/admin/content/entries";
+import { getContentEntry, CONTENT_ENTRIES } from "@/admin/content/entries";
 import { SEOHead } from "@/seo/SEOHead";
 
 export const adminContentKey = (type: string) => ["admin", "content", type] as const;
@@ -87,6 +87,9 @@ export default function ContentList() {
 
   if (!entry) return <Navigate to="/admin/content" replace />;
 
+  // Sous-onglets : types partageant un même `group` (ex. Partenaires).
+  const siblings = entry.group ? CONTENT_ENTRIES.filter((e) => e.group === entry.group) : [];
+
   return (
     <div className="mx-auto max-w-6xl">
       <SEOHead title={entry.label} noIndex />
@@ -96,12 +99,37 @@ export default function ContentList() {
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-text-primary dark:text-white sm:text-3xl">{entry.label}</h1>
-          <p className="text-sm text-text-secondary dark:text-white/60">{filtered.length} élément(s)</p>
+          {entry.description && (
+            <p className="mt-0.5 max-w-2xl text-sm text-text-secondary dark:text-white/60">{entry.description}</p>
+          )}
+          <p className="text-xs text-text-secondary/80 dark:text-white/50">{filtered.length} élément(s)</p>
         </div>
         <ButtonLink to={`/admin/content/${entry.key}/new`} size="sm">
           <Plus className="h-4 w-4" /> Nouveau {entry.singular.toLowerCase()}
         </ButtonLink>
       </header>
+
+      {siblings.length > 1 && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {siblings.map((s) => {
+            const active = s.key === type;
+            return (
+              <Link
+                key={s.key}
+                to={`/admin/content/${s.key}`}
+                title={s.description}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+                  active
+                    ? "bg-brand-green text-white"
+                    : "border border-border-soft bg-white text-text-secondary hover:border-brand-teal hover:text-brand-green dark:border-white/10 dark:bg-white/5 dark:text-white/70"
+                }`}
+              >
+                {s.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative max-w-sm flex-1">

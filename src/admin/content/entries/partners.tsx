@@ -6,8 +6,10 @@ import { PUBLISHED, SPONSOR } from "./shared";
 
 export const partnersEntry: ContentEntry<Partner> = {
   key: "partners",
-  label: "Partenaires",
+  label: "Fiches partenaires (annuaire)",
   singular: "Partenaire",
+  description: "Fiche annuaire éditoriale (logo, catégorie, description). PAS de sous-domaine ni d'espace dédié.",
+  group: "Partenaires",
   icon: "handshake",
   admin: makeContentAdmin<Partner>({ collection: "partners", idField: "slug", titleField: "name", resourceType: "partner" }),
   columns: [

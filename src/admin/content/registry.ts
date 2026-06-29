@@ -17,6 +17,12 @@ export interface ContentEntry<T extends object> {
   label: string;
   /** Singular label, e.g. "Article". */
   singular: string;
+  /**
+   * Phrase courte expliquant ce que gère ce type — affichée sous le titre de la
+   * liste et dans le hub. Sert à lever toute ambiguïté entre types proches
+   * (ex. fiche éditoriale SANS sous-domaine vs espace AVEC sous-domaine).
+   */
+  description?: string;
   /** Lucide icon name handled by the hub page. */
   icon: string;
   admin: ContentAdmin<T>;
