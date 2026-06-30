@@ -24,7 +24,7 @@ import {
   getPathologyBySlug,
   getFormations,
   getFormationBySlug,
-  getCommittees,
+  getTenants,
   getTenantCommunities,
   getTenantEvents,
   getTenantArticles,
@@ -53,7 +53,7 @@ export const catalogKeys = {
   partner: (slug: string) => ["catalog", "partner", slug] as const,
   formations: ["catalog", "formations"] as const,
   formation: (slug: string) => ["catalog", "formation", slug] as const,
-  committees: ["catalog", "committees"] as const,
+  tenants: ["catalog", "tenants"] as const,
   tenantContent: (slug: string, kind: string) => ["catalog", "tenant", slug, kind] as const,
 };
 
@@ -75,8 +75,8 @@ export const usePartners = () =>
   useQuery({ queryKey: catalogKeys.partners, queryFn: getPartners });
 export const useFormations = () =>
   useQuery({ queryKey: catalogKeys.formations, queryFn: getFormations });
-export const useCommittees = () =>
-  useQuery({ queryKey: catalogKeys.committees, queryFn: getCommittees });
+export const useTenants = () =>
+  useQuery({ queryKey: catalogKeys.tenants, queryFn: getTenants });
 
 // --- Tenant-scoped public lists (partner space aggregates by tenantSlug) ---
 export const useTenantCommunities = (slug?: string) =>

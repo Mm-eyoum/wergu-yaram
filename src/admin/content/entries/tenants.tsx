@@ -56,12 +56,28 @@ export const tenantsEntry: ContentEntry<Tenant> = {
         { name: "eventIds", label: "Événements (ids)", type: "stringArray" },
         { name: "articleSlugs", label: "Articles (slugs)", type: "stringArray" },
       ] },
+      { title: "Gouvernance & impact", fields: [
+        { name: "committee", label: "Comité de pilotage", type: "object", fullWidth: true, fields: [
+          { name: "name", label: "Nom du comité", type: "text" },
+          { name: "mission", label: "Mission", type: "textarea" },
+          { name: "members", label: "Membres", type: "repeatable", itemLabel: "un membre", fullWidth: true, fields: [
+            { name: "name", label: "Nom", type: "text" },
+            { name: "role", label: "Rôle", type: "text" },
+            { name: "org", label: "Organisation", type: "text" },
+          ] },
+          { name: "indicators", label: "Indicateurs d'impact", type: "repeatable", itemLabel: "un indicateur", fullWidth: true, fields: [
+            { name: "label", label: "Libellé", type: "text" },
+            { name: "value", label: "Valeur", type: "text" },
+          ] },
+        ] },
+      ] },
     ],
   },
   empty: () => ({
     slug: "", name: "", description: "", logo: null, theme: { accent: "" },
     communitySlugs: [], eventIds: [], articleSlugs: [], website: "", published: false,
     showOnPartnersPage: true,
+    committee: { name: "", mission: "", members: [], indicators: [] },
   }),
   // Lien « Voir sur le site » de l'éditeur → le sous-domaine public absolu.
   publicHref: (t) => `https://${t.slug}.werguyaram.org`,

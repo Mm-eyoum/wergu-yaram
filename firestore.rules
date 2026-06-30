@@ -207,14 +207,6 @@ service cloud.firestore {
             && request.resource.data.get('campaignQuota', {}) == resource.data.get('campaignQuota', {}));
       allow delete: if isEditor();
     }
-    // Comités (gouvernance + indicateurs d'impact) : éditorial OU manager du tenant.
-    match /committees/{doc} {
-      allow read: if true;
-      allow create: if isEditor() || tenantCreateOk();
-      allow update: if isEditor() || tenantUpdateOk();
-      allow delete: if isEditor() || tenantDeleteOk();
-    }
-
     // --- Site configuration (navigation menus, global settings) ---
     // Public read (header/footer render from it); admin-only writes.
     match /settings/{doc} { allow read: if true; allow write: if isAdmin(); }

@@ -168,6 +168,23 @@ export interface Tenant {
   website?: string;
   /** Domaine personnalisé éventuel (sinon `<slug>.werguyaram.org`). */
   domain?: string;
+  /** Remonter cet espace comme carte sur la page publique /partenaires (défaut: oui). */
+  showOnPartnersPage?: boolean;
+  /** Gouvernance & impact de l'espace (comité de pilotage + indicateurs). */
+  committee?: TenantCommittee;
+}
+
+/**
+ * Gouvernance d'un espace partenaire : comité de pilotage multi-acteurs qui
+ * **valide les indicateurs d'impact** d'un programme. Embarqué dans le tenant
+ * (1 espace ↔ 1 comité), édité depuis l'éditeur d'espace.
+ */
+export interface TenantCommittee {
+  name: string;
+  mission?: string;
+  members: { name: string; role?: string; org?: string }[];
+  /** Indicateurs d'impact mesurables — ex. « Personnes dépistées » : « 1 200 ». */
+  indicators: { label: string; value: string }[];
 }
 
 /** Canal d'une campagne de prévention ciblée (P3). */
@@ -193,24 +210,6 @@ export interface Campaign {
   createdAt?: string;
   /** Espace partenaire émetteur (campagnes self-service scopées). Vide = campagne admin globale. */
   tenantSlug?: string;
-}
-
-/**
- * Comité (groupe de travail multi-acteurs) qui pilote et **valide les
- * indicateurs d'impact** d'un programme / espace partenaire (le mot du deck).
- */
-export interface Committee {
-  slug: string;
-  published?: boolean;
-  name: string;
-  mission?: string;
-  /** Espace partenaire rattaché (optionnel) — relie le comité à un tenant. */
-  tenantSlug?: string;
-  /** Compte partenaire propriétaire (gestion autonome). */
-  ownerUid?: string;
-  members: { name: string; role?: string; org?: string }[];
-  /** Indicateurs d'impact suivis (mesurables) — ex. « Personnes dépistées » : « 1 200 ». */
-  indicators: { label: string; value: string }[];
 }
 
 /** Type of any searchable content — drives the universal search & result tabs. */

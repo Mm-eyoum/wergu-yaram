@@ -30,7 +30,6 @@ import {
   useArticles,
   useCommunities,
   useEvents,
-  useCommittees,
   useTenantCommunities,
   useTenantEvents,
   useTenantArticles,
@@ -82,7 +81,6 @@ export default function PartnerProfile() {
   const { data: communities = [] } = useCommunities();
   const { data: events = [] } = useEvents();
   const { data: articles = [] } = useArticles();
-  const { data: committees = [] } = useCommittees();
   const { data: ownedCommunities = [] } = useTenantCommunities(isTenant ? slug : undefined);
   const { data: ownedEvents = [] } = useTenantEvents(isTenant ? slug : undefined);
   const { data: ownedArticles = [] } = useTenantArticles(isTenant ? slug : undefined);
@@ -95,10 +93,7 @@ export default function PartnerProfile() {
 
   const isManager =
     !!user && !!tenant && (tenant.ownerUid === user.uid || !!tenant.managerUids?.includes(user.uid));
-  const committee = useMemo(
-    () => committees.find((c) => c.tenantSlug === tenant?.slug),
-    [committees, tenant],
-  );
+  const committee = tenant?.committee;
   const spaceCommunities = useMemo(
     () => dedupeBy([...ownedCommunities, ...communities.filter((c) => tenant?.communitySlugs?.includes(c.slug))], (c) => c.slug),
     [ownedCommunities, communities, tenant],

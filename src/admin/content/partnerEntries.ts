@@ -15,7 +15,6 @@ export const PARTNER_ENTRY_KEYS = [
   "articles",
   "formations",
   "equipmentNeeds",
-  "committees",
 ] as const;
 
 export const PARTNER_ENTRIES: AnyContentEntry[] = PARTNER_ENTRY_KEYS.map(

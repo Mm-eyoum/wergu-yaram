@@ -26,7 +26,6 @@ import type {
   Partner,
   Pathology,
   Tenant,
-  Committee,
 } from "@/types/domain";
 
 // TRANSITIONAL — bundled mock data used as the offline/empty-Firestore fallback
@@ -59,8 +58,6 @@ import {
   pathologyBySlug,
   tenantBySlug,
   tenants,
-  committees,
-  committeeBySlug,
 } from "./content";
 import { getMockMedications, getMockMedicationBySlug } from "@/data/medicationsLazy";
 
@@ -166,7 +163,6 @@ export const getFormationBySlug = (slug?: string) =>
 export const getTenants = () => listOrMock<Tenant>("tenants", tenants);
 export const getTenantBySlug = (slug?: string) =>
   oneOrMock<Tenant>("tenants", slug, slug ? () => tenantBySlug(slug) : undefined);
-export const getCommittees = () => listOrMock<Committee>("committees", committees);
 
 /**
  * Tenant-scoped public lists — published content tagged to a partner space
@@ -191,5 +187,3 @@ export const getTenantEvents = (slug?: string) => listByTenant<HealthEvent>("eve
 export const getTenantArticles = (slug?: string) => listByTenant<Article>("articles", slug);
 export const getTenantFormations = (slug?: string) => listByTenant<Formation>("formations", slug);
 export const getTenantEquipmentNeeds = (slug?: string) => listByTenant<EquipmentNeed>("equipmentNeeds", slug);
-export const getCommitteeBySlug = (slug?: string) =>
-  oneOrMock<Committee>("committees", slug, slug ? () => committeeBySlug(slug) : undefined);
