@@ -203,6 +203,13 @@ service cloud.firestore {
       allow update: if isEditor() || tenantUpdateOk();
       allow delete: if isEditor() || tenantDeleteOk();
     }
+    // Offres partenaires (services / produits / appels à projets).
+    match /partnerOffers/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
     // Espaces partenaires multi-tenant : créés/supprimés par un admin ; un manager
     // édite la marque/le profil mais jamais ownerUid ni campaignQuota (anti-abus).
     match /tenants/{slug} {

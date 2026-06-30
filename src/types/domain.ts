@@ -190,6 +190,29 @@ export interface TenantCommittee {
 }
 
 /**
+ * Offre d'un partenaire affichée sur son espace : prestation, produit/solution,
+ * ou appel à projets/financement (selon `kind`). Couvre les verticales métier
+ * (tech, médical, bailleurs, médias). Contenu partenaire léger : `slug` = id.
+ */
+export type PartnerOfferKind = "service" | "produit" | "appel";
+export interface PartnerOffer {
+  slug: string;
+  published?: boolean;
+  tenantSlug?: string;
+  ownerUid?: string;
+  kind: PartnerOfferKind;
+  title: string;
+  summary: string;
+  category?: string;
+  image?: string;
+  /** Prix / budget / date limite selon le type (ex. « Sur devis », « 50 M XOF », « 30 sept. »). */
+  meta?: string;
+  ctaLabel?: string;
+  /** Lien externe ; si vide, le bouton renvoie vers le formulaire de contact de l'espace. */
+  ctaUrl?: string;
+}
+
+/**
  * Témoignage / histoire d'impact (preuve sociale) affiché sur l'espace d'un
  * partenaire. Contenu partenaire léger : `slug` = id de document.
  */

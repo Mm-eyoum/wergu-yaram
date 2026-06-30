@@ -18,6 +18,7 @@ export { partners, partnerBySlug } from "@/data/mockPartners";
 export { formations, formationBySlug } from "@/data/mockFormations";
 export { tenants, tenantBySlug } from "@/data/mockTenants";
 export { testimonials } from "@/data/mockTestimonials";
+export { partnerOffers } from "@/data/mockPartnerOffers";
 
 export type SearchScope = ContentType | "all";
 

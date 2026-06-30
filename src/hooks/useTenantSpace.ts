@@ -9,6 +9,7 @@ import {
   useTenantEvents,
   useTenantEquipmentNeeds,
   useTenantTestimonials,
+  useTenantOffers,
 } from "./useCatalog";
 
 function dedupeBy<T>(items: T[], key: (item: T) => string): T[] {
@@ -33,6 +34,7 @@ export function useTenantSpace(slug?: string, tenant?: Tenant | null) {
   const { data: ownedArticles = [] } = useTenantArticles(slug);
   const { data: needs = [] } = useTenantEquipmentNeeds(slug);
   const { data: testimonials = [] } = useTenantTestimonials(slug);
+  const { data: offers = [] } = useTenantOffers(slug);
   const { data: allCommunities = [] } = useCommunities();
   const { data: allEvents = [] } = useEvents();
   const { data: allArticles = [] } = useArticles();
@@ -50,5 +52,5 @@ export function useTenantSpace(slug?: string, tenant?: Tenant | null) {
     [ownedArticles, allArticles, tenant],
   );
 
-  return { communities, events, articles, needs, testimonials };
+  return { communities, events, articles, needs, testimonials, offers };
 }

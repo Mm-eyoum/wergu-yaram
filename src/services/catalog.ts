@@ -27,6 +27,7 @@ import type {
   Pathology,
   Tenant,
   Testimonial,
+  PartnerOffer,
 } from "@/types/domain";
 
 // TRANSITIONAL — bundled mock data used as the offline/empty-Firestore fallback
@@ -60,6 +61,7 @@ import {
   tenantBySlug,
   tenants,
   testimonials,
+  partnerOffers,
 } from "./content";
 import { getMockMedications, getMockMedicationBySlug } from "@/data/medicationsLazy";
 
@@ -191,3 +193,5 @@ export const getTenantFormations = (slug?: string) => listByTenant<Formation>("f
 export const getTenantEquipmentNeeds = (slug?: string) => listByTenant<EquipmentNeed>("equipmentNeeds", slug);
 export const getTestimonials = () => listOrMock<Testimonial>("testimonials", testimonials);
 export const getTenantTestimonials = (slug?: string) => listByTenant<Testimonial>("testimonials", slug);
+export const getPartnerOffers = () => listOrMock<PartnerOffer>("partnerOffers", partnerOffers);
+export const getTenantOffers = (slug?: string) => listByTenant<PartnerOffer>("partnerOffers", slug);

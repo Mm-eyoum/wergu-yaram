@@ -6,6 +6,7 @@ import {
   ArrowRight,
   BadgeCheck,
   BookOpen,
+  Briefcase,
   Calendar,
   Globe,
   HandHeart,
@@ -75,6 +76,7 @@ export default function PartnerProfile() {
     articles: spaceArticles,
     needs: ownedNeeds,
     testimonials: spaceTestimonials,
+    offers: spaceOffers,
   } = useTenantSpace(slug, tenant);
 
   useEffect(() => {
@@ -281,6 +283,39 @@ export default function PartnerProfile() {
               </div>
             </section>
           )}
+
+          {(["service", "produit", "appel"] as const).map((k) => {
+            const items = spaceOffers.filter((o) => o.kind === k);
+            if (items.length === 0) return null;
+            const title = k === "service" ? "Nos services" : k === "produit" ? "Produits & solutions" : "Appels à projets";
+            return (
+              <section key={k} className="animate-fade-in">
+                <SectionHeading icon={<Briefcase className="h-5 w-5" style={theme.text} />} title={title} count={items.length} accent={accent} />
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map((o) => (
+                    <div key={o.slug} className="card-surface flex flex-col p-5">
+                      {o.image && <img src={o.image} alt={o.title} className="mb-3 h-32 w-full rounded-xl object-cover" />}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {o.category && <Badge tone="mint">{o.category}</Badge>}
+                        {o.meta && <span className="text-xs font-semibold" style={theme.text}>{o.meta}</span>}
+                      </div>
+                      <h3 className="mt-2 font-bold text-text-primary">{o.title}</h3>
+                      <p className="mt-1 flex-1 line-clamp-3 text-sm text-text-secondary">{o.summary}</p>
+                      {o.ctaUrl ? (
+                        <a href={o.ctaUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold hover:gap-1.5" style={theme.text}>
+                          {o.ctaLabel || "En savoir plus"} <ArrowRight className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <a href="#contact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold hover:gap-1.5" style={theme.text}>
+                          {o.ctaLabel || "Nous contacter"} <ArrowRight className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
 
           {spaceTestimonials.length > 0 && (
             <section className="animate-fade-in">
