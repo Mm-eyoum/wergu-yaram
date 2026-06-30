@@ -417,6 +417,20 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Prospects (lead capture) déposés depuis un espace partenaire : création
+    // ouverte (visiteur) mais shape validée + bornée ; lecture par l'admin OU le
+    // manager du tenant destinataire ; jamais de mutation/suppression client.
+    match /leads/{lead} {
+      allow create: if isText(request.resource.data.tenantSlug, 1, 80)
+        && isText(request.resource.data.name, 1, 120)
+        && isText(request.resource.data.email, 5, 200)
+        && request.resource.data.kind in ['contact', 'demo', 'candidature']
+        && isText(request.resource.data.get('message', ''), 0, 3000)
+        && isText(request.resource.data.get('phone', ''), 0, 40);
+      allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
+      allow update, delete: if false;
+    }
+
     // --- Analytiques par espace partenaire ---
     // Journalisation interne des vues : création ouverte mais shape validée +
     // bornée, SANS PII (pas d'uid/IP) ; jamais relue côté client (agrégée par une

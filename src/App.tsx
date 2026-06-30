@@ -48,6 +48,7 @@ const PartnerContentList = lazy(() => import("@/pages/partner/PartnerContentList
 const PartnerContentEditor = lazy(() => import("@/pages/partner/PartnerContentEditor"));
 const PartnerSettings = lazy(() => import("@/pages/partner/PartnerSettings"));
 const PartnerCampaigns = lazy(() => import("@/pages/partner/PartnerCampaigns"));
+const PartnerLeads = lazy(() => import("@/pages/partner/PartnerLeads"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -215,6 +216,7 @@ export default function App() {
           <Route path="contenus/:type/new" element={<PartnerContentEditor />} />
           <Route path="contenus/:type/:id/edit" element={<PartnerContentEditor />} />
           <Route path="campagnes" element={<PartnerCampaigns />} />
+          <Route path="prospects" element={<PartnerLeads />} />
           <Route path="parametres" element={<PartnerSettings />} />
         </Route>
         <Route path="/connexion" element={<Login />} />

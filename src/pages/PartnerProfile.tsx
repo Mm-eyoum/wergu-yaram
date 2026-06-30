@@ -24,6 +24,7 @@ import { CountUpStat } from "@/components/ui/CountUpStat";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ShareButtons } from "@/components/ShareButtons";
+import { PartnerLeadForm } from "@/components/tenant/PartnerLeadForm";
 import {
   SectionHeading,
   GovernancePanel,
@@ -278,6 +279,14 @@ export default function PartnerProfile() {
               </div>
             </section>
           )}
+
+          {/* ── Contact / lead capture ──────────────────────────────── */}
+          <section className="animate-fade-in" id="contact">
+            <SectionHeading icon={<HandHeart className="h-5 w-5" style={theme.text} />} title={`Contacter ${name}`} accent={accent} />
+            <div className="max-w-2xl">
+              <PartnerLeadForm tenantSlug={tenant.slug} accent={accent} />
+            </div>
+          </section>
 
           {/* ── Bande d'action ──────────────────────────────────────── */}
           <SupportBand cta={cta} name={name} accent={accent} />

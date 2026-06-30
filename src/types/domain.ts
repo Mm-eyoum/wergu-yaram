@@ -189,6 +189,21 @@ export interface TenantCommittee {
   indicators: { label: string; value: string }[];
 }
 
+/** Prospect capturé depuis l'espace d'un partenaire (contact / démo / candidature). */
+export type LeadKind = "contact" | "demo" | "candidature";
+export interface Lead {
+  id: string;
+  /** Espace partenaire destinataire. */
+  tenantSlug: string;
+  kind: LeadKind;
+  name: string;
+  email: string;
+  phone?: string;
+  message?: string;
+  status?: "new" | "handled";
+  createdAt?: string;
+}
+
 /** Canal d'une campagne de prévention ciblée (P3). */
 export type CampaignChannel = "sms" | "whatsapp";
 export type CampaignStatus = "draft" | "sent" | "failed";
