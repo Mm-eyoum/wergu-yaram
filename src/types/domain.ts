@@ -626,6 +626,8 @@ export interface Formation {
   modules: { title: string; summary?: string; durationLabel?: string }[];
   objectives: string[];
   certification?: boolean;
+  /** Évaluation (LMS léger) : réussite → certificat. `answer` = index de la bonne réponse. */
+  quiz?: { question: string; options: string[]; answer: number }[];
   /** Lien d'inscription / d'accès (webinaire, plateforme) — MVP sans LMS interne. */
   enrollUrl?: string;
   /** Webinaire lié (id d'un HealthEvent), le cas échéant. */

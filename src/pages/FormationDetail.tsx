@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
 import { SectionCard } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { FormationQuiz } from "@/components/formation/FormationQuiz";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useFormation } from "@/hooks/useCatalog";
@@ -102,6 +103,15 @@ export default function FormationDetail() {
                   </li>
                 ))}
               </ol>
+            </SectionCard>
+          )}
+
+          {(formation.quiz?.length ?? 0) > 0 && (
+            <SectionCard title="Évaluation & certificat">
+              <p className="mb-4 text-sm text-text-secondary">
+                Répondez au quiz : à partir de 70 % de bonnes réponses, téléchargez votre certificat nominatif.
+              </p>
+              <FormationQuiz formation={formation} />
             </SectionCard>
           )}
         </div>

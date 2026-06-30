@@ -48,6 +48,13 @@ export const formationsEntry: ContentEntry<Formation> = {
           { name: "durationLabel", label: "Durée", type: "text" },
         ] },
       ] },
+      { title: "Évaluation (quiz → certificat)", fields: [
+        { name: "quiz", label: "Questions", type: "repeatable", itemLabel: "une question", fullWidth: true, fields: [
+          { name: "question", label: "Question", type: "text", fullWidth: true },
+          { name: "options", label: "Réponses possibles", type: "stringArray" },
+          { name: "answer", label: "Index de la bonne réponse (0 = la 1ʳᵉ)", type: "number" },
+        ] },
+      ] },
       { title: "Accès & relations", fields: [
         { name: "enrollUrl", label: "Lien d'inscription / d'accès", type: "text" },
         { name: "relatedEventId", label: "Webinaire lié (id événement)", type: "text" },
