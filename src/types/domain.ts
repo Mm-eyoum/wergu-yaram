@@ -172,6 +172,10 @@ export interface Tenant {
   showOnPartnersPage?: boolean;
   /** Label « Partenaire vérifié » (confiance) — posé par un admin uniquement. */
   verified?: boolean;
+  /** Adhésion : libellé de cotisation affiché (ex. « 7 000 XOF/an »). Active la section adhésion. */
+  cotisationLabel?: string;
+  /** Clé API d'impact (lecture seule) — posée par un admin ; donne accès à l'endpoint impactApi. */
+  apiKey?: string;
   /** Gouvernance & impact de l'espace (comité de pilotage + indicateurs). */
   committee?: TenantCommittee;
 }
@@ -226,6 +230,26 @@ export interface Testimonial {
   authorRole?: string;
   org?: string;
   avatar?: string;
+}
+
+/**
+ * Adhésion à un espace partenaire (ex. mutuelle de santé). MVP : inscription +
+ * suivi de cotisation ; le paiement récurrent réutilise le rail Bictorys (à
+ * activer). `status` géré par le gestionnaire de l'espace.
+ */
+export type MembershipStatus = "pending" | "active" | "lapsed";
+export interface Membership {
+  id: string;
+  tenantSlug: string;
+  uid?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  status?: MembershipStatus;
+  /** Cotisation due (XOF) et période payée, le cas échéant. */
+  amount?: number;
+  paidUntil?: string;
+  createdAt?: string;
 }
 
 /** Prospect capturé depuis l'espace d'un partenaire (contact / démo / candidature). */

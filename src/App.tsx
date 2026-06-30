@@ -49,6 +49,7 @@ const PartnerContentEditor = lazy(() => import("@/pages/partner/PartnerContentEd
 const PartnerSettings = lazy(() => import("@/pages/partner/PartnerSettings"));
 const PartnerCampaigns = lazy(() => import("@/pages/partner/PartnerCampaigns"));
 const PartnerLeads = lazy(() => import("@/pages/partner/PartnerLeads"));
+const PartnerMembers = lazy(() => import("@/pages/partner/PartnerMembers"));
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -72,6 +73,7 @@ const Menus = lazy(() => import("@/pages/admin/Menus"));
 const Comments = lazy(() => import("@/pages/admin/Comments"));
 const AuditLog = lazy(() => import("@/pages/admin/AuditLog"));
 const Revenue = lazy(() => import("@/pages/admin/Revenue"));
+const Territoire = lazy(() => import("@/pages/admin/Territoire"));
 const Campaigns = lazy(() => import("@/pages/admin/Campaigns"));
 const Appearance = lazy(() => import("@/pages/admin/Appearance"));
 const Redirects = lazy(() => import("@/pages/admin/Redirects"));
@@ -217,6 +219,7 @@ export default function App() {
           <Route path="contenus/:type/:id/edit" element={<PartnerContentEditor />} />
           <Route path="campagnes" element={<PartnerCampaigns />} />
           <Route path="prospects" element={<PartnerLeads />} />
+          <Route path="membres" element={<PartnerMembers />} />
           <Route path="parametres" element={<PartnerSettings />} />
         </Route>
         <Route path="/connexion" element={<Login />} />
@@ -396,6 +399,14 @@ export default function App() {
             element={
               <RequirePermission permission="revenue.read">
                 <Revenue />
+              </RequirePermission>
+            }
+          />
+          <Route
+            path="territoire"
+            element={
+              <RequirePermission permission="revenue.read">
+                <Territoire />
               </RequirePermission>
             }
           />

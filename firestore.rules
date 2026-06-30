@@ -219,7 +219,8 @@ service cloud.firestore {
         || (isTenantManager(slug)
             && request.resource.data.get('ownerUid', '') == resource.data.get('ownerUid', '')
             && request.resource.data.get('campaignQuota', {}) == resource.data.get('campaignQuota', {})
-            && request.resource.data.get('verified', false) == resource.data.get('verified', false));
+            && request.resource.data.get('verified', false) == resource.data.get('verified', false)
+            && request.resource.data.get('apiKey', '') == resource.data.get('apiKey', ''));
       allow delete: if isEditor();
     }
     // --- Site configuration (navigation menus, global settings) ---
@@ -443,6 +444,20 @@ service cloud.firestore {
         && isText(request.resource.data.get('phone', ''), 0, 40);
       allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
       allow update, delete: if false;
+    }
+
+    // Adhésions à un espace partenaire (mutuelles…) : création ouverte mais shape
+    // validée ; lecture par l'admin, le manager du tenant, ou l'adhérent (uid) ;
+    // statut/cotisation gérés par le manager.
+    match /memberships/{m} {
+      allow create: if isText(request.resource.data.tenantSlug, 1, 80)
+        && isText(request.resource.data.name, 1, 120)
+        && isText(request.resource.data.email, 5, 200)
+        && isText(request.resource.data.get('phone', ''), 0, 40);
+      allow read: if isAdmin()
+        || isTenantManager(resource.data.get('tenantSlug', ''))
+        || isOwner(resource.data.get('uid', ''));
+      allow update, delete: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
     }
 
     // --- Analytiques par espace partenaire ---

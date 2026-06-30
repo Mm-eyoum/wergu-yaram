@@ -44,6 +44,8 @@ export const tenantsEntry: ContentEntry<Tenant> = {
         PUBLISHED,
         { name: "showOnPartnersPage", label: "Afficher sur la page publique des partenaires", type: "boolean" },
         { name: "verified", label: "Partenaire vérifié (badge de confiance)", type: "boolean", help: "Réservé aux administrateurs — affiche le label « Vérifié » sur l'espace et l'annuaire." },
+        { name: "cotisationLabel", label: "Cotisation (active l'adhésion)", type: "text", placeholder: "7 000 XOF/an", help: "Si renseigné, une section « Devenir membre » apparaît sur l'espace." },
+        { name: "apiKey", label: "Clé API d'impact (admin)", type: "text", help: "Donne accès en lecture à l'endpoint /api/impact pour l'intégration SI du bailleur." },
       ] },
       { title: "Marque", fields: [
         { name: "logo", label: "Logo", type: "image" },

@@ -27,6 +27,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ShareButtons } from "@/components/ShareButtons";
 import { PartnerLeadForm } from "@/components/tenant/PartnerLeadForm";
+import { PartnerJoinForm } from "@/components/tenant/PartnerJoinForm";
 import {
   SectionHeading,
   GovernancePanel,
@@ -340,6 +341,15 @@ export default function PartnerProfile() {
                     </figcaption>
                   </figure>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {tenant.cotisationLabel && (
+            <section className="animate-fade-in" id="adherer">
+              <SectionHeading icon={<HandHeart className="h-5 w-5" style={theme.text} />} title={`Devenir membre de ${name}`} accent={accent} />
+              <div className="max-w-2xl">
+                <PartnerJoinForm tenantSlug={tenant.slug} cotisationLabel={tenant.cotisationLabel} accent={accent} />
               </div>
             </section>
           )}

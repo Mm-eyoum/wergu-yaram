@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, FileStack, Megaphone, Inbox, Settings } from "lucide-react";
+import { LayoutDashboard, FileStack, Megaphone, Inbox, UsersRound, Settings } from "lucide-react";
 
 export interface PartnerNavItem {
   key: string;
@@ -14,5 +14,6 @@ export const PARTNER_NAV: PartnerNavItem[] = [
   { key: "content", label: "Contenus", segment: "contenus", icon: FileStack },
   { key: "campaigns", label: "Campagnes", segment: "campagnes", icon: Megaphone },
   { key: "leads", label: "Prospects", segment: "prospects", icon: Inbox },
+  { key: "members", label: "Membres", segment: "membres", icon: UsersRound },
   { key: "settings", label: "Paramètres", segment: "parametres", icon: Settings },
 ];

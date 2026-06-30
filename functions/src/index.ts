@@ -1492,3 +1492,75 @@ export const getTenantTraffic = onCall(
     }
   },
 );
+
+/**
+ * API d'impact (intégration SI bailleur) — `GET /api/impact?tenant=<slug>&key=<apiKey>`
+ * (ou en-tête `x-api-key`). Renvoie en JSON les KPIs agrégés (anonymisés) d'un
+ * espace partenaire, sécurisé par la clé API du tenant (posée par un admin).
+ * Lecture seule, CORS ouvert — destiné à être consommé par le SI du bailleur.
+ */
+export const impactApi = onRequest({ cors: true }, async (req, res) => {
+  const slug = String(req.query.tenant ?? "");
+  const key = String(req.query.key ?? req.headers["x-api-key"] ?? "");
+  if (!slug) {
+    res.status(400).json({ error: "Paramètre 'tenant' requis." });
+    return;
+  }
+  const tSnap = await db.collection("tenants").doc(slug).get();
+  const t = tSnap.data() as { name?: string; apiKey?: string } | undefined;
+  if (!t) {
+    res.status(404).json({ error: "Espace partenaire introuvable." });
+    return;
+  }
+  if (!t.apiKey || key !== t.apiKey) {
+    res.status(401).json({ error: "Clé API invalide ou absente." });
+    return;
+  }
+
+  const byTenant = (name: string) => db.collection(name).where("tenantSlug", "==", slug).get();
+  const [communities, events, needs, campaigns, formations] = await Promise.all([
+    byTenant("communities"),
+    byTenant("events"),
+    byTenant("equipmentNeeds"),
+    byTenant("campaigns"),
+    byTenant("formations"),
+  ]);
+
+  let members = 0;
+  communities.forEach((d) => (members += (d.data().membersCount as number) || 0));
+  let raised = 0,
+    target = 0,
+    donors = 0;
+  needs.forEach((d) => {
+    const n = d.data();
+    raised += (n.raisedAmount as number) || 0;
+    target += (n.targetAmount as number) || 0;
+    donors += (n.donorsCount as number) || 0;
+  });
+  let campaignsSent = 0,
+    campaignsTargeted = 0;
+  campaigns.forEach((d) => {
+    const c = d.data();
+    campaignsSent += (c.sentCount as number) || 0;
+    campaignsTargeted += (c.targetedCount as number) || 0;
+  });
+
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({
+    tenant: { slug, name: t.name ?? slug },
+    generatedAt: new Date().toISOString(),
+    currency: "XOF",
+    kpis: {
+      communities: communities.size,
+      members,
+      events: events.size,
+      formations: formations.size,
+      needs: needs.size,
+      raised,
+      target,
+      donors,
+      campaignsSent,
+      campaignsTargeted,
+    },
+  });
+});
