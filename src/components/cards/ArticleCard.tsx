@@ -4,6 +4,7 @@ import { BadgeCheck, Clock, Newspaper, PlayCircle } from "lucide-react";
 import type { Article } from "@/types/domain";
 import { Avatar } from "@/components/ui/Avatar";
 import { formatDate } from "@/lib/format";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 import { CardMedia, OverlayBadge, MetaItem, cardInteractive } from "./primitives";
 
 export function ArticleCard({ article }: { article: Article }) {
@@ -48,6 +49,7 @@ export function ArticleCard({ article }: { article: Article }) {
           </MetaItem>
         </div>
         <p className="mt-1.5 text-[11px] text-text-secondary">{formatDate(article.publishedAt)}</p>
+        {article.tenantSlug && <PartnerAttribution tenantSlug={article.tenantSlug} className="mt-1.5" />}
       </div>
     </Link>
   );

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, BadgeCheck, Pill, Stethoscope, Hospital, Users, FileText, PlayCircle, Calendar, HeartHandshake, Activity, GraduationCap } from "lucide-react";
 import type { ContentType, SearchHit } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 
 const TYPE_ICON: Record<ContentType, React.ReactNode> = {
   pathologie: <Activity className="h-4 w-4" />,
@@ -64,6 +65,7 @@ export function ResultCard({ hit }: { hit: SearchHit }) {
         </h3>
         {hit.meta && <p className="text-xs text-text-secondary">{hit.meta}</p>}
         <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{hit.description}</p>
+        {hit.tenantSlug && <PartnerAttribution tenantSlug={hit.tenantSlug} asLink className="mt-1.5" />}
 
         <Link
           to={hit.href}

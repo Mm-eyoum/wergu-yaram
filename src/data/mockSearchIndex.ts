@@ -103,6 +103,7 @@ export function buildSearchHits(content: SearchContent): SearchHit[] {
       verified: a.trust.verified,
       thumbnail: a.cover,
       badge: a.type === "video" ? a.videoDurationLabel : undefined,
+      tenantSlug: a.tenantSlug,
       keywords: `${a.title} ${a.category} ${a.excerpt}`.toLowerCase(),
       facets: {
         category: a.category,
@@ -143,6 +144,7 @@ export function buildSearchHits(content: SearchContent): SearchHit[] {
       description: c.description,
       href: `/communautes/${c.slug}`,
       meta: `${c.membersCount} membres`,
+      tenantSlug: c.tenantSlug,
       keywords: `${c.name} ${c.topic} ${c.description}`.toLowerCase(),
       facets: {
         topic: c.topic,
@@ -161,6 +163,7 @@ export function buildSearchHits(content: SearchContent): SearchHit[] {
       href: `/evenements/${e.id}`,
       meta: `${e.city} · ${e.mode}`,
       thumbnail: e.cover,
+      tenantSlug: e.tenantSlug,
       keywords: `${e.title} ${e.summary} ${e.city}`.toLowerCase(),
       facets: {
         mode: e.mode,
@@ -180,6 +183,7 @@ export function buildSearchHits(content: SearchContent): SearchHit[] {
       meta: `${n.facilityName} · ${n.region}`,
       thumbnail: n.cover,
       badge: n.urgency === "urgent" ? "Urgent" : undefined,
+      tenantSlug: n.tenantSlug,
       keywords: `${n.title} ${n.shortDescription} ${n.facilityName} ${n.region}`.toLowerCase(),
       facets: {
         category: n.category,
@@ -216,6 +220,7 @@ export function buildSearchHits(content: SearchContent): SearchHit[] {
       href: `/formations/${f.slug}`,
       meta: f.category,
       verified: f.trust?.verified,
+      tenantSlug: f.tenantSlug,
       keywords: `${f.title} ${f.category ?? ""} ${f.excerpt} ${(f.audience ?? []).join(" ")}`.toLowerCase(),
       facets: { category: f.category },
     });

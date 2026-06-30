@@ -4,6 +4,7 @@ import { CalendarDays, Globe, Lock, Users } from "lucide-react";
 import type { Community } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
 import { formatCompact } from "@/lib/format";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 import { MetaItem, cardInteractive } from "./primitives";
 
 export function CommunityCard({ community }: { community: Community }) {
@@ -45,6 +46,7 @@ export function CommunityCard({ community }: { community: Community }) {
           </MetaItem>
         )}
       </div>
+      {community.tenantSlug && <PartnerAttribution tenantSlug={community.tenantSlug} />}
     </Link>
   );
 }

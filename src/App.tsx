@@ -40,6 +40,7 @@ const TenantSupport = lazy(() => import("@/pages/tenant/TenantSupport"));
 const Soutenir = lazy(() => import("@/pages/Soutenir"));
 const Formations = lazy(() => import("@/pages/Formations"));
 const FormationDetail = lazy(() => import("@/pages/FormationDetail"));
+const Actualites = lazy(() => import("@/pages/Actualites"));
 const PartnerShell = lazy(() => import("@/components/partner/PartnerShell").then((m) => ({ default: m.PartnerShell })));
 const PartnerHome = lazy(() => import("@/pages/partner/PartnerHome"));
 const PartnerContentHub = lazy(() => import("@/pages/partner/PartnerContentHub"));
@@ -166,6 +167,7 @@ export default function App() {
         <Route path="/recherche" element={<SearchResults />} />
         <Route path="/medicaments/:slug" element={<MedicationDetail />} />
         <Route path="/pathologies/:slug" element={<PathologyDetail />} />
+        <Route path="/actualites" element={<Actualites />} />
         <Route path="/articles/:slug" element={<ArticleDetail />} />
         {/*
           Modèle unifié des lieux de santé :

@@ -50,6 +50,7 @@ const schema = {
     { name: "badge", type: "string", index: false, optional: true },
     { name: "thumbnail", type: "string", index: false, optional: true },
     { name: "verified", type: "bool", facet: true, optional: true },
+    { name: "tenantSlug", type: "string", facet: true, optional: true },
   ],
 } as const;
 

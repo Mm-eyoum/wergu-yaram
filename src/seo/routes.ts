@@ -85,6 +85,7 @@ const STATIC_ENTRIES: RouteEntry[] = [
   { path: "/besoins", changefreq: "daily", priority: 0.8 },
   { path: "/evenements", changefreq: "daily", priority: 0.7 },
   { path: "/formations", changefreq: "weekly", priority: 0.7 },
+  { path: "/actualites", changefreq: "daily", priority: 0.7 },
   { path: "/partenaires", changefreq: "monthly", priority: 0.6 },
   { path: "/soutenir", changefreq: "monthly", priority: 0.6 },
 ];

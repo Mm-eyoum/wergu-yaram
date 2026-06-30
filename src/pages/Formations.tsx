@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useFormations } from "@/hooks/useCatalog";
 import { FORMATION_LEVEL_LABELS, FORMATION_FORMAT_LABELS } from "@/lib/formationLabels";
 import { cn } from "@/lib/cn";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 import { SEOHead } from "@/seo/SEOHead";
 import { breadcrumbJsonLd } from "@/seo/jsonld";
 
@@ -106,6 +107,7 @@ export default function Formations() {
                     </span>
                   )}
                 </div>
+                {f.tenantSlug && <PartnerAttribution tenantSlug={f.tenantSlug} className="mt-2.5" />}
               </Link>
             ))}
           </div>

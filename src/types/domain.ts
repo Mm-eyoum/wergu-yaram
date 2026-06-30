@@ -801,6 +801,8 @@ export interface SearchHit {
   badge?: string;
   thumbnail?: string;
   keywords: string;
+  /** Espace partenaire propriétaire (attribution « Proposé par … » dans les résultats). */
+  tenantSlug?: string;
   /** Structured filterable attributes (drive the per-type faceted filters). */
   facets?: SearchFacets;
 }

@@ -4,6 +4,7 @@ import { CalendarClock, HeartHandshake, MapPin, Users } from "lucide-react";
 import type { EquipmentNeed } from "@/types/domain";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatFcfa, percent } from "@/lib/format";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 import { CardMedia, OverlayBadge, MetaItem, CardCta, cardInteractive } from "./primitives";
 
 const URGENCY_TEXT: Record<EquipmentNeed["urgency"], string> = {
@@ -52,6 +53,7 @@ export function EquipmentNeedCard({ need }: { need: EquipmentNeed }) {
           </div>
           <CardCta>{t("support")}</CardCta>
         </div>
+        {need.tenantSlug && <PartnerAttribution tenantSlug={need.tenantSlug} className="mt-3" />}
       </div>
     </Link>
   );

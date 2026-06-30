@@ -4,6 +4,7 @@ import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
 import type { HealthEvent } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
 import { dateChip, formatFcfa } from "@/lib/format";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 import { cardInteractive, CardMedia, OverlayBadge, MetaItem, CardCta } from "./primitives";
 
 /** Free if no positive ticket price. */
@@ -62,7 +63,8 @@ export function EventPosterCard({ event }: { event: HealthEvent }) {
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-end pt-1">
+        <div className="mt-4 flex items-center justify-between gap-2 pt-1">
+          {event.tenantSlug ? <PartnerAttribution tenantSlug={event.tenantSlug} /> : <span />}
           <CardCta>{free ? t("viewEvent") : t("book")}</CardCta>
         </div>
       </div>
