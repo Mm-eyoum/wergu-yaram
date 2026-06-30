@@ -99,7 +99,7 @@ export function tenantToPartnerCard(t: Tenant): {
     contributionsLabel: "",
     tags: [],
   };
-  return { partner, href: `/partenaires/${t.slug}`, badge: "Espace partenaire" };
+  return { partner, href: `/partenaires/${t.slug}`, badge: t.verified ? "Vérifié" : "Espace partenaire" };
 }
 
 /** Any active org as a federated search hit (Établissements / Partenaires tabs). */

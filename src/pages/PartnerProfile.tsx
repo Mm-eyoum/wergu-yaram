@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
+  BadgeCheck,
   BookOpen,
   Calendar,
   Globe,
@@ -173,8 +174,15 @@ export default function PartnerProfile() {
               </span>
 
               <div className="min-w-0 flex-1">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide backdrop-blur">
-                  <Sparkles className="h-3.5 w-3.5" /> Espace partenaire
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide backdrop-blur">
+                    <Sparkles className="h-3.5 w-3.5" /> Espace partenaire
+                  </span>
+                  {tenant.verified && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/25 px-3 py-1 text-xs font-semibold uppercase tracking-wide backdrop-blur">
+                      <BadgeCheck className="h-3.5 w-3.5" /> Vérifié
+                    </span>
+                  )}
                 </span>
                 <h1 className="mt-3 text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">{name}</h1>
                 {description && <p className="mt-3 max-w-2xl text-white/85">{description}</p>}

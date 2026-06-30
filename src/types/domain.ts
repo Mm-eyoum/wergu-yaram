@@ -170,6 +170,8 @@ export interface Tenant {
   domain?: string;
   /** Remonter cet espace comme carte sur la page publique /partenaires (défaut: oui). */
   showOnPartnersPage?: boolean;
+  /** Label « Partenaire vérifié » (confiance) — posé par un admin uniquement. */
+  verified?: boolean;
   /** Gouvernance & impact de l'espace (comité de pilotage + indicateurs). */
   committee?: TenantCommittee;
 }

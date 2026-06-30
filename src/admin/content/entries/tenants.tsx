@@ -43,6 +43,7 @@ export const tenantsEntry: ContentEntry<Tenant> = {
         { name: "domain", label: "Domaine personnalisé (optionnel)", type: "text" },
         PUBLISHED,
         { name: "showOnPartnersPage", label: "Afficher sur la page publique des partenaires", type: "boolean" },
+        { name: "verified", label: "Partenaire vérifié (badge de confiance)", type: "boolean", help: "Réservé aux administrateurs — affiche le label « Vérifié » sur l'espace et l'annuaire." },
       ] },
       { title: "Marque", fields: [
         { name: "logo", label: "Logo", type: "image" },
