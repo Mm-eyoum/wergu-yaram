@@ -36,4 +36,4 @@ export const SOCIAL_PROFILES: string[] = [
   "https://www.linkedin.com/company/werguyaram",
 ];
 
-export const CONTACT_EMAIL = "contact@werguyaram.sn";
+export const CONTACT_EMAIL = "contact@werguyaram.org";

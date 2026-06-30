@@ -3,8 +3,9 @@
 Checklist de mise en production. Projet Firebase par défaut : `werguyaram` (`.firebaserc`).
 
 > **Lancement actuel** : tout SAUF les dons en ligne (CTA neutralisé « Bientôt »,
-> `VITE_BICTORYS_ENABLED=false`). Domaine de lancement : `https://werguyaram.web.app`
-> (domaine custom ultérieur). Branche de prod : `main` (= la plateforme React ;
+> `VITE_BICTORYS_ENABLED=false`). Domaine principal : `https://werguyaram.org`
+> (servi via Cloudflare → origine Firebase Hosting `werguyaram.web.app`).
+> Branche de prod : `main` (= la plateforme React ;
 > l'ancien site vitrine Astro est conservé sur la branche `website-astro`).
 
 ## 1. Pré-requis
@@ -14,7 +15,7 @@ Checklist de mise en production. Projet Firebase par défaut : `werguyaram` (`.f
 - `.env.local` rempli avec les clés `VITE_FIREBASE_*` (jamais commité — voir `.env.example`)
 - `VITE_APPCHECK_SITE_KEY` : clé reCAPTCHA v3 (console Firebase > App Check). Sans elle, App Check
   est désactivé côté client — l'app fonctionne mais sans la protection anti-abus.
-- `VITE_SITE_URL=https://werguyaram.web.app` (origine canonique pour OG/sitemap)
+- `VITE_SITE_URL=https://werguyaram.org` (origine canonique pour OG/sitemap)
 - `VITE_PLACES_API_KEY` (import annuaire admin) ; secret serveur `PLACES_API_KEY` côté Functions
 - Java 11+ **uniquement pour les tests de règles via l'émulateur** (l'app n'en a pas besoin)
 

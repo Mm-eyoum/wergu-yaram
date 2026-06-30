@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { capturePageview } from "@/lib/posthog";
 import { AppShell } from "@/components/layout/AppShell";
+import { TenantShell } from "@/components/tenant/TenantShell";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { RequirePermission } from "@/components/admin/PermissionGate";
 import { PartnerProtectedRoute } from "@/components/partner/PartnerProtectedRoute";
@@ -31,6 +32,11 @@ const EventDetail = lazy(() => import("@/pages/EventDetail"));
 const Evenements = lazy(() => import("@/pages/Evenements"));
 const Partners = lazy(() => import("@/pages/Partners"));
 const PartnerProfile = lazy(() => import("@/pages/PartnerProfile"));
+const TenantAbout = lazy(() => import("@/pages/tenant/TenantAbout"));
+const TenantCommunities = lazy(() => import("@/pages/tenant/TenantCommunities"));
+const TenantEvents = lazy(() => import("@/pages/tenant/TenantEvents"));
+const TenantResources = lazy(() => import("@/pages/tenant/TenantResources"));
+const TenantSupport = lazy(() => import("@/pages/tenant/TenantSupport"));
 const Soutenir = lazy(() => import("@/pages/Soutenir"));
 const Formations = lazy(() => import("@/pages/Formations"));
 const FormationDetail = lazy(() => import("@/pages/FormationDetail"));
@@ -107,6 +113,7 @@ function EspaceRedirect() {
 
 export default function App() {
   const { pathname } = useLocation();
+  const { slug: tenantSlug } = useTenant();
   // PostHog : pageview SPA à chaque changement de route (no-op si non configuré).
   useEffect(() => {
     capturePageview(pathname);
@@ -116,6 +123,40 @@ export default function App() {
   // Admin pages render inside their own AdminShell (sidebar + topbar).
   const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
   const bareLayout = isAuthPage || isAdminPage;
+
+  // Partner micro-site: on a partner sub-domain (or `?tenant=`/`VITE_TENANT`),
+  // the public space renders in its own white-label TenantShell with a focused
+  // route set. Management (`/espace/.../gestion`) and admin keep their own shells.
+  const inTenantSpace = !!tenantSlug && !bareLayout && !pathname.startsWith("/espace/");
+
+  if (inTenantSpace) {
+    return (
+      <>
+        <ScrollToTop />
+        <RedirectHandler />
+        <TenantShell>
+          <ErrorBoundary>
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                <Route path="/" element={<PartnerProfile />} />
+                <Route path="/a-propos" element={<TenantAbout />} />
+                <Route path="/communautes" element={<TenantCommunities />} />
+                <Route path="/communautes/:slug" element={<CommunityDetail />} />
+                <Route path="/evenements" element={<TenantEvents />} />
+                <Route path="/evenements/:id" element={<EventDetail />} />
+                <Route path="/ressources" element={<TenantResources />} />
+                <Route path="/articles/:slug" element={<ArticleDetail />} />
+                <Route path="/formations/:slug" element={<FormationDetail />} />
+                <Route path="/soutenir" element={<TenantSupport />} />
+                <Route path="/besoins/:id" element={<EquipmentDetail />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </TenantShell>
+      </>
+    );
+  }
 
   const content = (
     <ErrorBoundary>

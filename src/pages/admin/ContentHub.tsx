@@ -21,6 +21,41 @@ const ICONS: Record<string, LucideIcon> = {
   scale: Scale,
 };
 
+interface HubCard {
+  key: string;
+  label: string;
+  sublabel?: string;
+  icon: string;
+  to: string;
+}
+
+/**
+ * One card per content type, except entries sharing a `group` collapse into a
+ * single card (e.g. "Partenaires" → fiches + espaces) linking to the first of
+ * the group. Order follows CONTENT_ENTRIES; a group lands at its first member.
+ */
+function buildHubCards(): HubCard[] {
+  const seenGroups = new Set<string>();
+  const cards: HubCard[] = [];
+  for (const entry of CONTENT_ENTRIES) {
+    if (entry.group) {
+      if (seenGroups.has(entry.group)) continue;
+      seenGroups.add(entry.group);
+      const members = CONTENT_ENTRIES.filter((e) => e.group === entry.group);
+      cards.push({
+        key: `group:${entry.group}`,
+        label: entry.group,
+        sublabel: members.map((e) => e.label).join(" · "),
+        icon: members[0].icon,
+        to: `/admin/content/${members[0].key}`,
+      });
+    } else {
+      cards.push({ key: entry.key, label: entry.label, icon: entry.icon, to: `/admin/content/${entry.key}` });
+    }
+  }
+  return cards;
+}
+
 export default function ContentHub() {
   return (
     <div className="mx-auto max-w-5xl">
@@ -33,18 +68,23 @@ export default function ContentHub() {
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {CONTENT_ENTRIES.map((entry) => {
-          const Icon = ICONS[entry.icon] ?? FileText;
+        {buildHubCards().map((card) => {
+          const Icon = ICONS[card.icon] ?? FileText;
           return (
             <Link
-              key={entry.key}
-              to={`/admin/content/${entry.key}`}
+              key={card.key}
+              to={card.to}
               className="card-surface group flex items-center gap-3 p-4 transition hover:shadow-card dark:bg-white/5"
             >
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-mint text-brand-green dark:bg-white/10">
                 <Icon className="h-5 w-5" />
               </span>
-              <span className="min-w-0 flex-1 font-semibold text-text-primary dark:text-white">{entry.label}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-text-primary dark:text-white">{card.label}</span>
+                {card.sublabel && (
+                  <span className="block text-xs text-text-secondary dark:text-white/50">{card.sublabel}</span>
+                )}
+              </span>
               <ArrowRight className="h-4 w-4 text-text-secondary transition group-hover:translate-x-0.5" />
             </Link>
           );

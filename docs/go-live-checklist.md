@@ -56,7 +56,7 @@ Tant que ce n'est pas fait, l'UI affiche « paiement bientôt disponible ».
 
 ## 2. Domaine personnalisé `werguyaram.org` → Hosting
 
-Le site est en ligne sur `werguyaram.web.app`. Pour `werguyaram.org` (utilisé par `APP_PUBLIC_URL` et les redirections de paiement) :
+Le domaine principal est `werguyaram.org` (origine Firebase Hosting : `werguyaram.web.app`). Pour le rattacher (`APP_PUBLIC_URL` et redirections de paiement l'utilisent déjà) :
 
 1. 🌐 Firebase Console → **Hosting** → **Add custom domain** → `werguyaram.org` (puis `www.werguyaram.org`).
 2. 🌐 Ajoutez les enregistrements **A / TXT** indiqués chez votre registrar DNS.

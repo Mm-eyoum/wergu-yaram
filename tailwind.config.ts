@@ -79,11 +79,16 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-14px)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.18s ease-out",
         "slide-down": "slide-down 0.2s ease-out",
         fade: "fade 0.18s ease-out",
+        float: "float 7s ease-in-out infinite",
       },
     },
   },

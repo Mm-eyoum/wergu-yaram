@@ -44,7 +44,7 @@ export function PartnerShell() {
           ))}
         </nav>
         <div className="mt-6 space-y-2 border-t border-black/5 pt-4 dark:border-white/10">
-          <Link to={`/espace/${slug}`} className="flex items-center gap-1.5 px-3 text-xs text-text-secondary hover:text-brand-green">
+          <Link to={`/partenaires/${slug}`} className="flex items-center gap-1.5 px-3 text-xs text-text-secondary hover:text-brand-green">
             <ExternalLink className="h-3.5 w-3.5" /> Voir l'espace public
           </Link>
           <Link to="/" className="flex items-center gap-1.5 px-3 text-xs text-text-secondary hover:text-brand-green">

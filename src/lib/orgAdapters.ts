@@ -4,7 +4,7 @@
  * merged alongside curated catalog content. Every directory entry links to
  * `/structures/:id` and carries a badge to distinguish it from curated content.
  */
-import type { Facility, Organization, Partner, SearchHit } from "@/types/domain";
+import type { Facility, Organization, Partner, SearchHit, Tenant } from "@/types/domain";
 import { categoryLabel, sectorLabel } from "@/lib/facilityTaxonomy";
 
 /**
@@ -80,6 +80,26 @@ export function orgToPartnerCard(org: Organization): {
     tags: [],
   };
   return { partner, href: orgHref(org), badge: orgBadge(org) };
+}
+
+/** A partner space (tenant) rendered through the existing PartnerCard. */
+export function tenantToPartnerCard(t: Tenant): {
+  partner: Partner;
+  href: string;
+  badge: string;
+} {
+  const partner: Partner = {
+    slug: t.slug,
+    name: t.name,
+    category: "structure",
+    categoryLabel: "Espace partenaire",
+    zone: "",
+    logo: t.logo ?? "",
+    description: t.description ?? "",
+    contributionsLabel: "",
+    tags: [],
+  };
+  return { partner, href: `/partenaires/${t.slug}`, badge: "Espace partenaire" };
 }
 
 /** Any active org as a federated search hit (Établissements / Partenaires tabs). */

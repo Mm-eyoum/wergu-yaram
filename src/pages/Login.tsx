@@ -193,7 +193,7 @@ export default function Login() {
         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-text-secondary">
           <LifeBuoy className="h-4 w-4 text-brand-green" />
           {t("login.needHelp")}{" "}
-          <a href="mailto:support@werguyaram.sn" className="font-semibold text-brand-green hover:underline">
+          <a href="mailto:support@werguyaram.org" className="font-semibold text-brand-green hover:underline">
             {t("login.contactSupport")}
           </a>
         </p>
