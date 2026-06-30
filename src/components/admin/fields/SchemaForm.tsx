@@ -4,6 +4,7 @@ import { slugify } from "@/lib/slug";
 import { StringArrayField } from "./StringArrayField";
 import { ImageField } from "./ImageField";
 import { CoordsField } from "./CoordsField";
+import { UserRefsField } from "./UserRefsField";
 
 export type FieldType =
   | "text"
@@ -16,7 +17,8 @@ export type FieldType =
   | "image"
   | "coords"
   | "object"
-  | "repeatable";
+  | "repeatable"
+  | "userRefs";
 
 export interface FieldDef {
   name: string;
@@ -32,6 +34,8 @@ export interface FieldDef {
   slugFrom?: string;
   /** Pour un champ `slug` : affiche un aperçu live `→ <slug>.werguyaram.org`. */
   subdomainPreview?: boolean;
+  /** Pour un champ `userRefs` : un seul compte (stocke un uid) au lieu d'une liste. */
+  single?: boolean;
   /** Singular noun for a repeatable's "Ajouter …" button. */
   itemLabel?: string;
   fullWidth?: boolean;
@@ -216,6 +220,15 @@ function FieldRenderer({
         </div>
       );
 
+    case "userRefs":
+      return (
+        <div>
+          <Label field={field} />
+          <UserRefsField value={value as string | string[] | undefined} onChange={onChange} single={field.single} />
+          {field.help && <p className="mt-1 text-xs text-text-secondary">{field.help}</p>}
+        </div>
+      );
+
     case "coords":
       return (
         <div>
@@ -366,7 +379,7 @@ export function SchemaForm({
                 key={field.name}
                 className={
                   field.fullWidth ||
-                  ["textarea", "stringArray", "object", "repeatable", "image", "coords"].includes(field.type)
+                  ["textarea", "stringArray", "object", "repeatable", "image", "coords", "userRefs"].includes(field.type)
                     ? "sm:col-span-2"
                     : ""
                 }

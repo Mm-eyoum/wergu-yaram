@@ -56,6 +56,10 @@ export const tenantsEntry: ContentEntry<Tenant> = {
         { name: "eventIds", label: "Événements (ids)", type: "stringArray" },
         { name: "articleSlugs", label: "Articles (slugs)", type: "stringArray" },
       ] },
+      { title: "Gestion & accès", fields: [
+        { name: "ownerUid", label: "Propriétaire (compte)", type: "userRefs", single: true, help: "Accès complet à l'espace de gestion /espace/<slug>/gestion." },
+        { name: "managerUids", label: "Co-gestionnaires", type: "userRefs", help: "Comptes autorisés à gérer cet espace (en plus du propriétaire)." },
+      ] },
       { title: "Gouvernance & impact", fields: [
         { name: "committee", label: "Comité de pilotage", type: "object", fullWidth: true, fields: [
           { name: "name", label: "Nom du comité", type: "text" },
@@ -77,6 +81,7 @@ export const tenantsEntry: ContentEntry<Tenant> = {
     slug: "", name: "", description: "", logo: null, theme: { accent: "" },
     communitySlugs: [], eventIds: [], articleSlugs: [], website: "", published: false,
     showOnPartnersPage: true,
+    ownerUid: "", managerUids: [],
     committee: { name: "", mission: "", members: [], indicators: [] },
   }),
   // Lien « Voir sur le site » de l'éditeur → le sous-domaine public absolu.
