@@ -30,6 +30,7 @@ import {
   getTenantArticles,
   getTenantFormations,
   getTenantEquipmentNeeds,
+  getTenantTestimonials,
 } from "@/services/catalog";
 import { getTenantAnalytics, fetchTenantTraffic } from "@/services/tenantAnalytics";
 
@@ -89,6 +90,8 @@ export const useTenantFormations = (slug?: string) =>
   useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "formations"), queryFn: () => getTenantFormations(slug), enabled: !!slug });
 export const useTenantEquipmentNeeds = (slug?: string) =>
   useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "equipmentNeeds"), queryFn: () => getTenantEquipmentNeeds(slug), enabled: !!slug });
+export const useTenantTestimonials = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "testimonials"), queryFn: () => getTenantTestimonials(slug), enabled: !!slug });
 export const useTenantAnalytics = (slug?: string) =>
   useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "analytics"), queryFn: () => getTenantAnalytics(slug!), enabled: !!slug });
 export const useTenantTraffic = (slug?: string) =>

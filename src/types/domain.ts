@@ -189,6 +189,22 @@ export interface TenantCommittee {
   indicators: { label: string; value: string }[];
 }
 
+/**
+ * Témoignage / histoire d'impact (preuve sociale) affiché sur l'espace d'un
+ * partenaire. Contenu partenaire léger : `slug` = id de document.
+ */
+export interface Testimonial {
+  slug: string;
+  published?: boolean;
+  tenantSlug?: string;
+  ownerUid?: string;
+  quote: string;
+  authorName: string;
+  authorRole?: string;
+  org?: string;
+  avatar?: string;
+}
+
 /** Prospect capturé depuis l'espace d'un partenaire (contact / démo / candidature). */
 export type LeadKind = "contact" | "demo" | "candidature";
 export interface Lead {
@@ -371,6 +387,8 @@ export interface Article {
   tenantSlug?: string;
   /** Compte partenaire ayant créé/possédant ce contenu (gestion autonome). */
   ownerUid?: string;
+  /** Nature éditoriale : article standard ou annonce/communiqué (badge dédié). */
+  kind?: "standard" | "annonce";
   title: string;
   excerpt: string;
   category: string;

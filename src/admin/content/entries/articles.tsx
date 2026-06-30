@@ -21,6 +21,7 @@ export const articlesEntry: ContentEntry<Article> = {
         { name: "slug", label: "Slug", type: "slug", slugFrom: "title", required: true },
         { name: "category", label: "Catégorie", type: "text" },
         { name: "type", label: "Type", type: "select", options: [{ value: "article", label: "Article" }, { value: "video", label: "Vidéo" }] },
+        { name: "kind", label: "Nature", type: "select", options: [{ value: "standard", label: "Article standard" }, { value: "annonce", label: "Annonce / communiqué" }] },
         { name: "readingMinutes", label: "Minutes de lecture", type: "number" },
         { name: "publishedAt", label: "Date de publication", type: "text", placeholder: "2024-01-01" },
         { name: "videoDurationLabel", label: "Durée vidéo (si vidéo)", type: "text" },

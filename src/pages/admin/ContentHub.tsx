@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Pill, Stethoscope, Newspaper, Building2, Users, HeartHandshake, Calendar, Handshake, FileText, MapPin, ArrowRight, GraduationCap, Globe, Scale,
+  Pill, Stethoscope, Newspaper, Building2, Users, HeartHandshake, Calendar, Handshake, FileText, MapPin, ArrowRight, GraduationCap, Globe, Scale, Quote,
   type LucideIcon,
 } from "lucide-react";
 import { CONTENT_ENTRIES } from "@/admin/content/entries";
@@ -19,6 +19,7 @@ const ICONS: Record<string, LucideIcon> = {
   "graduation-cap": GraduationCap,
   globe: Globe,
   scale: Scale,
+  quote: Quote,
 };
 
 interface HubCard {

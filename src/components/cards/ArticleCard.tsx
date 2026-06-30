@@ -16,7 +16,7 @@ export function ArticleCard({ article }: { article: Article }) {
         src={article.cover}
         fallback={<Newspaper className="h-9 w-9" />}
         height="lg"
-        overlayTopLeft={<OverlayBadge className="text-brand-green">{article.category}</OverlayBadge>}
+        overlayTopLeft={<OverlayBadge className="text-brand-green">{article.kind === "annonce" ? "Annonce" : article.category}</OverlayBadge>}
         overlayTopRight={
           article.trust?.verified ? (
             <OverlayBadge className="text-brand-green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>

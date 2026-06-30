@@ -10,6 +10,7 @@ import {
   Globe,
   HandHeart,
   MapPin,
+  Quote,
   Settings,
   Sparkles,
   Users,
@@ -73,6 +74,7 @@ export default function PartnerProfile() {
     events: spaceEvents,
     articles: spaceArticles,
     needs: ownedNeeds,
+    testimonials: spaceTestimonials,
   } = useTenantSpace(slug, tenant);
 
   useEffect(() => {
@@ -276,6 +278,33 @@ export default function PartnerProfile() {
               <SectionHeading icon={<BookOpen className="h-5 w-5" style={theme.text} />} title="Ressources & articles" count={spaceArticles.length} accent={accent} action={{ label: "Voir tout", to: "/ressources" }} />
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {spaceArticles.slice(0, 3).map((a) => <ArticleCard key={a.slug} article={a} />)}
+              </div>
+            </section>
+          )}
+
+          {spaceTestimonials.length > 0 && (
+            <section className="animate-fade-in">
+              <SectionHeading icon={<Quote className="h-5 w-5" style={theme.text} />} title="Témoignages" count={spaceTestimonials.length} accent={accent} />
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {spaceTestimonials.map((tm) => (
+                  <figure key={tm.slug} className="card-surface flex flex-col p-5">
+                    <Quote className="h-6 w-6 opacity-40" style={theme.text} />
+                    <blockquote className="mt-2 flex-1 text-sm text-text-secondary">« {tm.quote} »</blockquote>
+                    <figcaption className="mt-4 flex items-center gap-3 border-t border-border-soft pt-3">
+                      {tm.avatar ? (
+                        <img src={tm.avatar} alt={tm.authorName} className="h-9 w-9 rounded-full object-cover" />
+                      ) : (
+                        <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-mint text-xs font-bold" style={theme.text}>{initials(tm.authorName)}</span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-text-primary">{tm.authorName}</p>
+                        {(tm.authorRole || tm.org) && (
+                          <p className="truncate text-xs text-text-secondary">{[tm.authorRole, tm.org].filter(Boolean).join(" · ")}</p>
+                        )}
+                      </div>
+                    </figcaption>
+                  </figure>
+                ))}
               </div>
             </section>
           )}
