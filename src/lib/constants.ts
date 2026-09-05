@@ -12,7 +12,7 @@ import type {
 export const PRIMARY_NAV: { label: string; to: string }[] = [
   { label: "Portail Santé", to: "/" },
   { label: "Carte", to: "/carte" },
-  { label: "Communautés", to: "/communautes" },
+  { label: "Événements", to: "/evenements" },
   { label: "Forum", to: "/forum" },
   { label: "Équipements", to: "/besoins" },
   { label: "Partenaires", to: "/partenaires" },
@@ -35,6 +35,7 @@ export const EXPLORE_CATEGORIES: {
   { key: "etablissement", label: "Établissements", description: "Structures à proximité", to: "/recherche?type=etablissement" },
   { key: "article", label: "Articles", description: "Contenus vérifiés", to: "/recherche?type=article" },
   { key: "video", label: "Vidéos", description: "Formats courts", to: "/recherche?type=video" },
+  { key: "formation", label: "Formations", description: "Apprendre & se certifier", to: "/formations" },
 ];
 
 /** Search content types shown as chips / tabs. */
@@ -48,6 +49,7 @@ export const SEARCH_TYPES: { key: ContentType | "all"; label: string }[] = [
   { key: "etablissement", label: "Établissements" },
   { key: "communaute", label: "Communautés" },
   { key: "evenement", label: "Événements" },
+  { key: "formation", label: "Formations" },
 ];
 
 export const QUICK_SHORTCUTS = [
@@ -121,6 +123,7 @@ export const PARTNER_CATEGORY_LABELS: Record<PartnerCategory, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   patient_public: "Patient",
+  health_pro: "Professionnel de santé vérifié",
   editor: "Éditeur",
   admin: "Administrateur",
   super_admin: "Super administrateur",

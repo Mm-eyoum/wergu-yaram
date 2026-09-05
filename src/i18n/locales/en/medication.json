@@ -1,0 +1,62 @@
+{
+  "loading": "Loading the fact sheet…",
+  "notFoundTitle": "Medication not found",
+  "notFoundMsg": "This fact sheet doesn't exist or has been moved.",
+  "dci": "INN",
+  "badges": {
+    "essential": "Essential medicine",
+    "awareAntibiotic": "AWaRe antibiotic · {{cat}}",
+    "noPrescription": "Available without prescription",
+    "prescription": "Prescription only"
+  },
+  "table": {
+    "form": "Form",
+    "dosage": "Dosage",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "note": "Care levels: CSPS · CM · CMA · CH. ✓ = product available at this level (National Essential Medicines List)."
+  },
+  "care": {
+    "csps": "Health and Social Promotion Centre",
+    "cm": "Medical Centre",
+    "cma": "Medical Centre with Surgical Unit",
+    "ch": "Hospital Centre"
+  },
+  "sections": {
+    "presentations": "Presentations and care levels",
+    "usage": "What is this medication for?",
+    "posology": "Dosage",
+    "contraindications": "Contraindications",
+    "sideEffects": "Side effects",
+    "precautions": "Precautions for use",
+    "interactions": "Drug interactions",
+    "advice": "The health professional's advice",
+    "clinicalInfo": "Clinical information"
+  },
+  "clinicalPending": "The detailed clinical fact sheet (use, dosage, contraindications, interactions) for this essential medicine is undergoing editorial validation. In the meantime, ask your pharmacist or doctor for advice before any use. No medication should be taken without professional advice.",
+  "sourcesPrefix": "Clinical sources: ",
+  "underReview": " — content under medical review.",
+  "summary": {
+    "title": "Summary",
+    "group": "Group",
+    "forms": "Forms",
+    "aware": "AWaRe",
+    "prescriptionLabel": "Prescription",
+    "prescriptionNo": "Not required",
+    "prescriptionYes": "Required",
+    "updated": "Updated",
+    "source": "Source"
+  },
+  "findPharmacy": "Find at a pharmacy",
+  "askQuestion": "Ask a question",
+  "askComingSoon": "Asking a professional a question is coming soon.",
+  "regulatory": {
+    "title": "Regulatory framework",
+    "ref": "Listed in the {{edition}} ({{authority}}).",
+    "amm": "Any marketing requires a Marketing Authorisation (MA){{validity}} — UEMOA Regulation No. 04/2020.",
+    "ammValidity": ", valid for {{years}} years",
+    "nonPromo": "Non-promotional information, provided for educational purposes."
+  },
+  "relatedPathologies": "Related conditions",
+  "noRelated": "No related condition."
+}

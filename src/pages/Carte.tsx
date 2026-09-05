@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { LayoutList, LocateFixed, Map as MapIcon, MapPinned, Search } from "lucide-react";
 import { LazyMapView } from "@/components/map/LazyMapView";
 import type { MapMarker } from "@/components/map/MapView";
@@ -12,8 +11,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useFacilities } from "@/hooks/useCatalog";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { fetchActiveFacilityOrganizations } from "@/services/organizations";
 import { SENEGAL_REGIONS } from "@/lib/constants";
+import { categoryLabel, CATEGORY_OPTIONS } from "@/lib/facilityTaxonomy";
 import { haversineKm, formatDistance } from "@/lib/geo";
 import type { Coords } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
@@ -23,12 +22,16 @@ interface Entry {
   name: string;
   meta: string;
   color: PinColor;
+  category?: string;
+  amber?: boolean;
   badge?: string;
   href: string;
   coords: Coords;
   source: "catalog" | "org";
   region: string;
   city: string;
+  /** Paid Pro page — promoted to the top of the list. */
+  featured?: boolean;
   d?: number;
 }
 
@@ -41,61 +44,63 @@ const TYPES = [
 /** Discovery: synced list + map of all health structures, with filters & "near me". */
 export default function Carte() {
   const { data: facilities = [], isLoading } = useFacilities();
-  const { data: orgs = [], isError: orgsError } = useQuery({
-    queryKey: ["mapFacilityOrgs"],
-    queryFn: fetchActiveFacilityOrganizations,
-  });
   const geo = useGeolocation();
 
   const [region, setRegion] = useState(SENEGAL_REGIONS[0]);
   const [type, setType] = useState<(typeof TYPES)[number]["key"]>("all");
+  const [category, setCategory] = useState("");
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"map" | "list">("list");
 
   const entriesAll: Entry[] = useMemo(() => {
-    const cat: Entry[] = facilities.map((f) => ({
-      id: `f:${f.slug}`,
-      name: f.name,
-      meta: `${f.type} · ${f.city}`,
-      color: "green",
-      href: `/etablissements/${f.slug}`,
-      coords: f.coords,
-      source: "catalog",
-      region: f.region,
-      city: f.city,
-    }));
-    const org: Entry[] = orgs.map((o) => ({
-      id: `o:${o.id}`,
-      name: o.name,
-      meta: o.claimStatus === "claimed" ? `Structure · ${o.city ?? o.region ?? ""}` : "Non réclamée",
-      color: o.claimStatus === "claimed" ? "green" : "amber",
-      badge: o.claimStatus === "claimed" ? undefined : "Annuaire",
-      href: `/structures/${o.id}`,
-      coords: o.coords!,
-      source: "org",
-      region: o.region ?? "",
-      city: o.city ?? "",
-    }));
-    return [...cat, ...org];
-  }, [facilities, orgs]);
+    // Every health establishment lives in `facilities`. An imported, still
+    // unclaimed listing shows as "Annuaire" (amber); everything else is "catalog".
+    return facilities
+      .filter((f) => f.coords)
+      .map((f) => {
+        const unclaimed = f.source === "imported" && f.claimStatus !== "claimed" && !f.ownerUid;
+        return {
+          id: `f:${f.slug}`,
+          name: f.name,
+          meta: unclaimed
+            ? `${categoryLabel(f.category) || "Établissement"} · Non réclamée`
+            : `${categoryLabel(f.category) || f.type || "Établissement"} · ${f.city}`,
+          color: unclaimed ? "amber" : "green",
+          category: f.category,
+          amber: unclaimed,
+          badge: f.planTier ? "Vérifié" : unclaimed ? "Annuaire" : undefined,
+          featured: Boolean(f.featured),
+          href: `/etablissements/${f.slug}`,
+          coords: f.coords,
+          source: unclaimed ? "org" : "catalog",
+          region: f.region,
+          city: f.city,
+        };
+      });
+  }, [facilities]);
 
   const entries = useMemo(() => {
     const term = q.trim().toLowerCase();
     let list = entriesAll.filter((e) => {
       if (region !== SENEGAL_REGIONS[0] && e.region !== region) return false;
       if (type !== "all" && e.source !== type) return false;
+      if (category && e.category !== category) return false;
       if (term && !`${e.name} ${e.city}`.toLowerCase().includes(term)) return false;
       return true;
     });
     if (geo.position) {
-      list = list
-        .map((e) => ({ ...e, d: haversineKm(geo.position!, e.coords) }))
-        .sort((a, b) => (a.d ?? 0) - (b.d ?? 0));
+      list = list.map((e) => ({ ...e, d: haversineKm(geo.position!, e.coords) }));
     }
+    // Featured (Pro) pages first, then by distance when geolocated.
+    list = [...list].sort((a, b) => {
+      const f = Number(Boolean(b.featured)) - Number(Boolean(a.featured));
+      if (f !== 0) return f;
+      return (a.d ?? 0) - (b.d ?? 0);
+    });
     return list;
-  }, [entriesAll, region, type, q, geo.position]);
+  }, [entriesAll, region, type, category, q, geo.position]);
 
   const markers: MapMarker[] = useMemo(
     () =>
@@ -103,6 +108,8 @@ export default function Carte() {
         id: e.id,
         coords: e.coords,
         color: e.color,
+        category: e.category,
+        amber: e.amber,
         glyph: "hospital",
         title: e.name,
         popup: (
@@ -180,6 +187,18 @@ export default function Carte() {
                 <CategoryPill key={t.key} label={t.label} active={type === t.key} onClick={() => setType(t.key)} />
               ))}
             </div>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="h-11 w-full rounded-xl border border-border-soft bg-white px-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+            >
+              <option value="">Toutes les catégories</option>
+              {CATEGORY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
             <div className="flex items-center gap-2">
               <select
                 value={region}
@@ -202,11 +221,6 @@ export default function Carte() {
           </div>
 
           {geo.error && <p className="mt-2 text-xs text-text-secondary">{geo.error}</p>}
-          {orgsError && (
-            <p role="alert" className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              L'annuaire des structures n'a pas pu être chargé. Les établissements vérifiés restent affichés.
-            </p>
-          )}
 
           <div className="mt-3 max-h-[64vh] space-y-2 overflow-y-auto scroll-thin pr-1">
             {isLoading ? (

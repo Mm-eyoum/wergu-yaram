@@ -6,7 +6,9 @@
  * defaults, so the public header/footer always render — even before anything
  * is configured, or when Firebase is absent.
  */
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "@/services/db";
+import { apiGet } from "./apiClient";
+import { readsFromD1 } from "./dbRouting";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 import { PRIMARY_NAV } from "@/lib/constants";
@@ -46,6 +48,19 @@ export interface SiteSettings {
     messaging: boolean;
     events: boolean;
   };
+  /**
+   * Editable "trust" figures shown in the stats strips. These are claims that
+   * cannot be computed honestly from Firestore (e.g. total verified info, funds
+   * mobilised), so admins enter them here. An empty string hides that card —
+   * the platform never ships an invented number. Computable metrics (members,
+   * facilities, needs) come from `getPlatformStats()`, not from here.
+   */
+  stats: {
+    verifiedInfo: string;
+    fundsRaised: string;
+    regionsCovered: string;
+    projectsSupported: string;
+  };
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -58,6 +73,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   address: "",
   social: { facebook: "", instagram: "", youtube: "", linkedin: "", twitter: "" },
   features: { donations: true, forum: true, messaging: true, events: true },
+  stats: { verifiedInfo: "", fundsRaised: "", regionsCovered: "", projectsSupported: "" },
 };
 
 export const DEFAULT_MENUS: MenuConfig = {
@@ -93,12 +109,38 @@ export const DEFAULT_MENUS: MenuConfig = {
   ],
 };
 
+/**
+ * Les 6 sections de configuration en UN seul appel, mémoïsé pour la durée de vie
+ * de la page.
+ *
+ * Avant : 6 `getDoc` séparés sur `settings/*`, tous au démarrage. Depuis Dakar,
+ * chaque aller-retour coûte 150-250 ms — c'était près d'une seconde de latence
+ * avant le premier rendu. Le gain de la migration vient de là bien plus que du
+ * placement de la base.
+ */
+let settingsPromise: Promise<Record<string, unknown>> | null = null;
+function fetchAllSettings(): Promise<Record<string, unknown>> {
+  settingsPromise ??= apiGet<Record<string, unknown>>("/api/v1/settings").catch((err) => {
+    reportError(err, { scope: "siteConfig.fetchAllSettings" });
+    settingsPromise = null; // un échec ne doit pas être mis en cache
+    return {};
+  });
+  return settingsPromise;
+}
+
 async function readDoc<T>(id: string, fallback: T): Promise<T> {
+  if (readsFromD1("settings")) {
+    const all = await fetchAllSettings();
+    const section = all[id];
+    // Fusion superficielle sur les défauts : une clé nouvellement ajoutée au
+    // type ne vaut jamais `undefined` faute d'être encore en base.
+    return section ? { ...fallback, ...(section as Partial<T>) } : fallback;
+  }
+
   if (!db) return fallback;
   try {
     const snap = await getDoc(doc(db, "settings", id));
     if (!snap.exists()) return fallback;
-    // Shallow-merge over defaults so newly-added keys are never undefined.
     return { ...fallback, ...(snap.data() as Partial<T>) };
   } catch (err) {
     reportError(err, { scope: "siteConfig.readDoc", id });
@@ -175,3 +217,54 @@ export const DEFAULT_EMAILS: EmailConfig = {
 };
 
 export const getEmailConfig = () => readDoc<EmailConfig>("emails", DEFAULT_EMAILS);
+
+// ---------------------------------------------------------------------------
+// Legal — terms of use & privacy, editable in the admin so the text can change
+// without a code redeploy. The bundled default keeps the page rendering before
+// anything is configured (and feeds the SEO prerender).
+// ---------------------------------------------------------------------------
+export interface LegalSection {
+  title: string;
+  body: string;
+}
+
+export interface LegalConfig {
+  lastUpdated: string;
+  sections: LegalSection[];
+}
+
+export const DEFAULT_LEGAL: LegalConfig = {
+  lastUpdated: "juin 2026",
+  sections: [
+    {
+      title: "1. Objet",
+      body: "Wergu Yaram est un portail d'information santé au Sénégal. Il met à disposition des contenus éducatifs (pathologies, médicaments, articles), un annuaire d'établissements, des communautés d'entraide et un espace de soutien aux besoins d'équipement. L'utilisation de la plateforme implique l'acceptation des présentes conditions.",
+    },
+    {
+      title: "2. Information éducative, non médicale",
+      body: "Les contenus publiés ont une vocation informative et éducative. Ils ne remplacent en aucun cas une consultation, un diagnostic ou un avis médical professionnel. En cas de symptôme ou de doute sur votre santé, consultez un professionnel de santé qualifié.",
+    },
+    {
+      title: "3. Compte utilisateur",
+      body: "La création d'un compte requiert des informations exactes. Vous êtes responsable de la confidentialité de vos identifiants. Les comptes de structures de santé, partenaires et donateurs peuvent faire l'objet d'une validation avant l'accès à certaines fonctionnalités.",
+    },
+    {
+      title: "4. Données personnelles & confidentialité",
+      body: "Nous collectons uniquement les données nécessaires au fonctionnement du service (identité, email, région, centres d'intérêt). Vos données ne sont jamais revendues. Vous disposez d'un droit d'accès, de rectification et de suppression de vos données en nous contactant.",
+    },
+    {
+      title: "5. Communautés & contenus partagés",
+      body: "Les espaces communautaires et le forum doivent rester bienveillants et respectueux. Aucun diagnostic médical n'y est délivré. Tout contenu illégal, diffamatoire ou portant atteinte à la vie privée d'autrui pourra être retiré.",
+    },
+    {
+      title: "6. Soutien aux besoins d'équipement",
+      body: "Les campagnes de soutien visent à financer des équipements pour des structures de santé. La transparence sur l'utilisation des fonds est un engagement de la plateforme. Les modalités de paiement et de reçu sont précisées au moment de la contribution.",
+    },
+    {
+      title: "7. Contact",
+      body: "Pour toute question relative à ces conditions ou à vos données, vous pouvez nous écrire via les coordonnées indiquées en pied de page.",
+    },
+  ],
+};
+
+export const getLegalConfig = () => readDoc<LegalConfig>("legal", DEFAULT_LEGAL);

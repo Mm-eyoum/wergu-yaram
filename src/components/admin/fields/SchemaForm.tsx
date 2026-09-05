@@ -4,6 +4,7 @@ import { slugify } from "@/lib/slug";
 import { StringArrayField } from "./StringArrayField";
 import { ImageField } from "./ImageField";
 import { CoordsField } from "./CoordsField";
+import { UserRefsField } from "./UserRefsField";
 
 export type FieldType =
   | "text"
@@ -16,7 +17,8 @@ export type FieldType =
   | "image"
   | "coords"
   | "object"
-  | "repeatable";
+  | "repeatable"
+  | "userRefs";
 
 export interface FieldDef {
   name: string;
@@ -30,6 +32,10 @@ export interface FieldDef {
   fields?: FieldDef[];
   /** Source field name for `slug` auto-generation. */
   slugFrom?: string;
+  /** Pour un champ `slug` : affiche un aperçu live `→ <slug>.werguyaram.org`. */
+  subdomainPreview?: boolean;
+  /** Pour un champ `userRefs` : un seul compte (stocke un uid) au lieu d'une liste. */
+  single?: boolean;
   /** Singular noun for a repeatable's "Ajouter …" button. */
   itemLabel?: string;
   fullWidth?: boolean;
@@ -92,12 +98,15 @@ function FieldRenderer({
   value,
   row,
   onChange,
+  locked,
 }: {
   field: FieldDef;
   value: unknown;
   /** The full record this field belongs to (for slugFrom lookups). */
   row: Record<string, unknown>;
   onChange: (next: unknown) => void;
+  /** Read-only (e.g. the slug/id once the record exists). */
+  locked?: boolean;
 }) {
   switch (field.type) {
     case "text":
@@ -106,12 +115,22 @@ function FieldRenderer({
         <div>
           <Label field={field} />
           <input
-            className={INPUT}
+            className={cn(INPUT, locked && "cursor-not-allowed opacity-60")}
             value={(value as string) ?? ""}
             placeholder={field.placeholder}
-            onChange={(e) => onChange(e.target.value)}
+            readOnly={locked}
+            aria-readonly={locked}
+            onChange={(e) => !locked && onChange(e.target.value)}
           />
-          {field.type === "slug" && field.slugFrom && (
+          {field.type === "slug" && field.subdomainPreview && (
+            <p className="mt-1.5 text-xs text-text-secondary">
+              →{" "}
+              <span className="font-mono font-medium text-brand-green">
+                {String((value as string) || "<slug>")}.werguyaram.org
+              </span>
+            </p>
+          )}
+          {field.type === "slug" && field.slugFrom && !locked && (
             <button
               type="button"
               className="mt-1.5 text-xs font-medium text-brand-green hover:underline"
@@ -119,6 +138,11 @@ function FieldRenderer({
             >
               Générer depuis « {field.slugFrom} »
             </button>
+          )}
+          {locked && (
+            <p className="mt-1 text-xs text-text-secondary">
+              Verrouillé : modifier l'identifiant casserait l'URL et le sous-domaine.
+            </p>
           )}
           {field.help && <p className="mt-1 text-xs text-text-secondary">{field.help}</p>}
         </div>
@@ -193,6 +217,15 @@ function FieldRenderer({
         <div>
           <Label field={field} />
           <ImageField value={(value as string) ?? ""} onChange={onChange} />
+        </div>
+      );
+
+    case "userRefs":
+      return (
+        <div>
+          <Label field={field} />
+          <UserRefsField value={value as string | string[] | undefined} onChange={onChange} single={field.single} />
+          {field.help && <p className="mt-1 text-xs text-text-secondary">{field.help}</p>}
         </div>
       );
 
@@ -320,12 +353,16 @@ export function SchemaForm({
   schema,
   value,
   onChange,
+  lockedFields,
 }: {
   schema: ContentFormSchema;
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
+  /** Field names rendered read-only (e.g. the slug/id while editing). */
+  lockedFields?: string[];
 }) {
   const set = (name: string, v: unknown) => onChange({ ...value, [name]: v });
+  const isLocked = (name: string) => !!lockedFields?.includes(name);
 
   return (
     <div className="space-y-6">
@@ -342,12 +379,12 @@ export function SchemaForm({
                 key={field.name}
                 className={
                   field.fullWidth ||
-                  ["textarea", "stringArray", "object", "repeatable", "image", "coords"].includes(field.type)
+                  ["textarea", "stringArray", "object", "repeatable", "image", "coords", "userRefs"].includes(field.type)
                     ? "sm:col-span-2"
                     : ""
                 }
               >
-                <FieldRenderer field={field} value={value[field.name]} row={value} onChange={(v) => set(field.name, v)} />
+                <FieldRenderer field={field} value={value[field.name]} row={value} onChange={(v) => set(field.name, v)} locked={isLocked(field.name)} />
               </div>
             ))}
           </div>

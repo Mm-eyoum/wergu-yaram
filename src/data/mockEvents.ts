@@ -37,7 +37,7 @@ export const events: HealthEvent[] = [
     practicalInfo: [
       { label: "Lieu", value: "Salle de conférence, CHN Fann, Dakar" },
       { label: "Accès", value: "Entrée libre, sur inscription" },
-      { label: "Contact", value: "atelier@werguyaram.sn" },
+      { label: "Contact", value: "atelier@werguyaram.org" },
     ],
     communitySlug: "diabete",
     relatedEvents: ["depistage-hypertension"],

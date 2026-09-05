@@ -1,0 +1,17 @@
+{
+  "loading": "Chargement de l'événement…",
+  "notFoundTitle": "Événement introuvable",
+  "notFoundMsg": "Cet événement n'existe pas ou a été retiré.",
+  "sections": {
+    "about": "À propos de l'événement",
+    "program": "Programme",
+    "speakers": "Intervenants",
+    "practical": "Informations pratiques",
+    "venue": "Lieu",
+    "resources": "Ressources associées"
+  },
+  "addToCalendar": "Ajouter au calendrier",
+  "emailConfirm": "Confirmation immédiate par email",
+  "similar": "Événements similaires",
+  "relatedCommunity": "Communauté associée"
+}

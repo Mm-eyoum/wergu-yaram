@@ -2,12 +2,14 @@ import { Badge } from "@/components/ui/Badge";
 import { makeContentAdmin } from "@/services/admin/contentAdmin";
 import type { Partner } from "@/types/domain";
 import type { ContentEntry } from "../registry";
-import { PUBLISHED } from "./shared";
+import { PUBLISHED, SPONSOR } from "./shared";
 
 export const partnersEntry: ContentEntry<Partner> = {
   key: "partners",
-  label: "Partenaires",
+  label: "Fiches partenaires (annuaire)",
   singular: "Partenaire",
+  description: "Fiche annuaire éditoriale (logo, catégorie, description). PAS de sous-domaine ni d'espace dédié.",
+  group: "Partenaires",
   icon: "handshake",
   admin: makeContentAdmin<Partner>({ collection: "partners", idField: "slug", titleField: "name", resourceType: "partner" }),
   columns: [
@@ -36,6 +38,7 @@ export const partnersEntry: ContentEntry<Partner> = {
         { name: "contributionsLabel", label: "Contributions", type: "text" },
         { name: "tags", label: "Tags", type: "stringArray" },
       ] },
+      { title: "Sponsoring", fields: [SPONSOR] },
     ],
   },
   empty: () => ({

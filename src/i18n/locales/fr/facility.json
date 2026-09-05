@@ -1,0 +1,27 @@
+{
+  "loading": "Chargement de l'établissement…",
+  "notFoundTitle": "Établissement introuvable",
+  "notFoundMsg": "Cette fiche n'existe pas ou a été déplacée.",
+  "verifiedBadge": "Référencé & vérifié",
+  "reviewsCount": "({{count}} avis)",
+  "viewOnMap": "Voir sur la carte",
+  "contact": "Contacter",
+  "call": "Appeler",
+  "facts": {
+    "specialties": "Spécialités",
+    "capacity": "Capacité",
+    "hours": "Horaires",
+    "facilityType": "Type d'établissement"
+  },
+  "sections": {
+    "about": "À propos",
+    "specialties": "Spécialités",
+    "services": "Services disponibles",
+    "doctors": "Médecins & spécialistes",
+    "reviews": "Avis & recommandations"
+  },
+  "location": "Localisation",
+  "distanceFromYou": "À {{distance}} de vous",
+  "seeDistance": "Voir la distance depuis ma position",
+  "activeNeeds": "Besoins d'équipement actifs"
+}

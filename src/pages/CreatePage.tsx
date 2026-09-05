@@ -6,9 +6,16 @@ import { Button } from "@/components/ui/Button";
 import { OrgTypeSelector } from "@/components/organizations/OrgTypeSelector";
 import { LocationPicker, type LocationValue } from "@/components/map/LocationPicker";
 import { SENEGAL_REGIONS } from "@/lib/constants";
+import {
+  CATEGORY_OPTIONS,
+  SECTOR_OPTIONS,
+  type FacilityCategory,
+  type FacilitySector,
+} from "@/lib/facilityTaxonomy";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
 import { createOrganization } from "@/services/organizations";
+import { createFacilityAsOwner } from "@/services/facilities";
 import { auth } from "@/services/firebase";
 import type { OrganizationType } from "@/types/domain";
 import { SEOHead } from "@/seo/SEOHead";
@@ -23,6 +30,8 @@ export default function CreatePage() {
   const [region, setRegion] = useState(SENEGAL_REGIONS[1]);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState<LocationValue>({ address: "", city: "", coords: null });
+  const [category, setCategory] = useState<FacilityCategory | "">("");
+  const [sector, setSector] = useState<FacilitySector | "">("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -44,16 +53,32 @@ export default function CreatePage() {
     }
     setLoading(true);
     try {
-      await createOrganization(currentUser, {
-        type,
-        name: name.trim(),
-        region,
-        description: description.trim(),
-        address: location.address.trim(),
-        city: location.city.trim(),
-        coords: location.coords,
-      });
-      notify("Page créée — en attente de validation par un administrateur.", "success");
+      if (type === "healthcare_facility") {
+        // Une structure de santé EST un établissement (collection `facilities`).
+        await createFacilityAsOwner(currentUser, {
+          name: name.trim(),
+          region,
+          description: description.trim(),
+          address: location.address.trim(),
+          city: location.city.trim(),
+          coords: location.coords,
+          category: category || undefined,
+          sector: sector || undefined,
+        });
+        notify("Établissement créé — en attente de validation par un administrateur.", "success");
+      } else {
+        // Partenaire / donateur → page (collection `organizations`).
+        await createOrganization(currentUser, {
+          type,
+          name: name.trim(),
+          region,
+          description: description.trim(),
+          address: location.address.trim(),
+          city: location.city.trim(),
+          coords: location.coords,
+        });
+        notify("Page créée — en attente de validation par un administrateur.", "success");
+      }
       navigate("/dashboard");
     } catch (err) {
       setError(
@@ -118,11 +143,43 @@ export default function CreatePage() {
         </div>
 
         {type === "healthcare_facility" && (
-          <LocationPicker
-            label="Localisation de la structure"
-            value={location}
-            onChange={setLocation}
-          />
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="fac-category" className="mb-1.5 block text-sm font-medium text-text-primary">Catégorie</label>
+                <select
+                  id="fac-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as FacilityCategory | "")}
+                  className="h-11 w-full rounded-xl border border-border-soft bg-white px-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+                >
+                  <option value="">Choisir une catégorie…</option>
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="fac-sector" className="mb-1.5 block text-sm font-medium text-text-primary">Secteur</label>
+                <select
+                  id="fac-sector"
+                  value={sector}
+                  onChange={(e) => setSector(e.target.value as FacilitySector | "")}
+                  className="h-11 w-full rounded-xl border border-border-soft bg-white px-3 text-sm focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
+                >
+                  <option value="">Choisir un secteur…</option>
+                  {SECTOR_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <LocationPicker
+              label="Localisation de l'établissement"
+              value={location}
+              onChange={setLocation}
+            />
+          </>
         )}
 
         <div>

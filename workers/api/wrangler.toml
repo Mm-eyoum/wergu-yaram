@@ -1,0 +1,86 @@
+# Worker API — toute la logique serveur, les webhooks, les crons et les secrets.
+#
+# Séparé du Worker qui sert le site pour deux raisons : un correctif sur le
+# webhook de paiement ne doit pas redéployer le site, et BICTORYS_API_KEY n'a
+# rien à faire dans le script qui rend chaque page.
+#
+# ⚠️ Ce compte Cloudflare héberge d'AUTRES projets (eyone-learning, eyone-space,
+# khanouss-media, pharmaconnect-*). Toutes les ressources Wergu Yaram sont
+# préfixées `werguyaram-` ; ne jamais viser une ressource sans ce préfixe.
+name = "werguyaram-api"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+# Pas de nodejs_compat : tout passe par WebCrypto et fetch.
+
+# Créée avec `wrangler d1 create werguyaram --location weur`.
+# WEUR est le point le plus proche de Dakar : Cloudflare n'a pas de région D1 en
+# Afrique. Le vrai gain de latence viendra de l'effondrement des allers-retours
+# (tenantAnalytics : 10 requêtes → 1), pas du placement.
+[[d1_databases]]
+binding = "DB"
+database_name = "werguyaram"
+database_id = "86b2ba99-edbc-467d-9dfe-26ed6071d854"
+migrations_dir = "migrations"
+
+# Cache JWKS, drapeaux de bascule, tickets WebSocket.
+# ⚠️ JAMAIS de compteurs par requête ni d'état de rate-limiting ici : KV est
+# plafonné à 1 000 écritures/jour. Ce genre d'état va en Durable Object ou en D1.
+[[kv_namespaces]]
+binding = "CACHE"
+id = "7c865a4f901643f4b74fd1b5369ea291"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "werguyaram-media"
+
+[vars]
+FIREBASE_PROJECT_ID = "werguyaram"
+APP_PUBLIC_URL = "https://werguyaram.org"
+R2_PUBLIC_BASE = "https://media.werguyaram.org"
+CORS_ORIGINS = "https://werguyaram.org"
+BICTORYS_API_URL = "https://api.bictorys.com"
+
+[observability]
+enabled = true
+
+# --- Activés au fil des lots, quand leur code existe ---
+# Les déclarer avant ferait échouer le déploiement (classe DO introuvable,
+# handler de queue absent, route pointant vers un Worker incomplet).
+#
+# Diffusion des campagnes. La Cloud Function enchaînait jusqu'à 1 500 appels
+# Chatwoot SÉQUENTIELS avec le client bloqué ; la file rend l'envoi asynchrone.
+[[queues.producers]]
+binding = "TASKS"
+queue = "werguyaram-tasks"
+
+[[queues.consumers]]
+queue = "werguyaram-tasks"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 5
+# Chatwoot est mutualisé : une campagne à pleine parallélisation le saturerait.
+max_concurrency = 2
+dead_letter_queue = "werguyaram-tasks-dlq"
+#
+# Messagerie temps réel — un objet par conversation, WebSocket hibernant.
+[[durable_objects.bindings]]
+name = "CONVERSATION"
+class_name = "ConversationDO"
+
+# ⚠️ `new_sqlite_classes` et non `new_classes` : les Durable Objects adossés à
+# SQLite sont disponibles sur toutes les offres, les DO classiques non.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ConversationDO"]
+#
+# Balayage de l'outbox (rattrapage des effets de bord non partis).
+# ⚠️ UTC uniquement : Cloudflare n'a pas de champ fuseau horaire. Dakar étant à
+# UTC±0, l'heure affichée est l'heure locale — ce ne serait pas le cas ailleurs.
+[triggers]
+# 02:00 agrégat de revenus · 03:00 rattrapage outbox · 09:00 relances d'abonnement.
+# ⚠️ UTC uniquement — Cloudflare n'a pas de champ fuseau. Dakar étant à UTC±0
+# l'heure affichée est l'heure locale, ce qui ne serait pas vrai ailleurs.
+crons = ["0 2 * * *", "0 3 * * *", "0 9 * * *"]
+#
+# Lot 6 — mise en production (exige un enregistrement DNS `api`) :
+# routes = [{ pattern = "api.werguyaram.org/*", zone_name = "werguyaram.org" }]

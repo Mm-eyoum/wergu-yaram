@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Facebook, Instagram, Youtube, Linkedin, Twitter, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { NewsletterSignup } from "@/components/engagement/NewsletterSignup";
 import { useMenuConfig, useSiteSettings } from "@/hooks/useSiteConfig";
 
 const SOCIAL_ICONS: { key: keyof SocialMap; label: string; Icon: LucideIcon }[] = [
@@ -13,6 +15,7 @@ const SOCIAL_ICONS: { key: keyof SocialMap; label: string; Icon: LucideIcon }[] 
 type SocialMap = { facebook: string; instagram: string; youtube: string; linkedin: string; twitter: string };
 
 export function AppFooter() {
+  const { t } = useTranslation();
   const { data: menus } = useMenuConfig();
   const { data: settings } = useSiteSettings();
   const groups = menus?.footerGroups ?? [];
@@ -20,6 +23,15 @@ export function AppFooter() {
 
   return (
     <footer className="mt-16 border-t border-border-soft bg-white">
+      <div className="border-b border-border-soft bg-mint-fade">
+        <div className="container-page flex flex-col gap-4 py-8 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-md">
+            <h3 className="text-base font-bold text-text-primary">{t("footer.newsletterTitle")}</h3>
+            <p className="mt-1 text-sm text-text-secondary">{t("footer.newsletterText")}</p>
+          </div>
+          <NewsletterSignup source="footer" className="w-full md:max-w-sm" />
+        </div>
+      </div>
       <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div className="max-w-xs">
           <Logo />
@@ -59,10 +71,10 @@ export function AppFooter() {
       <div className="border-t border-border-soft">
         <div className="container-page flex flex-col items-center gap-2 py-4 text-center text-xs text-text-secondary sm:flex-row sm:justify-between sm:text-left">
           <p>
-            © {new Date().getFullYear()} {settings?.siteName ?? "Wergu Yaram"} · Information éducative — ne remplace pas un avis médical professionnel.
+            © {new Date().getFullYear()} {settings?.siteName ?? "Wergu Yaram"} · {t("footer.disclaimer")}
           </p>
           <Link to="/conditions" className="link-muted whitespace-nowrap">
-            Conditions d'utilisation
+            {t("footer.terms")}
           </Link>
         </div>
       </div>

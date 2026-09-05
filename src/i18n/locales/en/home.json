@@ -1,0 +1,40 @@
+{
+  "seoTitle": "Wergu Yaram — Senegal Health Portal",
+  "seeAll": "See all",
+  "sortNearby": "Sort around me",
+  "categories": {
+    "cardiology": "Cardiology",
+    "diabetes": "Diabetes",
+    "respiratory": "Respiratory",
+    "nutrition": "Nutrition",
+    "mentalHealth": "Mental health",
+    "pediatrics": "Paediatrics",
+    "medications": "Medications",
+    "facilities": "Facilities"
+  },
+  "sections": {
+    "categories": "Health categories",
+    "articles": "Recommended articles & videos",
+    "nearby": "Facilities nearby",
+    "communities": "Active communities",
+    "urgentNeeds": "Urgent equipment needs"
+  },
+  "why": {
+    "title": "Why Wergu Yaram?",
+    "text": "A simple, reassuring health portal: understand, find your way, connect and act, for all Senegalese.",
+    "cta": "Create a free account",
+    "verifiedTitle": "Verified content",
+    "verifiedText": "Medical fact sheets reviewed by an editorial board, with sources and update dates.",
+    "communityTitle": "A supportive community",
+    "communityText": "Share, ask your questions and find support from people who understand you.",
+    "actTitle": "Take concrete action",
+    "actText": "Support the equipment needs of health facilities near you."
+  },
+  "trust": {
+    "title": "A trusted platform, serving everyone",
+    "verifiedInfo": "Verified information",
+    "members": "Community members",
+    "facilities": "Listed facilities",
+    "needs": "Needs supported"
+  }
+}

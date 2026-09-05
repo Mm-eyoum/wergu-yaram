@@ -1,0 +1,22 @@
+{
+  "loading": "Loading the fact sheet…",
+  "notFoundTitle": "Condition not found",
+  "notFoundMsg": "This fact sheet doesn't exist or has been moved.",
+  "sections": {
+    "understanding": "Understanding the condition",
+    "symptoms": "Common symptoms",
+    "causes": "Causes and risk factors",
+    "prevention": "Prevention",
+    "treatments": "Treatments",
+    "whenToConsult": "When to seek care?",
+    "faq": "Frequently asked questions"
+  },
+  "sidebar": {
+    "meds": "Common medications",
+    "noMeds": "No medication listed.",
+    "articles": "Articles & videos",
+    "nearby": "Facilities nearby",
+    "community": "Related community"
+  },
+  "verifiedUpdated": "Verified content · updated on {{date}}"
+}

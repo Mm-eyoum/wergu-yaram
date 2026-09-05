@@ -1,10 +1,11 @@
 /** Admin writes for site settings, menus, appearance, redirects, emails. */
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "@/services/db";
 import { db } from "@/services/firebase";
 import { logAudit } from "@/services/audit";
 import type {
   AppearanceConfig,
   EmailConfig,
+  LegalConfig,
   MenuConfig,
   RedirectConfig,
   SiteSettings,
@@ -22,3 +23,4 @@ export const updateMenuConfig = (next: MenuConfig) => writeSettings("navigation"
 export const updateAppearance = (next: AppearanceConfig) => writeSettings("appearance", next, "Apparence");
 export const updateRedirects = (next: RedirectConfig) => writeSettings("redirects", next, "Redirections");
 export const updateEmailConfig = (next: EmailConfig) => writeSettings("emails", next, "Modèles d'email");
+export const updateLegalConfig = (next: LegalConfig) => writeSettings("legal", next, "Mentions légales");

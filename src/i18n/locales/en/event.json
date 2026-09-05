@@ -1,0 +1,17 @@
+{
+  "loading": "Loading the event…",
+  "notFoundTitle": "Event not found",
+  "notFoundMsg": "This event doesn't exist or has been removed.",
+  "sections": {
+    "about": "About the event",
+    "program": "Programme",
+    "speakers": "Speakers",
+    "practical": "Practical information",
+    "venue": "Venue",
+    "resources": "Related resources"
+  },
+  "addToCalendar": "Add to calendar",
+  "emailConfirm": "Immediate confirmation by email",
+  "similar": "Similar events",
+  "relatedCommunity": "Related community"
+}

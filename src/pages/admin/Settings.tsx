@@ -60,6 +60,22 @@ const SCHEMA: ContentFormSchema = {
         },
       ],
     },
+    {
+      title: "Chiffres de confiance",
+      fields: [
+        {
+          name: "stats",
+          label: "Statistiques affichées (laisser vide pour masquer la carte)",
+          type: "object",
+          fields: [
+            { name: "verifiedInfo", label: "Informations / contenus vérifiés", type: "text" },
+            { name: "fundsRaised", label: "Fonds mobilisés", type: "text" },
+            { name: "regionsCovered", label: "Régions couvertes", type: "text" },
+            { name: "projectsSupported", label: "Projets soutenus", type: "text" },
+          ],
+        },
+      ],
+    },
   ],
 };
 

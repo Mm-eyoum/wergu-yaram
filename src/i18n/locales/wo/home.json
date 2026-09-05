@@ -1,0 +1,41 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "seoTitle": "",
+  "seeAll": "",
+  "sortNearby": "",
+  "categories": {
+    "cardiology": "",
+    "diabetes": "",
+    "respiratory": "",
+    "nutrition": "",
+    "mentalHealth": "",
+    "pediatrics": "",
+    "medications": "",
+    "facilities": ""
+  },
+  "sections": {
+    "categories": "",
+    "articles": "",
+    "nearby": "",
+    "communities": "",
+    "urgentNeeds": ""
+  },
+  "why": {
+    "title": "",
+    "text": "",
+    "cta": "",
+    "verifiedTitle": "",
+    "verifiedText": "",
+    "communityTitle": "",
+    "communityText": "",
+    "actTitle": "",
+    "actText": ""
+  },
+  "trust": {
+    "title": "",
+    "verifiedInfo": "",
+    "members": "",
+    "facilities": "",
+    "needs": ""
+  }
+}

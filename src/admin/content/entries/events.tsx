@@ -23,9 +23,16 @@ export const eventsEntry: ContentEntry<HealthEvent> = {
         { name: "mode", label: "Mode", type: "select", options: [
           { value: "Présentiel", label: "Présentiel" }, { value: "En ligne", label: "En ligne" }, { value: "Hybride", label: "Hybride" },
         ] },
-        { name: "price", label: "Prix", type: "text" },
+        { name: "price", label: "Prix (libellé affiché)", type: "text" },
         { name: "seatsLeft", label: "Places restantes", type: "number" },
+        { name: "category", label: "Thème (collection)", type: "text" },
+        { name: "featured", label: "À la une", type: "boolean" },
         PUBLISHED,
+      ] },
+      { title: "Billetterie", fields: [
+        { name: "ticketingEnabled", label: "Activer la billetterie en ligne", type: "boolean" },
+        { name: "priceAmount", label: "Prix unitaire (XOF, 0 = gratuit)", type: "number" },
+        { name: "commissionRate", label: "Commission plateforme (0–1, défaut 0,09)", type: "number" },
       ] },
       { title: "Dates", fields: [
         { name: "startAt", label: "Début", type: "text", placeholder: "2024-01-01T09:00" },

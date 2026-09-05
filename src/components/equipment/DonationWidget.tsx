@@ -8,6 +8,7 @@ import { DONATION_AMOUNTS, PAYMENT_METHODS } from "@/lib/constants";
 import { formatFcfa, percent } from "@/lib/format";
 import { useComingSoon } from "@/hooks/useToast";
 import { isPaymentsEnabled, startDonation, type DonationPaymentType } from "@/services/payments";
+import { track } from "@/lib/analytics";
 
 /**
  * Maps the UI payment-method id (constants) to Bictorys' payment type.
@@ -18,15 +19,20 @@ const PAYMENT_TYPE_BY_METHOD: Record<string, DonationPaymentType | undefined> = 
   card: "card",
 };
 
+/** Suggested platform-tip rates (% of the donation). 0 = no tip. */
+const TIP_RATES = [0, 3, 6, 10];
+
 /** Donation widget — Bictorys hosted checkout when enabled, else "coming soon". */
 export function DonationWidget({ need }: { need: EquipmentNeed }) {
   const [amount, setAmount] = useState<number>(DONATION_AMOUNTS[1]);
   const [custom, setCustom] = useState("");
   const [method, setMethod] = useState(PAYMENT_METHODS[0].id);
+  const [tipRate, setTipRate] = useState<number>(TIP_RATES[1]);
   const [loading, setLoading] = useState(false);
   const comingSoon = useComingSoon();
   const pct = percent(need.raisedAmount, need.targetAmount);
   const finalAmount = custom ? Number(custom) : amount;
+  const tipAmount = finalAmount ? Math.round((finalAmount * tipRate) / 100) : 0;
 
   async function handleDonate() {
     if (!isPaymentsEnabled) {
@@ -34,12 +40,14 @@ export function DonationWidget({ need }: { need: EquipmentNeed }) {
       return;
     }
     setLoading(true);
+    track("donation_started", { needId: need.id, amount: finalAmount, tip: tipAmount });
     try {
       // Hosted checkout lets the donor pick the method; amount is re-validated server-side.
       await startDonation({
         needId: need.id,
         amount: finalAmount,
         paymentType: PAYMENT_TYPE_BY_METHOD[method],
+        tipAmount,
       });
       // On success the browser is redirected to Bictorys; no further UI needed.
     } catch {
@@ -96,6 +104,34 @@ export function DonationWidget({ need }: { need: EquipmentNeed }) {
       </fieldset>
 
       <fieldset className="mt-4">
+        <legend className="mb-2 text-sm font-semibold text-text-primary">
+          Soutenir aussi Wergu Yaram
+          <span className="ml-1 font-normal text-text-secondary">(optionnel)</span>
+        </legend>
+        <div className="grid grid-cols-4 gap-2">
+          {TIP_RATES.map((rate) => (
+            <button
+              key={rate}
+              onClick={() => setTipRate(rate)}
+              className={cn(
+                "min-h-[44px] rounded-xl border px-2 text-sm font-semibold transition-colors",
+                tipRate === rate
+                  ? "border-brand-green bg-brand-green/10 text-brand-green"
+                  : "border-border-soft text-text-secondary hover:border-brand-teal",
+              )}
+            >
+              {rate === 0 ? "Aucun" : `${rate}%`}
+            </button>
+          ))}
+        </div>
+        {tipAmount > 0 && (
+          <p className="mt-2 text-xs text-text-secondary">
+            Pourboire plateforme : {formatFcfa(tipAmount)} — aide à faire tourner le service.
+          </p>
+        )}
+      </fieldset>
+
+      <fieldset className="mt-4">
         <legend className="mb-2 text-sm font-semibold text-text-primary">Méthode de paiement</legend>
         <div className="grid grid-cols-3 gap-2">
           {PAYMENT_METHODS.map((m) => (
@@ -123,7 +159,9 @@ export function DonationWidget({ need }: { need: EquipmentNeed }) {
         onClick={handleDonate}
       >
         <HeartHandshake className="h-5 w-5" />
-        {loading ? "Redirection…" : `Soutenir ${finalAmount ? formatFcfa(finalAmount) : ""}`}
+        {loading
+          ? "Redirection…"
+          : `Soutenir ${finalAmount ? formatFcfa(finalAmount + tipAmount) : ""}`}
       </Button>
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-text-secondary">

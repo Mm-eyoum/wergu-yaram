@@ -13,6 +13,10 @@ import {
   CornerUpRight,
   Mail,
   MessageSquare,
+  Megaphone,
+  TrendingUp,
+  Scale,
+  Map as MapIcon,
 } from "lucide-react";
 import type { Permission } from "@/lib/permissions";
 
@@ -39,10 +43,14 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { key: "moderation", label: "Modération des pages", to: "/admin/moderation", icon: ShieldCheck, permission: "moderation", ready: true },
   { key: "directory", label: "Annuaire (import)", to: "/admin/directory", icon: Building2, permission: "moderation", ready: true },
   { key: "comments", label: "Contributions", to: "/admin/comments", icon: MessageSquare, permission: "comments.moderate", ready: true },
+  { key: "revenue", label: "Revenus", to: "/admin/revenue", icon: TrendingUp, permission: "revenue.read", ready: true },
+  { key: "territoire", label: "Territoire", to: "/admin/territoire", icon: MapIcon, permission: "revenue.read", ready: true },
+  { key: "campaigns", label: "Campagnes", to: "/admin/campaigns", icon: Megaphone, permission: "campaigns.manage", ready: true },
   { key: "users", label: "Utilisateurs", to: "/admin/users", icon: Users, permission: "users.manage", ready: true },
   { key: "menus", label: "Menus", to: "/admin/menus", icon: MenuIcon, permission: "menus.manage", ready: true },
   { key: "redirects", label: "Redirections", to: "/admin/redirects", icon: CornerUpRight, permission: "redirects.manage", ready: true },
   { key: "emails", label: "Emails", to: "/admin/emails", icon: Mail, permission: "emails.manage", ready: true },
+  { key: "legal", label: "Mentions légales", to: "/admin/legal", icon: Scale, permission: "settings.update", ready: true },
   { key: "appearance", label: "Apparence", to: "/admin/appearance", icon: Palette, permission: "appearance.manage", ready: true },
   { key: "settings", label: "Paramètres", to: "/admin/settings", icon: Settings, permission: "settings.update", ready: true },
   { key: "audit", label: "Journal d'audit", to: "/admin/audit-log", icon: ScrollText, permission: "audit.read", ready: true },

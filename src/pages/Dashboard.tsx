@@ -2,18 +2,22 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
+  BadgeCheck,
   Bell,
   Bookmark,
   Building2,
   CalendarDays,
   Heart,
+  HeartHandshake,
   LayoutGrid,
   LifeBuoy,
   MapPin,
   Pill,
   Plus,
   Search,
+  ShieldCheck,
   ShieldQuestion,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { ProfileSummaryCard } from "@/components/dashboard/ProfileSummaryCard";
@@ -30,10 +34,17 @@ import {
   useReminders,
   useSavedSearches,
   useUserOrganizations,
+  useUserFacilities,
+  useUserSubscriptions,
+  useUserDonations,
 } from "@/hooks/useDashboardData";
-import { useFacilities } from "@/hooks/useCatalog";
+import { useFacilities, useCommunities } from "@/hooks/useCatalog";
+import { JoinCommunityButton } from "@/components/community/JoinCommunityButton";
+import { suggestCommunities } from "@/lib/communitySuggest";
 import { fetchUserClaims } from "@/services/claims";
 import { HEALTH_INTERESTS, ORG_TYPE_LABELS } from "@/lib/constants";
+import { formatDate, formatFcfa } from "@/lib/format";
+import { summarizeDonations } from "@/services/billing";
 import type { OrgStatus } from "@/types/domain";
 
 const STATUS_TONE: Record<OrgStatus, "green" | "warning" | "danger"> = {
@@ -114,13 +125,24 @@ export default function Dashboard() {
   const memberships = useMemberships(uid);
   const reminders = useReminders(uid);
   const organizations = useUserOrganizations(uid);
+  const myFacilities = useUserFacilities(uid);
+  const subscriptions = useUserSubscriptions(uid);
+  const activeSubs = (subscriptions.data ?? []).filter((s) => s.status === "active");
+  const donations = useUserDonations(uid);
+  const isDonor = (donations.data?.length ?? 0) > 0;
   const { data: facilities = [] } = useFacilities();
+  const { data: communities = [] } = useCommunities();
   const nearbyFacilities = facilities.slice(0, 4);
   const claims = useQuery({
     queryKey: ["userClaims", uid],
     queryFn: () => fetchUserClaims(uid!),
     enabled: !!uid,
   });
+
+  // Communautés suggérées selon les intérêts santé (hors communautés déjà rejointes).
+  const joinedSlugs = new Set((memberships.data ?? []).map((m) => m.communitySlug));
+  const suggestedCommunities = suggestCommunities(communities, user?.interests, joinedSlugs);
+  const canRequestPro = !!user && user.role === "patient_public";
 
   const count = (q: { data?: unknown[]; isSuccess: boolean }) => (q.isSuccess ? q.data!.length : "—");
 
@@ -132,17 +154,39 @@ export default function Dashboard() {
       </header>
 
       {/* Stats — real per-user counts */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard icon={<Search className="h-5 w-5" />} value={count(savedSearches)} label="Recherches sauvegardées" />
         <StatCard icon={<Bookmark className="h-5 w-5" />} value={count(favorites)} label="Favoris" />
         <StatCard icon={<Users className="h-5 w-5" />} value={count(memberships)} label="Communautés rejointes" />
         <StatCard icon={<CalendarDays className="h-5 w-5" />} value={count(reminders)} label="Rappels à venir" />
+        <Link to="/dashboard/dons" className="rounded-2xl focus-visible:outline-none focus-visible:shadow-focus">
+          <StatCard
+            icon={<HeartHandshake className="h-5 w-5" />}
+            value={isDonor ? formatFcfa(summarizeDonations(donations.data ?? []).total) : "—"}
+            label="Total donné"
+          />
+        </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         {/* Left column */}
         <div className="space-y-5">
-          {user && <ProfileSummaryCard user={user} />}
+          {user && <ProfileSummaryCard user={user} isDonor={isDonor} />}
+
+          {canRequestPro && (
+            <Link
+              to="/dashboard/verification-pro"
+              className="flex items-center gap-3 rounded-3xl border border-border-soft bg-white p-4 transition-colors hover:border-brand-teal"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-green/10 text-brand-green">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-text-primary">Vous êtes soignant ?</p>
+                <p className="text-xs text-text-secondary">Faites vérifier votre profil professionnel.</p>
+              </div>
+            </Link>
+          )}
 
           <SidebarPanel title="Mes intérêts santé" icon={<Heart className="h-4 w-4" />}>
             <div className="flex flex-wrap gap-2">
@@ -177,16 +221,11 @@ export default function Dashboard() {
           >
             <AsyncList
               query={organizations}
-              emptyText="Vous ne gérez aucune page pour l'instant. Créez une page pour votre structure, partenaire ou donateur — ou réclamez une structure de santé déjà référencée."
+              emptyText="Vous ne gérez aucune page pour l'instant. Créez une page pour votre structure de santé, un partenaire ou un donateur."
               emptyCta={
-                <div className="flex flex-wrap gap-2">
-                  <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
-                    <Plus className="h-4 w-4" /> Créer une page
-                  </ButtonLink>
-                  <ButtonLink to="/structures/revendiquer" size="sm" variant="outline">
-                    <ShieldQuestion className="h-4 w-4" /> Réclamer une structure
-                  </ButtonLink>
-                </div>
+                <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                  <Plus className="h-4 w-4" /> Créer une page
+                </ButtonLink>
               }
             >
               {(orgs) => (
@@ -202,7 +241,12 @@ export default function Dashboard() {
                           <Building2 className="h-4 w-4" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-text-primary">{org.name}</p>
+                          <p className="flex items-center gap-1 truncate text-sm font-semibold text-text-primary">
+                            {org.name}
+                            {org.planTier && (
+                              <BadgeCheck className="h-4 w-4 shrink-0 text-brand-green" aria-label="Vérifié" />
+                            )}
+                          </p>
                           <p className="text-xs text-text-secondary">{ORG_TYPE_LABELS[org.type]}</p>
                         </div>
                         <Badge tone={STATUS_TONE[org.status]}>{STATUS_TEXT[org.status]}</Badge>
@@ -213,8 +257,131 @@ export default function Dashboard() {
                     <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
                       <Plus className="h-4 w-4" /> Créer une page
                     </ButtonLink>
-                    <ButtonLink to="/structures/revendiquer" size="sm" variant="outline">
-                      <ShieldQuestion className="h-4 w-4" /> Réclamer une structure
+                  </div>
+                </div>
+              )}
+            </AsyncList>
+          </SidebarPanel>
+
+          {suggestedCommunities.length > 0 && (
+            <SidebarPanel
+              title="Communautés suggérées pour vous"
+              icon={<Users className="h-4 w-4" />}
+              className="md:col-span-2"
+            >
+              <div className="space-y-2">
+                {suggestedCommunities.map((c) => (
+                  <div
+                    key={c.slug}
+                    className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5"
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
+                      <Users className="h-4 w-4" />
+                    </span>
+                    <Link
+                      to={`/communautes/${c.slug}`}
+                      className="min-w-0 flex-1"
+                    >
+                      <p className="truncate text-sm font-semibold text-text-primary hover:text-brand-green">{c.name}</p>
+                      <p className="truncate text-xs text-text-secondary">{c.topic}</p>
+                    </Link>
+                    <JoinCommunityButton slug={c.slug} name={c.name} />
+                  </div>
+                ))}
+              </div>
+            </SidebarPanel>
+          )}
+
+          {activeSubs.length > 0 && (
+            <SidebarPanel
+              title="Mes abonnements"
+              icon={<Sparkles className="h-4 w-4" />}
+              className="md:col-span-2"
+            >
+              <div className="space-y-2">
+                {activeSubs.map((sub) => (
+                  <Link
+                    key={sub.id}
+                    to={
+                      sub.facilitySlug
+                        ? `/dashboard/facilities/${sub.facilitySlug}`
+                        : sub.orgId
+                          ? `/dashboard/pages/${sub.orgId}`
+                          : "/dashboard"
+                    }
+                    className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5 transition-colors hover:border-brand-teal"
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-green/10 text-brand-green">
+                      <BadgeCheck className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-text-primary">
+                        {sub.planId?.includes("pro") ? "Pro" : "Vérifié"}
+                      </p>
+                      <p className="text-xs text-text-secondary">
+                        Renouvellement avant le {formatDate(sub.currentPeriodEnd)}
+                      </p>
+                    </div>
+                    <Badge tone="green">Actif</Badge>
+                  </Link>
+                ))}
+              </div>
+            </SidebarPanel>
+          )}
+
+          <SidebarPanel
+            title="Mes établissements de santé"
+            icon={<Building2 className="h-4 w-4" />}
+            className="md:col-span-2"
+          >
+            <AsyncList
+              query={myFacilities}
+              emptyText="Vous ne gérez aucun établissement de santé. Inscrivez le vôtre, ou réclamez un établissement déjà référencé."
+              emptyCta={
+                <div className="flex flex-wrap gap-2">
+                  <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                    <Plus className="h-4 w-4" /> Inscrire un établissement
+                  </ButtonLink>
+                  <ButtonLink to="/etablissements/revendiquer" size="sm" variant="outline">
+                    <ShieldQuestion className="h-4 w-4" /> Réclamer un établissement
+                  </ButtonLink>
+                </div>
+              }
+            >
+              {(items) => (
+                <div className="space-y-3">
+                  <ul className="space-y-2">
+                    {items.map((f) => (
+                      <li key={f.slug}>
+                        <Link
+                          to={`/dashboard/facilities/${f.slug}`}
+                          className="flex items-center gap-3 rounded-xl border border-border-soft px-3 py-2.5 transition-colors hover:border-brand-teal"
+                        >
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-mint text-brand-green">
+                            <Building2 className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="flex items-center gap-1 truncate text-sm font-semibold text-text-primary">
+                              {f.name}
+                              {f.planTier && (
+                                <BadgeCheck className="h-4 w-4 shrink-0 text-brand-green" aria-label="Vérifié" />
+                              )}
+                            </p>
+                            <p className="truncate text-xs text-text-secondary">{f.city || f.region}</p>
+                          </div>
+                          <Badge tone={f.published ? "green" : "warning"}>
+                            {f.published ? "Publié" : "En attente"}
+                          </Badge>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <ButtonLink to="/dashboard/pages/new" size="sm" variant="outline">
+                      <Plus className="h-4 w-4" /> Inscrire un établissement
+                    </ButtonLink>
+                    <ButtonLink to="/etablissements/revendiquer" size="sm" variant="outline">
+                      <ShieldQuestion className="h-4 w-4" /> Réclamer un établissement
                     </ButtonLink>
                   </div>
                 </div>
@@ -238,10 +405,10 @@ export default function Dashboard() {
                       <Building2 className="h-4 w-4" />
                     </span>
                     <Link
-                      to={`/structures/${c.orgId}`}
+                      to={`/etablissements/${c.facilitySlug ?? c.orgId}`}
                       className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary hover:text-brand-green"
                     >
-                      {c.orgName}
+                      {c.facilityName ?? c.orgName}
                     </Link>
                     <Badge
                       tone={c.status === "approved" ? "green" : c.status === "rejected" ? "danger" : "warning"}

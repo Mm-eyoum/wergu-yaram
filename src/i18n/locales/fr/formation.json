@@ -1,0 +1,13 @@
+{
+  "loading": "Chargement de la formation…",
+  "notFoundTitle": "Formation introuvable",
+  "notFoundMsg": "Cette formation n'existe pas ou n'est plus disponible.",
+  "certified": "Certifiante",
+  "objectives": "Objectifs pédagogiques",
+  "program": "Programme",
+  "enroll": "S'inscrire",
+  "access": "Accéder à la formation",
+  "enrollComingSoon": "Les inscriptions en ligne arrivent bientôt.",
+  "byPrefix": "Par",
+  "viewWebinar": "Voir le webinaire associé"
+}

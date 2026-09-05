@@ -4,11 +4,21 @@
  * merged alongside curated catalog content. Every directory entry links to
  * `/structures/:id` and carries a badge to distinguish it from curated content.
  */
-import type { Facility, Organization, Partner, SearchHit } from "@/types/domain";
+import type { Facility, Organization, Partner, SearchHit, Tenant } from "@/types/domain";
+import { categoryLabel, sectorLabel } from "@/lib/facilityTaxonomy";
 
-/** "Annuaire" once claimed/managed, "Non réclamée" while still unowned. */
+/**
+ * Badge: a paid tier shows "Vérifié"; otherwise "Annuaire" once claimed/managed,
+ * "Non réclamée" while still unowned.
+ */
 export function orgBadge(org: Organization): string {
+  if (org.planTier) return "Vérifié";
   return org.claimStatus === "claimed" ? "Annuaire" : "Non réclamée";
+}
+
+/** A page is "verified" for trust filters if it carries a paid tier or is claimed. */
+export function orgIsVerified(org: Organization): boolean {
+  return Boolean(org.planTier) || org.claimStatus === "claimed";
 }
 
 export const orgHref = (org: Organization) => `/structures/${org.id}`;
@@ -22,7 +32,9 @@ export function orgToFacilityCard(org: Organization): {
   const facility: Facility = {
     slug: org.id,
     name: org.name,
-    type: "Structure de santé",
+    type: categoryLabel(org.category) || "Structure de santé",
+    category: org.category,
+    sector: org.sector,
     region: org.region ?? "",
     city: org.city ?? "",
     address: org.address ?? "",
@@ -40,7 +52,7 @@ export function orgToFacilityCard(org: Organization): {
     reviews: [],
     coords: org.coords ?? { lat: 0, lng: 0 },
     equipmentNeeds: [],
-    verified: org.claimStatus === "claimed",
+    verified: orgIsVerified(org),
   };
   return { facility, href: orgHref(org), badge: orgBadge(org) };
 }
@@ -70,6 +82,26 @@ export function orgToPartnerCard(org: Organization): {
   return { partner, href: orgHref(org), badge: orgBadge(org) };
 }
 
+/** A partner space (tenant) rendered through the existing PartnerCard. */
+export function tenantToPartnerCard(t: Tenant): {
+  partner: Partner;
+  href: string;
+  badge: string;
+} {
+  const partner: Partner = {
+    slug: t.slug,
+    name: t.name,
+    category: "structure",
+    categoryLabel: "Espace partenaire",
+    zone: "",
+    logo: t.logo ?? "",
+    description: t.description ?? "",
+    contributionsLabel: "",
+    tags: [],
+  };
+  return { partner, href: `/partenaires/${t.slug}`, badge: t.verified ? "Vérifié" : "Espace partenaire" };
+}
+
 /** Any active org as a federated search hit (Établissements / Partenaires tabs). */
 export function orgToSearchHit(org: Organization): SearchHit {
   const isFacility = org.type === "healthcare_facility";
@@ -81,12 +113,13 @@ export function orgToSearchHit(org: Organization): SearchHit {
     description: org.description || org.address || place,
     href: orgHref(org),
     meta: place,
-    verified: org.claimStatus === "claimed",
+    verified: orgIsVerified(org),
     badge: orgBadge(org),
     keywords: [org.name, org.city, org.region, org.address].filter(Boolean).join(" "),
     facets: isFacility
       ? {
-          facilityType: "Structure de santé",
+          facilityType: categoryLabel(org.category) || "Structure de santé",
+          sector: sectorLabel(org.sector),
           region: org.region,
           city: org.city,
           rating: org.rating,

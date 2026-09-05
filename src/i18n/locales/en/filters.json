@@ -1,0 +1,44 @@
+{
+  "allPrefix": "All — {{label}}",
+  "titles": {
+    "famille": "Family",
+    "aware": "AWaRe category",
+    "sansord": "Over the counter",
+    "essentiel": "Essential medicine",
+    "categorie": "Category",
+    "secteur": "Sector",
+    "region": "Region",
+    "ville": "City",
+    "specialites": "Specialties",
+    "theme": "Topic",
+    "public": "Public community",
+    "mode": "Mode",
+    "urgence": "Urgency",
+    "statut": "Status",
+    "zone": "Area"
+  },
+  "sorts": {
+    "relevance": "Relevance",
+    "title": "Alphabetical",
+    "recent": "Most recent",
+    "rating": "Top rated",
+    "distance": "Nearest",
+    "members": "Most members",
+    "date": "Date (upcoming)",
+    "urgency": "Urgency",
+    "daysLeft": "Days left"
+  },
+  "options": {
+    "aware": { "Access": "Access", "Watch": "Watch", "Reserve": "Reserve" },
+    "urgency": { "urgent": "Urgent", "eleve": "High", "modere": "Moderate" },
+    "needStatus": { "en_cours": "In progress", "finance": "Funded", "valide": "Validated" },
+    "mode": { "Présentiel": "In person", "En ligne": "Online", "Hybride": "Hybrid" },
+    "partnerCategory": {
+      "ong": "NGO",
+      "institution": "Institution",
+      "entreprise": "Company",
+      "fondation": "Foundation",
+      "structure": "Organisation"
+    }
+  }
+}

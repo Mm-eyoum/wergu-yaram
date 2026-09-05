@@ -17,6 +17,12 @@ export interface ContentEntry<T extends object> {
   label: string;
   /** Singular label, e.g. "Article". */
   singular: string;
+  /**
+   * Phrase courte expliquant ce que gère ce type — affichée sous le titre de la
+   * liste et dans le hub. Sert à lever toute ambiguïté entre types proches
+   * (ex. fiche éditoriale SANS sous-domaine vs espace AVEC sous-domaine).
+   */
+  description?: string;
   /** Lucide icon name handled by the hub page. */
   icon: string;
   admin: ContentAdmin<T>;
@@ -26,6 +32,22 @@ export interface ContentEntry<T extends object> {
   empty: () => T;
   /** Public-site path for a "view" link (by id/slug), if any. */
   publicHref?: (item: T) => string;
+  /**
+   * Validation métier optionnelle, jouée avant l'enregistrement. Renvoie un
+   * message d'erreur (bloque la sauvegarde) ou `null`/`undefined` si valide.
+   * Peut être asynchrone (ex. vérif d'unicité Firestore).
+   */
+  validate?: (item: T, ctx: { isNew: boolean }) => Promise<string | null> | string | null;
+  /**
+   * Champs verrouillés (lecture seule) en édition uniquement — typiquement
+   * l'identifiant/slug qui sert d'id de document (le changer casse les URLs).
+   */
+  lockOnEdit?: string[];
+  /**
+   * Regroupe plusieurs types sous un même menu + sous-onglets (ex. "Partenaires").
+   * Purement présentationnel — aucune autre mécanique ne le lit.
+   */
+  group?: string;
 }
 
 // Heterogeneous registry: each entry is authored against its real type, but

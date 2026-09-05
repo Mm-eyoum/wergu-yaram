@@ -1,6 +1,7 @@
 import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
 import { AnnouncementBanner } from "./AnnouncementBanner";
+import { SupportLauncher } from "@/components/support/SupportLauncher";
 
 /** Standard page shell: header + main content + footer. */
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <AppFooter />
+      <SupportLauncher />
     </div>
   );
 }

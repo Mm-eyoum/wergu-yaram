@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 
 interface PaginationProps {
@@ -26,6 +27,7 @@ function pageTokens(page: number, pageCount: number): (number | "…")[] {
 
 /** Numbered pagination control. Renders nothing for a single page. */
 export function Pagination({ page, pageCount, onChange, className }: PaginationProps) {
+  const { t } = useTranslation();
   if (pageCount <= 1) return null;
 
   const go = (p: number) => {
@@ -40,12 +42,12 @@ export function Pagination({ page, pageCount, onChange, className }: PaginationP
     "grid h-9 min-w-9 place-items-center rounded-xl border px-3 text-sm font-semibold transition-colors";
 
   return (
-    <nav className={cn("flex flex-wrap items-center justify-center gap-1.5", className)} aria-label="Pagination">
+    <nav className={cn("flex flex-wrap items-center justify-center gap-1.5", className)} aria-label={t("pagination.label")}>
       <button
         type="button"
         onClick={() => go(page - 1)}
         disabled={page === 1}
-        aria-label="Page précédente"
+        aria-label={t("pagination.prev")}
         className={cn(cell, "border-border-soft text-text-secondary hover:border-brand-teal hover:text-brand-green disabled:opacity-40 disabled:hover:border-border-soft disabled:hover:text-text-secondary")}
       >
         <ChevronLeft className="h-4 w-4" />
@@ -78,7 +80,7 @@ export function Pagination({ page, pageCount, onChange, className }: PaginationP
         type="button"
         onClick={() => go(page + 1)}
         disabled={page === pageCount}
-        aria-label="Page suivante"
+        aria-label={t("pagination.next")}
         className={cn(cell, "border-border-soft text-text-secondary hover:border-brand-teal hover:text-brand-green disabled:opacity-40 disabled:hover:border-border-soft disabled:hover:text-text-secondary")}
       >
         <ChevronRight className="h-4 w-4" />

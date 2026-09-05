@@ -1,0 +1,45 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "allPrefix": "",
+  "titles": {
+    "famille": "",
+    "aware": "",
+    "sansord": "",
+    "essentiel": "",
+    "categorie": "",
+    "secteur": "",
+    "region": "",
+    "ville": "",
+    "specialites": "",
+    "theme": "",
+    "public": "",
+    "mode": "",
+    "urgence": "",
+    "statut": "",
+    "zone": ""
+  },
+  "sorts": {
+    "relevance": "",
+    "title": "",
+    "recent": "",
+    "rating": "",
+    "distance": "",
+    "members": "",
+    "date": "",
+    "urgency": "",
+    "daysLeft": ""
+  },
+  "options": {
+    "aware": { "Access": "Access", "Watch": "Watch", "Reserve": "Reserve" },
+    "urgency": { "urgent": "", "eleve": "", "modere": "" },
+    "needStatus": { "en_cours": "", "finance": "", "valide": "" },
+    "mode": { "Présentiel": "", "En ligne": "", "Hybride": "" },
+    "partnerCategory": {
+      "ong": "",
+      "institution": "",
+      "entreprise": "",
+      "fondation": "",
+      "structure": ""
+    }
+  }
+}

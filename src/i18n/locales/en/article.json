@@ -1,0 +1,27 @@
+{
+  "loading": "Loading the article…",
+  "notFoundTitle": "Article not found",
+  "notFoundMsg": "This content doesn't exist or has been moved.",
+  "toc": "Contents",
+  "readingMinutes": "{{count}} min",
+  "sponsored": "Sponsored content",
+  "sources": "Verified medical sources",
+  "relatedArticles": "Related articles",
+  "commonMeds": "Common medications",
+  "nearbySpecialists": "Specialists nearby",
+  "mapAction": "Map",
+  "cta": {
+    "title": "Connect with the community",
+    "text": "Ask your questions and share your experience on the health forum.",
+    "forum": "Forum",
+    "communities": "Communities"
+  },
+  "trust": {
+    "users": "Users",
+    "verifiedContent": "Verified content",
+    "facilities": "Facilities",
+    "reliableSources": "Reliable sources",
+    "barTitle": "A trusted platform",
+    "barSubtitle": "Content verified by health professionals."
+  }
+}

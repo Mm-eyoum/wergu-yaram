@@ -6,13 +6,17 @@ import type { ReactNode } from "react";
 import type { Marker as LeafletMarker } from "leaflet";
 import type { Coords } from "@/types/domain";
 import { DAKAR_CENTER, DEFAULT_ZOOM } from "@/lib/geo";
-import { L, pinIcon, clusterIcon, userLocationIcon, type PinColor, type PinGlyph } from "./leafletSetup";
+import { L, pinIcon, categoryPinIcon, clusterIcon, userLocationIcon, type PinColor, type PinGlyph } from "./leafletSetup";
 
 export interface MapMarker {
   id: string;
   coords: Coords;
   color?: PinColor;
   glyph?: PinGlyph;
+  /** When set, the pin is styled by health-structure category (color + glyph). */
+  category?: string;
+  /** Force the amber "unclaimed directory" color (overrides category color). */
+  amber?: boolean;
   popup?: ReactNode;
   title?: string;
 }
@@ -113,7 +117,11 @@ export default function MapView({
           <Marker
             key={m.id}
             position={[m.coords.lat, m.coords.lng]}
-            icon={pinIcon(m.color ?? "green", { active, glyph: m.glyph })}
+            icon={
+              m.category !== undefined || m.amber
+                ? categoryPinIcon(m.category, { active, amber: m.amber })
+                : pinIcon(m.color ?? "green", { active, glyph: m.glyph })
+            }
             title={m.title}
             ref={(r) => {
               if (r) markerRefs.current.set(m.id, r);

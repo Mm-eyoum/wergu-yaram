@@ -1,0 +1,13 @@
+{
+  "loading": "Loading the course…",
+  "notFoundTitle": "Course not found",
+  "notFoundMsg": "This course doesn't exist or is no longer available.",
+  "certified": "Certifying",
+  "objectives": "Learning objectives",
+  "program": "Programme",
+  "enroll": "Enrol",
+  "access": "Access the course",
+  "enrollComingSoon": "Online enrolment is coming soon.",
+  "byPrefix": "By",
+  "viewWebinar": "View the related webinar"
+}

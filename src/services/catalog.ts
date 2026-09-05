@@ -12,7 +12,7 @@
  * `slug` (or `id` for events/equipment needs), so single-item lookups can
  * read the document directly.
  */
-import { collection, doc, getDoc, getDocs, limit, query } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, query, where } from "@/services/db";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 import type {
@@ -20,10 +20,14 @@ import type {
   Community,
   EquipmentNeed,
   Facility,
+  Formation,
   HealthEvent,
   Medication,
   Partner,
   Pathology,
+  Tenant,
+  Testimonial,
+  PartnerOffer,
 } from "@/types/domain";
 
 // TRANSITIONAL — bundled mock data used as the offline/empty-Firestore fallback
@@ -48,10 +52,16 @@ import {
   events,
   facilities,
   facilityBySlug,
+  formationBySlug,
+  formations,
   partnerBySlug,
   partners,
   pathologies,
   pathologyBySlug,
+  tenantBySlug,
+  tenants,
+  testimonials,
+  partnerOffers,
 } from "./content";
 import { getMockMedications, getMockMedicationBySlug } from "@/data/medicationsLazy";
 
@@ -71,40 +81,56 @@ function isPublic(data: unknown): boolean {
   return (data as { published?: boolean }).published !== false;
 }
 
-/** List a collection from Firestore, falling back to mock when empty/absent. */
+/**
+ * Whether the bundled mock data may stand in for an empty/absent Firestore.
+ * Allowed in dev (offline work, before seeding) and when explicitly opted into,
+ * but NEVER in a normal production build — there an unseeded/unreachable
+ * collection yields an empty result and the page shows an honest empty state,
+ * rather than presenting invented content as real. Seed Firestore before a
+ * production build:seo (see DEPLOYMENT.md §4–§5).
+ */
+const ALLOW_MOCK_FALLBACK = (() => {
+  const flag = import.meta.env.VITE_ALLOW_MOCK_FALLBACK;
+  if (flag === "true") return true; // explicit opt-in (e.g. a staging build)
+  if (flag === "false") return false; // explicit opt-out
+  return import.meta.env.DEV; // default: dev only, never a plain prod build
+})();
+
+/** List a collection from Firestore; fall back to mock only when allowed. */
 async function listOrMock<T>(collectionName: string, fallback: Lazy<T[]>): Promise<T[]> {
-  if (!db) return resolveLazy(fallback);
+  if (!db) return ALLOW_MOCK_FALLBACK ? resolveLazy(fallback) : [];
   try {
     const snap = await getDocs(query(collection(db, collectionName), limit(CATALOG_PAGE_SIZE)));
-    if (snap.empty) return resolveLazy(fallback);
+    if (snap.empty) return ALLOW_MOCK_FALLBACK ? resolveLazy(fallback) : [];
     // Drafts (published === false) are hidden from the public site.
     return snap.docs.map((d) => d.data() as T).filter(isPublic);
   } catch (err) {
-    // Network/permission error → degrade gracefully to mock, but surface the
-    // cause so a misconfiguration (e.g. denied rules) is not silently masked.
+    // Network/permission error → surface the cause so a misconfiguration (e.g.
+    // denied rules) is not silently masked, then degrade: mock in dev, empty in prod.
     reportError(err, { scope: "catalog.listOrMock", collection: collectionName });
-    return resolveLazy(fallback);
+    return ALLOW_MOCK_FALLBACK ? resolveLazy(fallback) : [];
   }
 }
 
-/** Read one document (id === slug/id) from Firestore, falling back to mock. */
+/** Read one document (id === slug/id) from Firestore; mock only when allowed. */
 async function oneOrMock<T>(
   collectionName: string,
   id: string | undefined,
   fallback: Lazy<T | undefined>,
 ): Promise<T | null> {
   if (!id) return null;
-  if (!db) return (await resolveLazy(fallback)) ?? null;
+  const mock = async () => (ALLOW_MOCK_FALLBACK ? ((await resolveLazy(fallback)) ?? null) : null);
+  if (!db) return mock();
   try {
     const snap = await getDoc(doc(db, collectionName, id));
     if (snap.exists()) {
       // A draft document 404s on the public site (admins use the admin services).
       return isPublic(snap.data()) ? (snap.data() as T) : null;
     }
-    return (await resolveLazy(fallback)) ?? null;
+    return mock();
   } catch (err) {
     reportError(err, { scope: "catalog.oneOrMock", collection: collectionName, id });
-    return (await resolveLazy(fallback)) ?? null;
+    return mock();
   }
 }
 
@@ -117,6 +143,7 @@ export const getCommunities = () => listOrMock<Community>("communities", communi
 export const getEquipmentNeeds = () => listOrMock<EquipmentNeed>("equipmentNeeds", equipmentNeeds);
 export const getEvents = () => listOrMock<HealthEvent>("events", events);
 export const getPartners = () => listOrMock<Partner>("partners", partners);
+export const getFormations = () => listOrMock<Formation>("formations", formations);
 
 // --- Single items ---
 export const getMedicationBySlug = (slug?: string) =>
@@ -135,3 +162,36 @@ export const getEventById = (id?: string) =>
   oneOrMock<HealthEvent>("events", id, id ? eventById(id) : undefined);
 export const getPartnerBySlug = (slug?: string) =>
   oneOrMock<Partner>("partners", slug, slug ? partnerBySlug(slug) : undefined);
+export const getFormationBySlug = (slug?: string) =>
+  oneOrMock<Formation>("formations", slug, slug ? () => formationBySlug(slug) : undefined);
+export const getTenants = () => listOrMock<Tenant>("tenants", tenants);
+export const getTenantBySlug = (slug?: string) =>
+  oneOrMock<Tenant>("tenants", slug, slug ? () => tenantBySlug(slug) : undefined);
+
+/**
+ * Tenant-scoped public lists — published content tagged to a partner space
+ * (`tenantSlug == slug`). Single-field filter (auto-indexed). Empty when
+ * Firestore is absent (no mock fallback: scoping is meaningless on bundled mock).
+ */
+async function listByTenant<T>(collectionName: string, slug: string | undefined): Promise<T[]> {
+  if (!db || !slug) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, collectionName), where("tenantSlug", "==", slug), limit(CATALOG_PAGE_SIZE)),
+    );
+    return snap.docs.map((d) => d.data() as T).filter(isPublic);
+  } catch (err) {
+    reportError(err, { scope: "catalog.listByTenant", collection: collectionName });
+    return [];
+  }
+}
+
+export const getTenantCommunities = (slug?: string) => listByTenant<Community>("communities", slug);
+export const getTenantEvents = (slug?: string) => listByTenant<HealthEvent>("events", slug);
+export const getTenantArticles = (slug?: string) => listByTenant<Article>("articles", slug);
+export const getTenantFormations = (slug?: string) => listByTenant<Formation>("formations", slug);
+export const getTenantEquipmentNeeds = (slug?: string) => listByTenant<EquipmentNeed>("equipmentNeeds", slug);
+export const getTestimonials = () => listOrMock<Testimonial>("testimonials", testimonials);
+export const getTenantTestimonials = (slug?: string) => listByTenant<Testimonial>("testimonials", slug);
+export const getPartnerOffers = () => listOrMock<PartnerOffer>("partnerOffers", partnerOffers);
+export const getTenantOffers = (slug?: string) => listByTenant<PartnerOffer>("partnerOffers", slug);

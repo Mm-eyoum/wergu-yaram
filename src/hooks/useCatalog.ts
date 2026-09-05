@@ -22,7 +22,18 @@ import {
   getPartners,
   getPathologies,
   getPathologyBySlug,
+  getFormations,
+  getFormationBySlug,
+  getTenants,
+  getTenantCommunities,
+  getTenantEvents,
+  getTenantArticles,
+  getTenantFormations,
+  getTenantEquipmentNeeds,
+  getTenantTestimonials,
+  getTenantOffers,
 } from "@/services/catalog";
+import { getTenantAnalytics, fetchTenantTraffic } from "@/services/tenantAnalytics";
 
 /** Query keys for catalog data — invalidate these after admin content edits. */
 export const catalogKeys = {
@@ -42,6 +53,10 @@ export const catalogKeys = {
   event: (id: string) => ["catalog", "event", id] as const,
   partners: ["catalog", "partners"] as const,
   partner: (slug: string) => ["catalog", "partner", slug] as const,
+  formations: ["catalog", "formations"] as const,
+  formation: (slug: string) => ["catalog", "formation", slug] as const,
+  tenants: ["catalog", "tenants"] as const,
+  tenantContent: (slug: string, kind: string) => ["catalog", "tenant", slug, kind] as const,
 };
 
 // --- Lists ---
@@ -60,6 +75,30 @@ export const useEquipmentNeeds = () =>
 export const useEvents = () => useQuery({ queryKey: catalogKeys.events, queryFn: getEvents });
 export const usePartners = () =>
   useQuery({ queryKey: catalogKeys.partners, queryFn: getPartners });
+export const useFormations = () =>
+  useQuery({ queryKey: catalogKeys.formations, queryFn: getFormations });
+export const useTenants = () =>
+  useQuery({ queryKey: catalogKeys.tenants, queryFn: getTenants });
+
+// --- Tenant-scoped public lists (partner space aggregates by tenantSlug) ---
+export const useTenantCommunities = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "communities"), queryFn: () => getTenantCommunities(slug), enabled: !!slug });
+export const useTenantEvents = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "events"), queryFn: () => getTenantEvents(slug), enabled: !!slug });
+export const useTenantArticles = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "articles"), queryFn: () => getTenantArticles(slug), enabled: !!slug });
+export const useTenantFormations = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "formations"), queryFn: () => getTenantFormations(slug), enabled: !!slug });
+export const useTenantEquipmentNeeds = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "equipmentNeeds"), queryFn: () => getTenantEquipmentNeeds(slug), enabled: !!slug });
+export const useTenantTestimonials = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "testimonials"), queryFn: () => getTenantTestimonials(slug), enabled: !!slug });
+export const useTenantOffers = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "partnerOffers"), queryFn: () => getTenantOffers(slug), enabled: !!slug });
+export const useTenantAnalytics = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "analytics"), queryFn: () => getTenantAnalytics(slug!), enabled: !!slug });
+export const useTenantTraffic = (slug?: string) =>
+  useQuery({ queryKey: catalogKeys.tenantContent(slug ?? "", "traffic"), queryFn: () => fetchTenantTraffic(slug!), enabled: !!slug, staleTime: 6 * 60 * 60 * 1000 });
 
 // --- Single items (enabled only when the route param is present) ---
 export const useMedication = (slug: string | undefined) =>
@@ -108,5 +147,11 @@ export const usePartner = (slug: string | undefined) =>
   useQuery({
     queryKey: catalogKeys.partner(slug ?? ""),
     queryFn: () => getPartnerBySlug(slug),
+    enabled: !!slug,
+  });
+export const useFormation = (slug: string | undefined) =>
+  useQuery({
+    queryKey: catalogKeys.formation(slug ?? ""),
+    queryFn: () => getFormationBySlug(slug),
     enabled: !!slug,
   });

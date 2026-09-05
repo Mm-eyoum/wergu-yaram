@@ -1,7 +1,7 @@
 import { makeContentAdmin } from "@/services/admin/contentAdmin";
 import type { Article } from "@/types/domain";
 import type { ContentEntry } from "../registry";
-import { PUBLISHED, TRUST } from "./shared";
+import { PUBLISHED, TRUST, SPONSOR } from "./shared";
 
 export const articlesEntry: ContentEntry<Article> = {
   key: "articles",
@@ -21,6 +21,7 @@ export const articlesEntry: ContentEntry<Article> = {
         { name: "slug", label: "Slug", type: "slug", slugFrom: "title", required: true },
         { name: "category", label: "Catégorie", type: "text" },
         { name: "type", label: "Type", type: "select", options: [{ value: "article", label: "Article" }, { value: "video", label: "Vidéo" }] },
+        { name: "kind", label: "Nature", type: "select", options: [{ value: "standard", label: "Article standard" }, { value: "annonce", label: "Annonce / communiqué" }] },
         { name: "readingMinutes", label: "Minutes de lecture", type: "number" },
         { name: "publishedAt", label: "Date de publication", type: "text", placeholder: "2024-01-01" },
         { name: "videoDurationLabel", label: "Durée vidéo (si vidéo)", type: "text" },
@@ -56,6 +57,7 @@ export const articlesEntry: ContentEntry<Article> = {
         { name: "relatedArticles", label: "Articles liés (slugs)", type: "stringArray" },
         { name: "relatedMedications", label: "Médicaments liés (slugs)", type: "stringArray" },
       ] },
+      { title: "Sponsoring", fields: [SPONSOR] },
       { title: "Confiance", fields: [TRUST] },
     ],
   },

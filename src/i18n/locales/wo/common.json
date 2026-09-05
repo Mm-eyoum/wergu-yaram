@@ -1,0 +1,144 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "actions": {
+    "search": "",
+    "retry": "",
+    "save": "",
+    "cancel": "",
+    "share": "",
+    "close": "",
+    "seeMore": "",
+    "loading": ""
+  },
+  "states": {
+    "errorTitle": "",
+    "errorMessage": "",
+    "emptyTitle": "",
+    "emptyMessage": "",
+    "emptyMessageFilters": ""
+  },
+  "pagination": {
+    "label": "",
+    "prev": "",
+    "next": ""
+  },
+  "share": {
+    "label": "",
+    "shareOn": "",
+    "copy": "",
+    "copyShort": "",
+    "copiedShort": "",
+    "copied": "",
+    "copyError": ""
+  },
+  "language": {
+    "label": "",
+    "fr": "Français",
+    "en": "English",
+    "wo": "Wolof"
+  },
+  "nav": {
+    "portal": "",
+    "map": "",
+    "events": "",
+    "forum": "",
+    "equipment": "",
+    "partners": "",
+    "explore": ""
+  },
+  "auth": {
+    "signIn": "",
+    "signUp": ""
+  },
+  "userMenu": {
+    "dashboard": "",
+    "messages": "",
+    "admin": "",
+    "logout": "",
+    "account": "",
+    "userFallback": ""
+  },
+  "menu": {
+    "open": "",
+    "close": ""
+  },
+  "footer": {
+    "newsletterTitle": "",
+    "newsletterText": "",
+    "disclaimer": "",
+    "terms": ""
+  },
+  "contentTypes": {
+    "all": "",
+    "pathologie": "",
+    "medicament": "",
+    "symptome": "",
+    "etablissement": "",
+    "article": "",
+    "video": "",
+    "communaute": "",
+    "evenement": "",
+    "formation": "",
+    "partenaire": "",
+    "besoin": ""
+  },
+  "explore": {
+    "trigger": "",
+    "heading": "",
+    "seeAllPortal": "",
+    "desc": {
+      "pathologie": "",
+      "medicament": "",
+      "symptome": "",
+      "etablissement": "",
+      "article": "",
+      "video": "",
+      "formation": ""
+    }
+  },
+  "notFound": {
+    "seoTitle": "",
+    "title": "",
+    "text": "",
+    "home": ""
+  },
+  "breadcrumb": {
+    "home": "",
+    "aria": ""
+  },
+  "orgTypes": {
+    "healthcare_facility": "",
+    "partner": "",
+    "partner_donor": ""
+  },
+  "searchBar": {
+    "placeholder": "",
+    "aria": ""
+  },
+  "hero": {
+    "titleLead": "",
+    "titleHighlight": "",
+    "subtitle": ""
+  },
+  "shortcuts": {
+    "diabetes": "",
+    "hypertension": "",
+    "paracetamol": "",
+    "asthma": "",
+    "findFacility": "",
+    "supportNeed": ""
+  },
+  "contentTypesSingular": {
+    "pathologie": "",
+    "medicament": "",
+    "symptome": "",
+    "article": "",
+    "video": "",
+    "etablissement": "",
+    "communaute": "",
+    "evenement": "",
+    "besoin": "",
+    "partenaire": "",
+    "formation": ""
+  }
+}

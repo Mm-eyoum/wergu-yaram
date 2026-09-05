@@ -152,6 +152,74 @@ describe("public content — editor-only writes", () => {
   });
 });
 
+describe("facilities — owner edits (claimed), admin publishes", () => {
+  const ownedFacility = {
+    slug: "clinique-x",
+    name: "Clinique X",
+    ownerUid: "u1",
+    managerUids: ["u1"],
+    published: false,
+    verified: false,
+  };
+
+  it("lets the owner edit content fields while staying unpublished", async () => {
+    await seedProfile("u1", "patient_public");
+    await seedDoc("facilities/clinique-x", ownedFacility);
+    const db = testEnv.authenticatedContext("u1").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "facilities", "clinique-x"), {
+        description: "Centre de soins",
+        published: false,
+        verified: false,
+      }),
+    );
+  });
+
+  it("forbids the owner from self-publishing", async () => {
+    await seedProfile("u1", "patient_public");
+    await seedDoc("facilities/clinique-x", ownedFacility);
+    const db = testEnv.authenticatedContext("u1").firestore();
+    await assertFails(updateDoc(doc(db, "facilities", "clinique-x"), { published: true }));
+  });
+
+  it("forbids the owner from self-verifying", async () => {
+    await seedProfile("u1", "patient_public");
+    await seedDoc("facilities/clinique-x", ownedFacility);
+    const db = testEnv.authenticatedContext("u1").firestore();
+    await assertFails(updateDoc(doc(db, "facilities", "clinique-x"), { verified: true }));
+  });
+
+  it("forbids the owner from reassigning ownership", async () => {
+    await seedProfile("u1", "patient_public");
+    await seedDoc("facilities/clinique-x", ownedFacility);
+    const db = testEnv.authenticatedContext("u1").firestore();
+    await assertFails(updateDoc(doc(db, "facilities", "clinique-x"), { ownerUid: "u2" }));
+  });
+
+  it("forbids a non-owner patient from editing the facility", async () => {
+    await seedProfile("u2", "patient_public");
+    await seedDoc("facilities/clinique-x", ownedFacility);
+    const db = testEnv.authenticatedContext("u2").firestore();
+    await assertFails(updateDoc(doc(db, "facilities", "clinique-x"), { description: "hack" }));
+  });
+
+  it("forbids a patient from editing an editorial facility (no owner)", async () => {
+    await seedProfile("u1", "patient_public");
+    await seedDoc("facilities/editorial", { slug: "editorial", name: "Hôpital", published: true });
+    const db = testEnv.authenticatedContext("u1").firestore();
+    await assertFails(updateDoc(doc(db, "facilities", "editorial"), { description: "x" }));
+  });
+
+  it("lets an editor publish an owner-submitted facility", async () => {
+    await seedProfile("e1", "editor");
+    await seedDoc("facilities/clinique-x", ownedFacility);
+    const db = testEnv.authenticatedContext("e1").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "facilities", "clinique-x"), { published: true, verified: true }),
+    );
+  });
+});
+
 describe("organizations — create pending, admin validates", () => {
   it("lets an active user create a pending page they own", async () => {
     await seedProfile("u1", "patient_public");

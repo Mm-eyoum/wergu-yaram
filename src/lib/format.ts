@@ -1,15 +1,18 @@
-/** Formatting helpers — French / Senegal locale (FCFA, dates). */
-
-const FCFA = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
+/**
+ * Formatting helpers — locale-aware (suit la langue active i18n : FR/EN/Wolof).
+ * Le Wolof retombe sur fr-SN (peu supporté par Intl). La devise reste le FCFA.
+ */
+import { currentIntlLocale } from "@/i18n";
 
 /** "30 000 000 FCFA" */
 export function formatFcfa(amount: number): string {
-  return `${FCFA.format(Math.round(amount))} FCFA`;
+  const n = new Intl.NumberFormat(currentIntlLocale(), { maximumFractionDigits: 0 });
+  return `${n.format(Math.round(amount))} FCFA`;
 }
 
 /** Compact "30 M" / "1,2 k" style for stats. */
 export function formatCompact(value: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+  return new Intl.NumberFormat(currentIntlLocale(), {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
@@ -19,7 +22,7 @@ export function formatCompact(value: number): string {
 export function formatDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat("fr-FR", {
+  return new Intl.DateTimeFormat(currentIntlLocale(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -30,7 +33,7 @@ export function formatDate(iso: string): string {
 export function formatDayMonth(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat("fr-FR", {
+  return new Intl.DateTimeFormat(currentIntlLocale(), {
     day: "numeric",
     month: "short",
   }).format(date);
@@ -40,8 +43,9 @@ export function formatDayMonth(iso: string): string {
 export function dateChip(iso: string): { day: string; month: string } {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return { day: "--", month: "" };
-  const day = new Intl.DateTimeFormat("fr-FR", { day: "2-digit" }).format(date);
-  const month = new Intl.DateTimeFormat("fr-FR", { month: "short" })
+  const locale = currentIntlLocale();
+  const day = new Intl.DateTimeFormat(locale, { day: "2-digit" }).format(date);
+  const month = new Intl.DateTimeFormat(locale, { month: "short" })
     .format(date)
     .replace(".", "")
     .toUpperCase();

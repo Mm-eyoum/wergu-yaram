@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   BadgeCheck,
   Building2,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Badge } from "@/components/ui/Badge";
+import { categoryLabel, sectorLabel, levelLabel } from "@/lib/facilityTaxonomy";
 import { SectionCard } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -27,8 +29,10 @@ import { SEOHead } from "@/seo/SEOHead";
 import { facilityJsonLd, breadcrumbJsonLd } from "@/seo/jsonld";
 import { ShareButtons } from "@/components/ShareButtons";
 import { FavoriteButton } from "@/components/content/FavoriteButton";
+import { ClaimFacilityCard } from "@/components/facility/ClaimFacilityCard";
 
 export default function FacilityDetail() {
+  const { t } = useTranslation(["facility", "common"]);
   const { slug } = useParams();
   const { data: facility, isLoading } = useFacility(slug);
   const { data: equipmentNeeds = [] } = useEquipmentNeeds();
@@ -37,7 +41,7 @@ export default function FacilityDetail() {
   if (isLoading) {
     return (
       <div className="container-page py-16">
-        <LoadingState label="Chargement de l'établissement…" />
+        <LoadingState label={t("loading")} />
       </div>
     );
   }
@@ -45,8 +49,8 @@ export default function FacilityDetail() {
   if (!facility) {
     return (
       <div className="container-page py-16">
-        <SEOHead title="Établissement introuvable" noIndex />
-        <EmptyState title="Établissement introuvable" message="Cette fiche n'existe pas ou a été déplacée." />
+        <SEOHead title={t("notFoundTitle")} noIndex />
+        <EmptyState title={t("notFoundTitle")} message={t("notFoundMsg")} />
       </div>
     );
   }
@@ -65,16 +69,16 @@ export default function FacilityDetail() {
         jsonLd={[
           facilityJsonLd(facility),
           breadcrumbJsonLd([
-            { name: "Accueil", path: "/" },
-            { name: "Établissements", path: "/recherche?type=etablissement" },
+            { name: t("common:breadcrumb.home"), path: "/" },
+            { name: t("common:contentTypes.etablissement"), path: "/recherche?type=etablissement" },
             { name: facility.name, path: `/etablissements/${facility.slug}` },
           ]),
         ]}
       />
       <Breadcrumb
         items={[
-          { label: "Accueil", to: "/" },
-          { label: "Établissements", to: "/recherche?type=etablissement" },
+          { label: t("common:breadcrumb.home"), to: "/" },
+          { label: t("common:contentTypes.etablissement"), to: "/recherche?type=etablissement" },
           { label: facility.name },
         ]}
       />
@@ -87,10 +91,14 @@ export default function FacilityDetail() {
         <div className="flex flex-wrap items-start justify-between gap-4 p-6">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="navy">{facility.type}</Badge>
+              {(categoryLabel(facility.category) || facility.type) && (
+                <Badge tone="navy">{categoryLabel(facility.category) || facility.type}</Badge>
+              )}
+              {sectorLabel(facility.sector) && <Badge tone="mint">{sectorLabel(facility.sector)}</Badge>}
+              {levelLabel(facility.level) && <Badge tone="neutral">{levelLabel(facility.level)}</Badge>}
               {facility.verified && (
                 <Badge tone="green" icon={<BadgeCheck className="h-3.5 w-3.5" />}>
-                  Référencé & vérifié
+                  {t("verifiedBadge")}
                 </Badge>
               )}
             </div>
@@ -101,7 +109,7 @@ export default function FacilityDetail() {
             <div className="mt-2 inline-flex items-center gap-1.5 text-sm">
               <Star className="h-4 w-4 fill-warning text-warning" />
               <span className="font-bold text-text-primary">{facility.rating.toFixed(1)}</span>
-              <span className="text-text-secondary">({facility.reviewsCount} avis)</span>
+              <span className="text-text-secondary">{t("reviewsCount", { count: facility.reviewsCount })}</span>
             </div>
             {/* Contact chips */}
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -121,7 +129,7 @@ export default function FacilityDetail() {
                 href="#localisation"
                 className="inline-flex items-center gap-1.5 rounded-full border border-border-soft px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-brand-teal hover:text-brand-green"
               >
-                <MapPin className="h-3.5 w-3.5" /> Voir sur la carte
+                <MapPin className="h-3.5 w-3.5" /> {t("viewOnMap")}
               </a>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -145,7 +153,7 @@ export default function FacilityDetail() {
                 window.location.href = `mailto:${facility.email}`;
               }}
             >
-              <Mail className="h-4 w-4" /> Contacter
+              <Mail className="h-4 w-4" /> {t("contact")}
             </Button>
             <Button
               variant="outline"
@@ -153,7 +161,7 @@ export default function FacilityDetail() {
                 window.location.href = `tel:${facility.phone.replace(/\s/g, "")}`;
               }}
             >
-              <Phone className="h-4 w-4" /> Appeler
+              <Phone className="h-4 w-4" /> {t("call")}
             </Button>
             <DirectionsButton to={facility.coords} className="sm:w-auto" />
           </div>
@@ -162,19 +170,19 @@ export default function FacilityDetail() {
 
       {/* Quick facts */}
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Fact icon={<Stethoscope className="h-5 w-5" />} label="Spécialités" value={`${facility.specialties.length}`} />
-        <Fact icon={<Building2 className="h-5 w-5" />} label="Capacité" value={facility.capacity} />
-        <Fact icon={<Clock className="h-5 w-5" />} label="Horaires" value={facility.hours} />
-        <Fact icon={<Building2 className="h-5 w-5" />} label="Type d'établissement" value={facility.type} />
+        <Fact icon={<Stethoscope className="h-5 w-5" />} label={t("facts.specialties")} value={`${facility.specialties.length}`} />
+        <Fact icon={<Building2 className="h-5 w-5" />} label={t("facts.capacity")} value={facility.capacity} />
+        <Fact icon={<Clock className="h-5 w-5" />} label={t("facts.hours")} value={facility.hours} />
+        <Fact icon={<Building2 className="h-5 w-5" />} label={t("facts.facilityType")} value={categoryLabel(facility.category) || facility.type || "—"} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
-          <SectionCard title="À propos">
+          <SectionCard title={t("sections.about")}>
             <p className="text-sm leading-relaxed text-text-secondary">{facility.description}</p>
           </SectionCard>
 
-          <SectionCard title="Spécialités">
+          <SectionCard title={t("sections.specialties")}>
             <div className="flex flex-wrap gap-2">
               {facility.specialties.map((s) => (
                 <Badge key={s} tone="mint">
@@ -184,7 +192,7 @@ export default function FacilityDetail() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Services disponibles">
+          <SectionCard title={t("sections.services")}>
             <ul className="grid gap-2 sm:grid-cols-2">
               {facility.services.map((s) => (
                 <li key={s} className="flex items-center gap-2 text-sm text-text-secondary">
@@ -194,7 +202,7 @@ export default function FacilityDetail() {
             </ul>
           </SectionCard>
 
-          <SectionCard title="Médecins & spécialistes">
+          <SectionCard title={t("sections.doctors")}>
             <div className="grid gap-3 sm:grid-cols-2">
               {facility.doctors.map((d) => (
                 <div key={d.name} className="flex items-center gap-3 rounded-2xl border border-border-soft p-3">
@@ -208,7 +216,7 @@ export default function FacilityDetail() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Avis & recommandations">
+          <SectionCard title={t("sections.reviews")}>
             <div className="space-y-3">
               {facility.reviews.map((r) => (
                 <div key={r.author} className="rounded-2xl border border-border-soft p-4">
@@ -226,7 +234,11 @@ export default function FacilityDetail() {
         </div>
 
         <aside className="space-y-5">
-          <SectionCard title="Localisation" id="localisation" className="scroll-mt-24">
+          {facility.claimStatus !== "claimed" && !facility.ownerUid && (
+            <ClaimFacilityCard slug={facility.slug} name={facility.name} />
+          )}
+
+          <SectionCard title={t("location")} id="localisation" className="scroll-mt-24">
             <LazyMapView
               className="h-48 w-full"
               markers={[{ id: facility.slug, coords: facility.coords, title: facility.name }]}
@@ -241,7 +253,7 @@ export default function FacilityDetail() {
             </p>
             {geo.position ? (
               <p className="mt-2 text-sm font-semibold text-brand-green">
-                À {formatDistance(haversineKm(geo.position, facility.coords))} de vous
+                {t("distanceFromYou", { distance: formatDistance(haversineKm(geo.position, facility.coords)) })}
               </p>
             ) : (
               <button
@@ -249,7 +261,7 @@ export default function FacilityDetail() {
                 onClick={geo.request}
                 className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-green hover:underline"
               >
-                <LocateFixed className="h-4 w-4" /> Voir la distance depuis ma position
+                <LocateFixed className="h-4 w-4" /> {t("seeDistance")}
               </button>
             )}
             {geo.error && <p className="mt-1 text-xs text-text-secondary">{geo.error}</p>}
@@ -260,7 +272,7 @@ export default function FacilityDetail() {
 
           {needs.length > 0 && (
             <div>
-              <h2 className="mb-3 text-sm font-bold text-text-primary">Besoins d'équipement actifs</h2>
+              <h2 className="mb-3 text-sm font-bold text-text-primary">{t("activeNeeds")}</h2>
               <div className="space-y-4">
                 {needs.map((n) => n && <EquipmentNeedCard key={n.id} need={n} />)}
               </div>

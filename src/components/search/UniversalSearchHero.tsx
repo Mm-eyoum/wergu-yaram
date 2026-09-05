@@ -1,5 +1,5 @@
+import { useTranslation } from "react-i18next";
 import { CategoryPill } from "@/components/ui/CategoryPill";
-import { QUICK_SHORTCUTS } from "@/lib/constants";
 import { UniversalSearchBar } from "./UniversalSearchBar";
 
 interface UniversalSearchHeroProps {
@@ -10,23 +10,25 @@ interface UniversalSearchHeroProps {
   compact?: boolean;
 }
 
-const SHORTCUT_LINKS: Record<string, string> = {
-  Diabète: "/recherche?q=diab%C3%A8te",
-  Hypertension: "/pathologies/hypertension-arterielle",
-  Paracétamol: "/medicaments/paracetamol-500mg",
-  Asthme: "/recherche?q=asthme",
-  "Trouver une structure": "/recherche?type=etablissement",
-  "Soutenir un besoin": "/besoins",
-};
+/** Quick shortcuts: stable i18n key + destination (label translated at render). */
+const SHORTCUTS: { key: string; to: string }[] = [
+  { key: "diabetes", to: "/recherche?q=diab%C3%A8te" },
+  { key: "hypertension", to: "/pathologies/hypertension-arterielle" },
+  { key: "paracetamol", to: "/medicaments/paracetamol-500mg" },
+  { key: "asthma", to: "/recherche?q=asthme" },
+  { key: "findFacility", to: "/recherche?type=etablissement" },
+  { key: "supportNeed", to: "/besoins" },
+];
 
 /** Mint hero with the central universal search bar (home + search results). */
 export function UniversalSearchHero({
   title,
-  subtitle = "Votre moteur de recherche santé au Sénégal",
+  subtitle,
   defaultValue,
   showShortcuts = true,
   compact = false,
 }: UniversalSearchHeroProps) {
+  const { t } = useTranslation();
   return (
     <section className="bg-mint-fade">
       <div className={`container-page text-center ${compact ? "py-10" : "py-16 lg:py-20"}`}>
@@ -37,12 +39,14 @@ export function UniversalSearchHero({
         >
           {title ?? (
             <>
-              Recherchez une information santé{" "}
-              <span className="text-brand-green">fiable, simplement.</span>
+              {t("hero.titleLead")}{" "}
+              <span className="text-brand-green">{t("hero.titleHighlight")}</span>
             </>
           )}
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary sm:text-base">{subtitle}</p>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-text-secondary sm:text-base">
+          {subtitle ?? t("hero.subtitle")}
+        </p>
 
         <div className="mx-auto mt-7 max-w-2xl">
           <UniversalSearchBar size="hero" defaultValue={defaultValue} />
@@ -50,8 +54,8 @@ export function UniversalSearchHero({
 
         {showShortcuts && (
           <div className="mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-2">
-            {QUICK_SHORTCUTS.map((label) => (
-              <CategoryPill key={label} label={label} to={SHORTCUT_LINKS[label] ?? "/recherche"} />
+            {SHORTCUTS.map((s) => (
+              <CategoryPill key={s.key} label={t(`shortcuts.${s.key}`)} to={s.to} />
             ))}
           </div>
         )}

@@ -24,6 +24,8 @@ export type Permission =
   | "redirects.manage"
   | "emails.manage"
   | "audit.read"
+  | "revenue.read"
+  | "campaigns.manage"
   | "backups.manage";
 
 const EDITOR: Role[] = ["editor", "admin", "super_admin"];
@@ -47,6 +49,8 @@ const PERMISSION_ROLES: Record<Permission, Role[]> = {
   "redirects.manage": ADMIN,
   "emails.manage": ADMIN,
   "audit.read": ADMIN,
+  "revenue.read": ADMIN,
+  "campaigns.manage": ADMIN,
   "backups.manage": SUPER,
 };
 
@@ -67,7 +71,8 @@ export function canAccessAdmin(role: Role | null | undefined): boolean {
  * super_admins manage the `admin` role; admins only toggle patient ↔ editor.
  */
 export function assignableRoles(actorRole: Role | null | undefined): Role[] {
-  if (actorRole === "super_admin") return ["patient_public", "editor", "admin"];
-  if (actorRole === "admin") return ["patient_public", "editor"];
+  // `health_pro` is a patient-level badge (no admin/editor power) — admins may grant it.
+  if (actorRole === "super_admin") return ["patient_public", "health_pro", "editor", "admin"];
+  if (actorRole === "admin") return ["patient_public", "health_pro", "editor"];
   return [];
 }

@@ -1,4 +1,16 @@
-import type { SearchHit } from "@/types/domain";
+import type {
+  Article,
+  Community,
+  EquipmentNeed,
+  Facility,
+  Formation,
+  HealthEvent,
+  Medication,
+  Partner,
+  Pathology,
+  SearchHit,
+} from "@/types/domain";
+import { categoryLabel, sectorLabel } from "@/lib/facilityTaxonomy";
 import { getMockMedications } from "./medicationsLazy";
 import { pathologies } from "./mockPathologies";
 import { articles } from "./mockArticles";
@@ -7,13 +19,30 @@ import { communities } from "./mockCommunities";
 import { equipmentNeeds } from "./mockEquipmentNeeds";
 import { events } from "./mockEvents";
 import { partners } from "./mockPartners";
+import { formations } from "./mockFormations";
 
-/** Build a flat, federated index of every searchable content object. */
-export async function buildSearchIndex(): Promise<SearchHit[]> {
+/** The resolved catalog content a federated index is built from. */
+export interface SearchContent {
+  medications: Medication[];
+  pathologies: Pathology[];
+  articles: Article[];
+  facilities: Facility[];
+  communities: Community[];
+  events: HealthEvent[];
+  equipmentNeeds: EquipmentNeed[];
+  partners: Partner[];
+  formations: Formation[];
+}
+
+/**
+ * Pure builder: flatten a catalog content bundle into a federated search index.
+ * Shared by the app's client-side fallback search and the Typesense indexer, so
+ * both index identical hits whatever the source (mock or live Firestore).
+ */
+export function buildSearchHits(content: SearchContent): SearchHit[] {
   const hits: SearchHit[] = [];
 
-  const medications = await getMockMedications();
-  for (const m of medications) {
+  for (const m of content.medications) {
     hits.push({
       id: `medicament-${m.slug}`,
       type: "medicament",
@@ -37,7 +66,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
-  for (const p of pathologies) {
+  for (const p of content.pathologies) {
     hits.push({
       id: `pathologie-${p.slug}`,
       type: "pathologie",
@@ -63,7 +92,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     }
   }
 
-  for (const a of articles) {
+  for (const a of content.articles) {
     hits.push({
       id: `${a.type}-${a.slug}`,
       type: a.type,
@@ -74,6 +103,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
       verified: a.trust.verified,
       thumbnail: a.cover,
       badge: a.type === "video" ? a.videoDurationLabel : undefined,
+      tenantSlug: a.tenantSlug,
       keywords: `${a.title} ${a.category} ${a.excerpt}`.toLowerCase(),
       facets: {
         category: a.category,
@@ -84,19 +114,20 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
-  for (const f of facilities) {
+  for (const f of content.facilities) {
     hits.push({
       id: `etablissement-${f.slug}`,
       type: "etablissement",
       title: f.name,
       description: f.description,
       href: `/etablissements/${f.slug}`,
-      meta: `${f.type} · ${f.city}`,
+      meta: `${categoryLabel(f.category) || f.type || "Établissement"} · ${f.city}`,
       verified: f.verified,
       thumbnail: f.cover,
-      keywords: `${f.name} ${f.type} ${f.city} ${f.region} ${f.specialties.join(" ")}`.toLowerCase(),
+      keywords: `${f.name} ${categoryLabel(f.category) || f.type || ""} ${f.city} ${f.region} ${f.specialties.join(" ")}`.toLowerCase(),
       facets: {
-        facilityType: f.type,
+        facilityType: categoryLabel(f.category) || f.type,
+        sector: sectorLabel(f.sector),
         region: f.region,
         city: f.city,
         specialties: f.specialties,
@@ -105,7 +136,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
-  for (const c of communities) {
+  for (const c of content.communities) {
     hits.push({
       id: `communaute-${c.slug}`,
       type: "communaute",
@@ -113,6 +144,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
       description: c.description,
       href: `/communautes/${c.slug}`,
       meta: `${c.membersCount} membres`,
+      tenantSlug: c.tenantSlug,
       keywords: `${c.name} ${c.topic} ${c.description}`.toLowerCase(),
       facets: {
         topic: c.topic,
@@ -122,7 +154,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
-  for (const e of events) {
+  for (const e of content.events) {
     hits.push({
       id: `evenement-${e.id}`,
       type: "evenement",
@@ -131,6 +163,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
       href: `/evenements/${e.id}`,
       meta: `${e.city} · ${e.mode}`,
       thumbnail: e.cover,
+      tenantSlug: e.tenantSlug,
       keywords: `${e.title} ${e.summary} ${e.city}`.toLowerCase(),
       facets: {
         mode: e.mode,
@@ -140,7 +173,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
-  for (const n of equipmentNeeds) {
+  for (const n of content.equipmentNeeds) {
     hits.push({
       id: `besoin-${n.id}`,
       type: "besoin",
@@ -150,6 +183,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
       meta: `${n.facilityName} · ${n.region}`,
       thumbnail: n.cover,
       badge: n.urgency === "urgent" ? "Urgent" : undefined,
+      tenantSlug: n.tenantSlug,
       keywords: `${n.title} ${n.shortDescription} ${n.facilityName} ${n.region}`.toLowerCase(),
       facets: {
         category: n.category,
@@ -161,7 +195,7 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
-  for (const p of partners) {
+  for (const p of content.partners) {
     hits.push({
       id: `partenaire-${p.slug}`,
       type: "partenaire",
@@ -177,7 +211,42 @@ export async function buildSearchIndex(): Promise<SearchHit[]> {
     });
   }
 
+  for (const f of content.formations) {
+    hits.push({
+      id: `formation-${f.slug}`,
+      type: "formation",
+      title: f.title,
+      description: f.excerpt,
+      href: `/formations/${f.slug}`,
+      meta: f.category,
+      verified: f.trust?.verified,
+      tenantSlug: f.tenantSlug,
+      keywords: `${f.title} ${f.category ?? ""} ${f.excerpt} ${(f.audience ?? []).join(" ")}`.toLowerCase(),
+      facets: { category: f.category },
+    });
+  }
+
   return hits;
+}
+
+/** Resolve the bundled mock catalog (lazily loads the medication dataset). */
+export async function mockSearchContent(): Promise<SearchContent> {
+  return {
+    medications: await getMockMedications(),
+    pathologies,
+    articles,
+    facilities,
+    communities,
+    events,
+    equipmentNeeds,
+    partners,
+    formations,
+  };
+}
+
+/** Build the federated index from the bundled mock content. */
+export async function buildSearchIndex(): Promise<SearchHit[]> {
+  return buildSearchHits(await mockSearchContent());
 }
 
 /**

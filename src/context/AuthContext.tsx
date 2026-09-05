@@ -10,6 +10,8 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "@/services/firebase";
 import { createUserProfile, fetchUserProfile } from "@/services/users";
+import { identifyUser, resetUser } from "@/lib/posthog";
+import { setAppLang, SUPPORTED_LANGS, type AppLang } from "@/i18n";
 import type { AppUser } from "@/types/domain";
 import { AuthContext, type AuthContextValue, type RegisterInput } from "./auth";
 
@@ -24,20 +26,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
+        let profile: AppUser;
         try {
-          setUser(await fetchUserProfile(fbUser));
+          profile = await fetchUserProfile(fbUser);
         } catch {
-          setUser({
+          profile = {
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: fbUser.displayName,
             photoURL: fbUser.photoURL,
             role: "patient_public",
             status: "active",
-          });
+          };
+        }
+        setUser(profile);
+        // PostHog : associe les events à l'utilisateur (no-op si non configuré).
+        identifyUser(profile.uid, { role: profile.role, language: profile.language });
+        // i18n : applique la langue préférée du profil si elle est supportée.
+        if (profile.language && (SUPPORTED_LANGS as readonly string[]).includes(profile.language)) {
+          setAppLang(profile.language as AppLang);
         }
       } else {
         setUser(null);
+        resetUser();
       }
       setLoading(false);
     });

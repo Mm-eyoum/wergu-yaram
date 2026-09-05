@@ -12,8 +12,10 @@ import {
   startAfter,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { apiDelete, apiUpload } from "./apiClient";
+import { usesD1 } from "./dbRouting";
 import { auth, db, storage } from "./firebase";
 
 export type MediaCategory = "image" | "video" | "audio" | "document";
@@ -77,6 +79,37 @@ export async function uploadMedia(file: File, folder?: string): Promise<MediaIte
   if (category === "document" && file.type !== "application/pdf")
     throw new Error("Type de fichier non autorisé.");
   if (file.size > MAX_BYTES) throw new Error("Le fichier ne doit pas dépasser 25 Mo.");
+
+  // R2 via le Worker. Corrige au passage un bug d'orphelins : la séquence
+  // actuelle (uploadBytes → getDownloadURL → setDoc) abandonne l'objet dans le
+  // bucket si la dernière étape échoue. Côté serveur, l'objet est supprimé si
+  // l'insertion en base échoue.
+  if (usesD1("storage")) {
+    const uploaded = await apiUpload<{
+      id: string;
+      url: string;
+      storagePath: string;
+      mimeType: string;
+      size: number;
+    }>(`/api/v1/uploads/media${folder ? `?folder=${encodeURIComponent(folder)}` : ""}`, file);
+    const dims = await readImageSize(file);
+    return {
+      id: uploaded.id,
+      filenameOriginal: file.name,
+      storagePath: uploaded.storagePath,
+      url: uploaded.url,
+      mimeType: uploaded.mimeType,
+      category,
+      size: uploaded.size,
+      ...(dims ? { width: dims.width, height: dims.height } : {}),
+      folder,
+      altText: "",
+      title: "",
+      caption: "",
+      uploadedBy: actor.uid,
+      createdAt: Date.now(),
+    };
+  }
 
   const docRef = doc(collection(db, "media"));
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
@@ -174,6 +207,13 @@ export async function updateMediaMeta(
 
 /** Delete a media item: Storage object first, then the Firestore index doc. */
 export async function deleteMedia(item: Pick<MediaItem, "id" | "storagePath">): Promise<void> {
+  // Côté serveur : la ligne d'index est supprimée d'abord, l'objet ensuite —
+  // un objet resté seul est inoffensif, une ligne pointant dans le vide non.
+  if (usesD1("storage")) {
+    await apiDelete(`/api/v1/media/${encodeURIComponent(item.id)}`);
+    return;
+  }
+
   if (!storage || !db) throw new Error("Firebase non configuré.");
   try {
     await deleteObject(ref(storage, item.storagePath));

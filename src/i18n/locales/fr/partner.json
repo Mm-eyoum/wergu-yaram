@@ -1,0 +1,11 @@
+{
+  "loading": "Chargement du partenaire…",
+  "notFoundTitle": "Partenaire introuvable",
+  "notFoundMsg": "Ce partenaire n'existe pas ou a été retiré.",
+  "relatedTitle": "Autres partenaires similaires",
+  "contribution": "Contribution",
+  "ctaTitle": "Travailler avec ce partenaire ?",
+  "ctaText": "Contactez l'équipe Wergu Yaram pour une mise en relation.",
+  "ctaButton": "Demander un contact",
+  "ctaComingSoon": "La mise en relation avec les partenaires arrive bientôt."
+}

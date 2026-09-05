@@ -10,7 +10,7 @@ import { SITE_NAME } from "./config";
 
 const ENV_SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "");
 
-/** Absolute origin, e.g. "https://werguyaram.web.app" (no trailing slash). */
+/** Absolute origin, e.g. "https://werguyaram.org" (no trailing slash). */
 export function getSiteUrl(): string {
   if (ENV_SITE_URL) return ENV_SITE_URL;
   if (typeof window !== "undefined") return window.location.origin;

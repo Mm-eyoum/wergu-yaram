@@ -1,0 +1,11 @@
+{
+  "loading": "Loading the partner…",
+  "notFoundTitle": "Partner not found",
+  "notFoundMsg": "This partner doesn't exist or has been removed.",
+  "relatedTitle": "Other similar partners",
+  "contribution": "Contribution",
+  "ctaTitle": "Work with this partner?",
+  "ctaText": "Contact the Wergu Yaram team to be put in touch.",
+  "ctaButton": "Request a contact",
+  "ctaComingSoon": "Partner introductions are coming soon."
+}

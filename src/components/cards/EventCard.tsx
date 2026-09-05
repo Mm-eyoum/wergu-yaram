@@ -3,6 +3,7 @@ import { MapPin, Ticket, Users } from "lucide-react";
 import type { HealthEvent } from "@/types/domain";
 import { Badge } from "@/components/ui/Badge";
 import { dateChip } from "@/lib/format";
+import { PartnerAttribution } from "@/components/tenant/PartnerAttribution";
 import { MetaItem, cardInteractive } from "./primitives";
 
 const isFree = (price: string) => /gratuit|free|^0/i.test(price.trim());
@@ -41,6 +42,7 @@ export function EventCard({ event, compact = false }: { event: HealthEvent; comp
             </div>
           </>
         )}
+        {event.tenantSlug && <PartnerAttribution tenantSlug={event.tenantSlug} className="mt-2" />}
       </div>
     </Link>
   );

@@ -1,0 +1,19 @@
+{
+  "loading": "Chargement de la campagne…",
+  "notFoundTitle": "Besoin introuvable",
+  "notFoundMsg": "Cette campagne n'existe pas ou est terminée.",
+  "urgent": "Urgent",
+  "donors": "{{count}} donateurs",
+  "daysLeft": "{{count}} jours restants",
+  "sections": {
+    "about": "À propos du projet",
+    "impact": "Impact attendu",
+    "budget": "Répartition du budget",
+    "updates": "Mises à jour",
+    "documents": "Documents & transparence",
+    "photos": "Photos"
+  },
+  "total": "Total",
+  "beneficiary": "Établissement bénéficiaire",
+  "otherNeeds": "Autres besoins à soutenir"
+}

@@ -1,0 +1,143 @@
+{
+  "actions": {
+    "search": "Rechercher",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "share": "Partager",
+    "close": "Fermer",
+    "seeMore": "Voir plus",
+    "loading": "Chargement…"
+  },
+  "states": {
+    "errorTitle": "Une erreur est survenue",
+    "errorMessage": "Impossible de charger ces données pour le moment.",
+    "emptyTitle": "Aucun résultat",
+    "emptyMessage": "Essayez une autre recherche.",
+    "emptyMessageFilters": "Essayez d'ajuster votre recherche ou vos filtres."
+  },
+  "pagination": {
+    "label": "Pagination",
+    "prev": "Page précédente",
+    "next": "Page suivante"
+  },
+  "share": {
+    "label": "Partager",
+    "shareOn": "Partager sur {{network}}",
+    "copy": "Copier le lien",
+    "copyShort": "Copier",
+    "copiedShort": "Copié",
+    "copied": "Lien copié ✓",
+    "copyError": "Impossible de copier le lien."
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English",
+    "wo": "Wolof"
+  },
+  "nav": {
+    "portal": "Portail Santé",
+    "map": "Carte",
+    "events": "Événements",
+    "forum": "Forum",
+    "equipment": "Équipements",
+    "partners": "Partenaires",
+    "explore": "Explorer"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte"
+  },
+  "userMenu": {
+    "dashboard": "Mon tableau de bord",
+    "messages": "Messages",
+    "admin": "Administration",
+    "logout": "Se déconnecter",
+    "account": "Mon compte",
+    "userFallback": "Utilisateur"
+  },
+  "menu": {
+    "open": "Ouvrir le menu",
+    "close": "Fermer le menu"
+  },
+  "footer": {
+    "newsletterTitle": "Restez informé·e",
+    "newsletterText": "Conseils santé vérifiés, nouveaux contenus et campagnes à soutenir — une fois par mois, sans spam.",
+    "disclaimer": "Information éducative — ne remplace pas un avis médical professionnel.",
+    "terms": "Conditions d'utilisation"
+  },
+  "contentTypes": {
+    "all": "Tous",
+    "pathologie": "Pathologies",
+    "medicament": "Médicaments",
+    "symptome": "Symptômes",
+    "etablissement": "Établissements",
+    "article": "Articles",
+    "video": "Vidéos",
+    "communaute": "Communautés",
+    "evenement": "Événements",
+    "formation": "Formations",
+    "partenaire": "Partenaires",
+    "besoin": "Besoins"
+  },
+  "explore": {
+    "trigger": "Explorer",
+    "heading": "Explorer la santé",
+    "seeAllPortal": "Voir tout le portail santé",
+    "desc": {
+      "pathologie": "Comprendre une maladie",
+      "medicament": "Référentiel essentiel (DCI)",
+      "symptome": "S'orienter selon les signes",
+      "etablissement": "Structures à proximité",
+      "article": "Contenus vérifiés",
+      "video": "Formats courts",
+      "formation": "Apprendre & se certifier"
+    }
+  },
+  "notFound": {
+    "seoTitle": "Page introuvable",
+    "title": "Page introuvable",
+    "text": "La page que vous recherchez n'existe pas ou a été déplacée. Essayez une recherche santé.",
+    "home": "Retour à l'accueil"
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "aria": "Fil d'Ariane"
+  },
+  "orgTypes": {
+    "healthcare_facility": "Structure de santé",
+    "partner": "Partenaire",
+    "partner_donor": "Donateur"
+  },
+  "searchBar": {
+    "placeholder": "Rechercher un médicament, une pathologie, un symptôme, une structure…",
+    "aria": "Recherche santé universelle"
+  },
+  "hero": {
+    "titleLead": "Recherchez une information santé",
+    "titleHighlight": "fiable, simplement.",
+    "subtitle": "Votre moteur de recherche santé au Sénégal"
+  },
+  "shortcuts": {
+    "diabetes": "Diabète",
+    "hypertension": "Hypertension",
+    "paracetamol": "Paracétamol",
+    "asthma": "Asthme",
+    "findFacility": "Trouver une structure",
+    "supportNeed": "Soutenir un besoin"
+  },
+  "contentTypesSingular": {
+    "pathologie": "Pathologie",
+    "medicament": "Médicament",
+    "symptome": "Symptôme",
+    "article": "Article",
+    "video": "Vidéo",
+    "etablissement": "Établissement",
+    "communaute": "Communauté",
+    "evenement": "Événement",
+    "besoin": "Besoin",
+    "partenaire": "Partenaire",
+    "formation": "Formation"
+  }
+}

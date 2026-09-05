@@ -1,17 +1,17 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import { validateText } from "@/lib/validation";
@@ -107,27 +107,6 @@ export async function fetchUserOrganizations(uid: string): Promise<Organization[
   return snap.docs.map((d) => toOrganization(d.id, d.data()));
 }
 
-/** Live subscription to a user's pages. Returns the unsubscribe fn. */
-export function subscribeUserOrganizations(
-  uid: string,
-  onData: (orgs: Organization[]) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  if (!db) {
-    onData([]);
-    return () => {};
-  }
-  const q = query(
-    collection(db, COLLECTION),
-    where("ownerUid", "==", uid),
-    orderBy("createdAt", "desc"),
-  );
-  return onSnapshot(
-    q,
-    (snap) => onData(snap.docs.map((d) => toOrganization(d.id, d.data()))),
-    (err) => onError?.(err),
-  );
-}
 
 export async function fetchOrganization(id: string): Promise<Organization | null> {
   if (!db) return null;
@@ -207,4 +186,24 @@ export async function fetchActiveOrganizations(): Promise<Organization[]> {
 export async function setOrganizationStatus(id: string, status: OrgStatus): Promise<void> {
   if (!db) throw new Error("Firebase non configuré.");
   await updateDoc(doc(db, COLLECTION, id), { status, updatedAt: serverTimestamp() });
+}
+
+/**
+ * Admin-only: all directory listings imported from Google Places, regardless of
+ * status (active/suspended). Single-field filter (source) → no composite index;
+ * sorted client-side by name since the set is bounded by LIST_LIMIT.
+ */
+export async function fetchDirectoryOrganizations(): Promise<Organization[]> {
+  if (!db) return [];
+  const q = query(collection(db, COLLECTION), where("source", "==", "imported"), limit(LIST_LIMIT));
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => toOrganization(d.id, d.data()))
+    .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+}
+
+/** Admin-only: permanently remove an organization (rules restrict to admins/owner). */
+export async function deleteOrganization(id: string): Promise<void> {
+  if (!db) throw new Error("Firebase non configuré.");
+  await deleteDoc(doc(db, COLLECTION, id));
 }

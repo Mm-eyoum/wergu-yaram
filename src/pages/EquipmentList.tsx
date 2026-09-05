@@ -22,6 +22,8 @@ import { LazyMapView } from "@/components/map/LazyMapView";
 import type { MapMarker } from "@/components/map/MapView";
 import { MarkerPopup } from "@/components/map/MarkerPopup";
 import { useEquipmentNeeds, useFacilities } from "@/hooks/useCatalog";
+import { useSiteSettings } from "@/hooks/useSiteConfig";
+import { formatCount } from "@/services/stats";
 import { usePagination } from "@/hooks/usePagination";
 import { Pagination } from "@/components/ui/Pagination";
 import { SENEGAL_REGIONS } from "@/lib/constants";
@@ -42,6 +44,10 @@ export default function EquipmentList() {
   const [region, setRegion] = useState("Toutes les régions");
   const [urgency, setUrgency] = useState<Urgency | "all">("all");
   const [view, setView] = useState<"grid" | "map">("grid");
+
+  // Real funded-need count (from the loaded list) + admin-entered funds figure.
+  const fundedCount = equipmentNeeds.filter((n) => n.status === "finance").length;
+  const fundsRaised = useSiteSettings().data?.stats?.fundsRaised;
 
   const categories = useMemo(
     () => ["Toutes catégories", ...Array.from(new Set(equipmentNeeds.map((n) => n.category)))],
@@ -224,8 +230,10 @@ export default function EquipmentList() {
 
           <SidebarPanel title="Notre impact">
             <ul className="space-y-3 text-sm">
-              <Impact icon={<TrendingUp className="h-4 w-4" />} label="Fonds collectés" value="2,6 Mds FCFA" />
-              <Impact icon={<HandHeart className="h-4 w-4" />} label="Besoins financés" value="320+" />
+              {fundsRaised && (
+                <Impact icon={<TrendingUp className="h-4 w-4" />} label="Fonds collectés" value={fundsRaised} />
+              )}
+              <Impact icon={<HandHeart className="h-4 w-4" />} label="Besoins financés" value={formatCount(fundedCount)!} />
               <Impact icon={<ShieldCheck className="h-4 w-4" />} label="Transparence" value="100 %" />
             </ul>
           </SidebarPanel>

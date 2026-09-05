@@ -41,6 +41,38 @@ service cloud.firestore {
       return value is string && value.size() >= min && value.size() <= max;
     }
 
+    // --- Multi-tenant partner spaces ---
+    // A signed-in user who owns or co-manages the tenant `slug`. The size()>0
+    // guard means an empty/absent tenantSlug NEVER matches — global editorial
+    // content (no tenantSlug) stays editor-only.
+    function tenantData(slug) {
+      return get(/databases/$(database)/documents/tenants/$(slug)).data;
+    }
+    function isTenantManager(slug) {
+      return isSignedIn()
+        && slug is string && slug.size() > 0
+        && exists(/databases/$(database)/documents/tenants/$(slug))
+        && (request.auth.uid == tenantData(slug).get('ownerUid', '')
+            || request.auth.uid in tenantData(slug).get('managerUids', []));
+    }
+    // Tenant managers create/edit/publish their own content immediately
+    // (autonomy; moderation a posteriori). On create the doc must be tagged to a
+    // tenant they manage and owned by them; on update the tenant/owner are
+    // immutable (no cross-tenant move, no owner change). `isEditor()` is checked
+    // first by callers so admins/editors short-circuit before the tenant get().
+    function tenantCreateOk() {
+      return isTenantManager(request.resource.data.get('tenantSlug', ''))
+        && request.resource.data.get('ownerUid', '') == request.auth.uid;
+    }
+    function tenantUpdateOk() {
+      return isTenantManager(resource.data.get('tenantSlug', ''))
+        && request.resource.data.get('tenantSlug', '') == resource.data.get('tenantSlug', '')
+        && request.resource.data.get('ownerUid', '') == resource.data.get('ownerUid', '');
+    }
+    function tenantDeleteOk() {
+      return isTenantManager(resource.data.get('tenantSlug', ''));
+    }
+
     // Guards which role transitions an admin may perform on a user profile.
     function roleChangeAuthorized(uid, oldRole, newRole) {
       return
@@ -50,10 +82,11 @@ service cloud.firestore {
         || (oldRole != newRole && request.auth.uid != uid && (
              // Super_admin grants/revokes 'admin', but never 'super_admin'.
              (isSuperAdmin() && oldRole != 'super_admin' && newRole != 'super_admin')
-             // Admin only toggles patient_public ↔ editor (no privilege escalation).
+             // Admin toggles patient_public ↔ health_pro ↔ editor (no privilege escalation;
+             // health_pro is a patient-level verified badge, not an admin power).
              || (isAdmin()
-                 && oldRole in ['patient_public', 'editor']
-                 && newRole in ['patient_public', 'editor'])
+                 && oldRole in ['patient_public', 'health_pro', 'editor']
+                 && newRole in ['patient_public', 'health_pro', 'editor'])
            ));
     }
 
@@ -89,12 +122,107 @@ service cloud.firestore {
     // Writes go through the admin CMS: editors + admins may manage content.
     match /medications/{doc}    { allow read: if true; allow write: if isEditor(); }
     match /pathologies/{doc}    { allow read: if true; allow write: if isEditor(); }
-    match /articles/{doc}       { allow read: if true; allow write: if isEditor(); }
-    match /facilities/{doc}     { allow read: if true; allow write: if isEditor(); }
+    // Articles : éditorial global (editor) OU contenu d'un espace partenaire
+    // (le manager du tenant crée/édite/publie le sien — autonomie).
+    match /articles/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Facilities are THE single model for a health establishment. An editor
+    // manages editorial entries; an active user may also create one they own
+    // (source:"user"), and a claimed directory listing carries an `ownerUid`.
+    // Owners edit content fields only — they can never publish/verify, change
+    // owner/slug/source/claimStatus, nor grant themselves a paid tier
+    // (monetization fields are written by the subscription webhook). Admin
+    // validation gates public visibility.
+    match /facilities/{slug} {
+      function facOwner() { return resource.data.get('ownerUid', ''); }
+      allow read: if true;
+      allow create: if isEditor()
+        || (isActiveUser()
+            && request.resource.data.ownerUid == request.auth.uid
+            && request.resource.data.get('published', false) == false
+            && request.resource.data.get('verified', false) == false
+            && request.resource.data.get('source', '') == 'user'
+            && request.resource.data.slug == slug
+            && isText(request.resource.data.name, 2, 150));
+      allow delete: if isEditor();
+      allow update: if isEditor()
+        || (isSignedIn()
+            && facOwner() != ''
+            && request.auth.uid == facOwner()
+            && request.resource.data.get('ownerUid', '') == facOwner()
+            && request.resource.data.get('slug', '') == resource.data.get('slug', '')
+            && request.resource.data.get('published', false) == false
+            && request.resource.data.get('verified', false) == false
+            && request.resource.data.get('source', '') == resource.data.get('source', '')
+            && request.resource.data.get('claimStatus', '') == resource.data.get('claimStatus', '')
+            && request.resource.data.get('planTier', '') == resource.data.get('planTier', '')
+            && request.resource.data.get('planId', '') == resource.data.get('planId', '')
+            && request.resource.data.get('featured', false) == resource.data.get('featured', false)
+            && request.resource.data.get('subscribedUntil', '') == resource.data.get('subscribedUntil', ''));
+    }
     match /partners/{doc}       { allow read: if true; allow write: if isEditor(); }
-    match /events/{doc}         { allow read: if true; allow write: if isEditor(); }
-    match /equipmentNeeds/{doc} { allow read: if true; allow write: if isEditor(); }
-
+    // Événements : éditorial global OU contenu d'un espace partenaire.
+    match /events/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Besoins d'équipement : comme ci-dessus, mais les montants/état de collecte
+    // sont écrits EXCLUSIVEMENT par le webhook de don — un manager ne peut ni
+    // créer un besoin déjà « financé » ni fausser les compteurs.
+    match /equipmentNeeds/{doc} {
+      allow read: if true;
+      allow create: if isEditor()
+        || (tenantCreateOk()
+            && request.resource.data.get('raisedAmount', 0) == 0
+            && request.resource.data.get('donorsCount', 0) == 0
+            && request.resource.data.get('status', 'en_cours') == 'en_cours');
+      allow update: if isEditor()
+        || (tenantUpdateOk()
+            && request.resource.data.get('raisedAmount', 0) == resource.data.get('raisedAmount', 0)
+            && request.resource.data.get('donorsCount', 0) == resource.data.get('donorsCount', 0)
+            && request.resource.data.get('status', 'en_cours') == resource.data.get('status', 'en_cours'));
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Formations : éditorial global OU contenu d'un espace partenaire.
+    match /formations/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Témoignages : éditorial global OU contenu d'un espace partenaire.
+    match /testimonials/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Offres partenaires (services / produits / appels à projets).
+    match /partnerOffers/{doc} {
+      allow read: if true;
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
+    }
+    // Espaces partenaires multi-tenant : créés/supprimés par un admin ; un manager
+    // édite la marque/le profil mais jamais ownerUid ni campaignQuota (anti-abus).
+    match /tenants/{slug} {
+      allow read: if true;
+      allow create: if isEditor();
+      allow update: if isEditor()
+        || (isTenantManager(slug)
+            && request.resource.data.get('ownerUid', '') == resource.data.get('ownerUid', '')
+            && request.resource.data.get('campaignQuota', {}) == resource.data.get('campaignQuota', {})
+            && request.resource.data.get('verified', false) == resource.data.get('verified', false)
+            && request.resource.data.get('apiKey', '') == resource.data.get('apiKey', ''));
+      allow delete: if isEditor();
+    }
     // --- Site configuration (navigation menus, global settings) ---
     // Public read (header/footer render from it); admin-only writes.
     match /settings/{doc} { allow read: if true; allow write: if isAdmin(); }
@@ -125,11 +253,17 @@ service cloud.firestore {
           && request.resource.data.type == 'healthcare_facility'
           && isText(request.resource.data.name, 2, 150));
 
-      // Managers update profile fields but cannot self-validate or change owner.
+      // Managers update profile fields but cannot self-validate, change owner,
+      // nor grant themselves a paid tier — the monetization fields are written
+      // exclusively by the subscription webhook (Admin SDK).
       allow update: if
         (isManager()
           && request.resource.data.status == resource.data.status
-          && request.resource.data.ownerUid == resource.data.ownerUid)
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.get('planTier', '') == resource.data.get('planTier', '')
+          && request.resource.data.get('planId', '') == resource.data.get('planId', '')
+          && request.resource.data.get('featured', false) == resource.data.get('featured', false)
+          && request.resource.data.get('subscribedUntil', '') == resource.data.get('subscribedUntil', ''))
         || isAdmin();
 
       allow delete: if request.auth.uid == resource.data.ownerUid || isAdmin();
@@ -148,10 +282,25 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // --- Demandes de vérification « professionnel de santé » ---
+    // Un utilisateur actif crée SA demande ; un admin lit la file et décide.
+    // Le passage au rôle `health_pro` se fait via la règle /users/{uid}
+    // (roleChangeAuthorized, admin-only) lors de l'approbation.
+    match /professionalVerificationRequests/{request} {
+      allow read: if isAdmin() || isOwner(resource.data.requesterUid);
+      allow create: if isActiveUser()
+        && request.resource.data.requesterUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && isText(request.resource.data.justification, 1, 5000);
+      allow update, delete: if isAdmin();
+    }
+
     // --- Community content (active members can contribute) ---
     match /communities/{community} {
       allow read: if true;
-      allow write: if isEditor();
+      allow create: if isEditor() || tenantCreateOk();
+      allow update: if isEditor() || tenantUpdateOk();
+      allow delete: if isEditor() || tenantDeleteOk();
 
       match /posts/{post} {
         allow read: if true;
@@ -231,6 +380,119 @@ service cloud.firestore {
     match /donations/{donation} {
       allow read: if isAdmin() || isOwner(resource.data.donorUid);
       allow write: if false;
+    }
+
+    // --- Monétisation (scaffold) ---
+    // Plans tarifaires : grille publique (lecture), édition admin uniquement.
+    match /pricingPlans/{plan} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Registre transactionnel et reporting : écrits EXCLUSIVEMENT par les Cloud
+    // Functions (Admin SDK, qui contourne ces règles). Le payeur lit ses propres
+    // transactions ; les admins lisent tout pour la réconciliation/le dashboard.
+    match /transactions/{txn} {
+      allow read: if isAdmin() || isOwner(resource.data.payerUid);
+      allow write: if false;
+    }
+    match /commissions/{commission} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /revenueReports/{report} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Abonnements : l'abonné lit le sien, l'owner de la page lit celui de sa page,
+    // les admins lisent tout. Écriture serveur uniquement (Cloud Functions).
+    match /subscriptions/{sub} {
+      allow read: if isAdmin() || isOwner(resource.data.subscriberUid);
+      allow write: if false;
+    }
+
+    // Charges en attente (abonnements/billets) : créées et finalisées par les
+    // Cloud Functions uniquement ; le payeur peut relire la sienne.
+    match /pendingCharges/{charge} {
+      allow read: if isAdmin() || isOwner(resource.data.payerUid);
+      allow write: if false;
+    }
+
+    // Billets d'événement : l'acheteur lit les siens ; écriture Functions only.
+    match /tickets/{ticket} {
+      allow read: if isAdmin() || isOwner(resource.data.buyerUid);
+      allow write: if false;
+    }
+
+    // Campagnes de prévention (SMS/WhatsApp) : créées/envoyées par la Function
+    // sendCampaign (Admin SDK) ; lecture admin OU manager du tenant émetteur.
+    match /campaigns/{campaign} {
+      allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
+      allow write: if false;
+    }
+
+    // Prospects (lead capture) déposés depuis un espace partenaire : création
+    // ouverte (visiteur) mais shape validée + bornée ; lecture par l'admin OU le
+    // manager du tenant destinataire ; jamais de mutation/suppression client.
+    match /leads/{lead} {
+      allow create: if isText(request.resource.data.tenantSlug, 1, 80)
+        && isText(request.resource.data.name, 1, 120)
+        && isText(request.resource.data.email, 5, 200)
+        && request.resource.data.kind in ['contact', 'demo', 'candidature']
+        && isText(request.resource.data.get('message', ''), 0, 3000)
+        && isText(request.resource.data.get('phone', ''), 0, 40);
+      allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
+      allow update, delete: if false;
+    }
+
+    // Adhésions à un espace partenaire (mutuelles…) : création ouverte mais shape
+    // validée ; lecture par l'admin, le manager du tenant, ou l'adhérent (uid) ;
+    // statut/cotisation gérés par le manager.
+    match /memberships/{m} {
+      allow create: if isText(request.resource.data.tenantSlug, 1, 80)
+        && isText(request.resource.data.name, 1, 120)
+        && isText(request.resource.data.email, 5, 200)
+        && isText(request.resource.data.get('phone', ''), 0, 40);
+      allow read: if isAdmin()
+        || isTenantManager(resource.data.get('tenantSlug', ''))
+        || isOwner(resource.data.get('uid', ''));
+      allow update, delete: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
+    }
+
+    // --- Analytiques par espace partenaire ---
+    // Journalisation interne des vues : création ouverte mais shape validée +
+    // bornée, SANS PII (pas d'uid/IP) ; jamais relue côté client (agrégée par une
+    // Cloud Function) ni mutée.
+    match /pageViews/{view} {
+      allow create: if isText(request.resource.data.tenantSlug, 1, 80)
+        && isText(request.resource.data.path, 1, 300)
+        && isText(request.resource.data.day, 10, 10);
+      allow read, update, delete: if false;
+    }
+    // Rapports agrégés par tenant (vues, trafic GA4, revenu) : écrits par les
+    // Cloud Functions ; lus par l'admin OU le manager du tenant.
+    match /tenantReports/{report} {
+      allow read: if isAdmin() || isTenantManager(resource.data.get('tenantSlug', ''));
+      allow write: if false;
+    }
+
+    // --- Capture d'engagement public (newsletter, intention de don) ---
+    // Création ouverte (visiteur non connecté) mais shape validée et taille
+    // bornée ; lecture réservée aux admins ; jamais de mutation/suppression.
+    match /newsletterSignups/{signup} {
+      allow read: if isAdmin();
+      allow create: if isText(request.resource.data.email, 5, 200)
+        && isText(request.resource.data.get('source', ''), 0, 60);
+      allow update, delete: if false;
+    }
+    match /supportIntents/{intent} {
+      allow read: if isAdmin();
+      allow create: if isText(request.resource.data.email, 5, 200)
+        && request.resource.data.monthlyAmount is number
+        && request.resource.data.monthlyAmount >= 500
+        && request.resource.data.monthlyAmount <= 5000000;
+      allow update, delete: if false;
     }
 
     // Deny everything else by default.

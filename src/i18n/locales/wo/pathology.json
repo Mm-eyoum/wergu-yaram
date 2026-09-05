@@ -1,0 +1,23 @@
+{
+  "_comment": "TODO Wolof — valeurs vides = repli automatique sur le français (fr). À compléter par un traducteur.",
+  "loading": "",
+  "notFoundTitle": "",
+  "notFoundMsg": "",
+  "sections": {
+    "understanding": "",
+    "symptoms": "",
+    "causes": "",
+    "prevention": "",
+    "treatments": "",
+    "whenToConsult": "",
+    "faq": ""
+  },
+  "sidebar": {
+    "meds": "",
+    "noMeds": "",
+    "articles": "",
+    "nearby": "",
+    "community": ""
+  },
+  "verifiedUpdated": ""
+}

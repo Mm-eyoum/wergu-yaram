@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import { UniversalSearchHero } from "@/components/search/UniversalSearchHero";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
@@ -32,17 +33,8 @@ import { orgToSearchHit } from "@/lib/orgAdapters";
 import { SaveSearchButton } from "@/components/content/SaveSearchButton";
 import { SEOHead } from "@/seo/SEOHead";
 
-const RELIABILITY_GROUP: FilterGroup = {
-  key: "reliability",
-  title: "Fiabilité",
-  kind: "radio",
-  options: [
-    { value: "all", label: "Tous les contenus" },
-    { value: "verified", label: "Contenus vérifiés" },
-  ],
-};
-
 export default function SearchResults() {
+  const { t } = useTranslation(["search", "common"]);
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
   const typeParam = (params.get("type") as SearchScope | null) ?? "all";
@@ -64,7 +56,7 @@ export default function SearchResults() {
     return activeOrgs.map(orgToSearchHit).filter((h) => {
       if (terms.length === 0) return true;
       const hay = `${h.title} ${h.keywords} ${h.meta ?? ""}`.toLowerCase();
-      return terms.every((t) => hay.includes(t));
+      return terms.every((term) => hay.includes(term));
     });
   }, [activeOrgs, query]);
 
@@ -119,17 +111,27 @@ export default function SearchResults() {
   // Filter sidebar groups: reliability (when relevant) + per-type facets + sort.
   const filterGroups = useMemo<FilterGroup[]>(() => {
     const groups: FilterGroup[] = [];
-    if (config.reliability) groups.push(RELIABILITY_GROUP);
-    groups.push(...buildFacetGroups(typeParam, typeHits, selected));
+    if (config.reliability) {
+      groups.push({
+        key: "reliability",
+        title: t("reliability"),
+        kind: "radio",
+        options: [
+          { value: "all", label: t("reliabilityAll") },
+          { value: "verified", label: t("reliabilityVerified") },
+        ],
+      });
+    }
+    groups.push(...buildFacetGroups(typeParam, typeHits, selected, t));
     const sorts = config.sorts.filter((s) => s.value !== "distance" || geo.position);
     groups.push({
       key: "sort",
-      title: "Trier par",
+      title: t("sortBy"),
       kind: "radio",
-      options: sorts.map((s) => ({ value: s.value, label: s.label })),
+      options: sorts.map((s) => ({ value: s.value, label: t(s.label) })),
     });
     return groups;
-  }, [config, typeParam, typeHits, selected, geo.position]);
+  }, [config, typeParam, typeHits, selected, geo.position, t]);
 
   function changeFilter(key: string, value: string | string[]) {
     const next = new URLSearchParams(params);
@@ -195,7 +197,7 @@ export default function SearchResults() {
             popup: (
               <MarkerPopup
                 title={o.name}
-                subtitle={o.claimStatus === "claimed" ? o.city : "Non réclamée"}
+                subtitle={o.claimStatus === "claimed" ? o.city : t("unclaimed")}
                 distanceLabel={dist(o.coords)}
                 href={hit.href}
                 coords={o.coords}
@@ -206,12 +208,12 @@ export default function SearchResults() {
       }
       return [];
     });
-  }, [isFacilityTab, facilities, activeOrgs, results, geo.position]);
+  }, [isFacilityTab, facilities, activeOrgs, results, geo.position, t]);
 
-  const tabs: TabItem[] = SEARCH_TYPES.map((t) => ({
-    key: t.key,
-    label: t.label,
-    count: counts[t.key] ?? 0,
+  const tabs: TabItem[] = SEARCH_TYPES.map((st) => ({
+    key: st.key,
+    label: t(`common:contentTypes.${st.key}`),
+    count: counts[st.key] ?? 0,
   }));
 
   function changeType(key: string) {
@@ -244,29 +246,21 @@ export default function SearchResults() {
   return (
     <>
       <SEOHead
-        title={query ? `Recherche : ${query}` : "Recherche santé"}
-        description="Recherchez médicaments, pathologies, articles, établissements et communautés sur Wergu Yaram."
+        title={query ? t("seoTitleQuery", { query }) : t("seoTitle")}
+        description={t("seoDesc")}
         noIndex
       />
       <UniversalSearchHero
         compact
         showShortcuts={false}
         defaultValue={query}
-        subtitle="Affinez votre recherche par type de contenu et par fiabilité."
+        subtitle={t("heroSubtitle")}
       />
 
       <div className="container-page py-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-text-secondary">
-            {query ? (
-              <>
-                <span className="font-semibold text-text-primary">{results.length}</span> résultat
-                {results.length > 1 ? "s" : ""} pour «{" "}
-                <span className="font-semibold text-text-primary">{query}</span> »
-              </>
-            ) : (
-              <>Parcourez l'ensemble des contenus de la plateforme.</>
-            )}
+            {query ? t("resultsCount", { count: results.length, query }) : t("browseAll")}
           </p>
           <div className="flex items-center gap-2">
             {isFacilityTab && (
@@ -277,7 +271,7 @@ export default function SearchResults() {
                   aria-pressed={view === "grid"}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold ${view === "grid" ? "bg-brand-green text-white" : "bg-white text-text-secondary hover:text-brand-green"}`}
                 >
-                  <LayoutGrid className="h-4 w-4" /> Liste
+                  <LayoutGrid className="h-4 w-4" /> {t("viewList")}
                 </button>
                 <button
                   type="button"
@@ -285,7 +279,7 @@ export default function SearchResults() {
                   aria-pressed={view === "map"}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold ${view === "map" ? "bg-brand-green text-white" : "bg-white text-text-secondary hover:text-brand-green"}`}
                 >
-                  <MapIcon className="h-4 w-4" /> Carte
+                  <MapIcon className="h-4 w-4" /> {t("viewMap")}
                 </button>
               </div>
             )}
@@ -305,20 +299,20 @@ export default function SearchResults() {
 
           <div>
             {isLoading ? (
-              <LoadingState label="Recherche en cours…" />
+              <LoadingState label={t("loading")} />
             ) : results.length === 0 ? (
               <EmptyState
-                title="Aucun résultat"
-                message="Essayez un autre mot-clé, élargissez la catégorie ou réinitialisez vos filtres."
+                title={t("emptyTitle")}
+                message={t("emptyMessage")}
                 action={
                   <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                     {hasActiveFilters && (
                       <Button variant="outline" size="sm" onClick={resetSearch}>
-                        Réinitialiser les filtres
+                        {t("resetFilters")}
                       </Button>
                     )}
                     <ButtonLink to="/recherche?type=pathologie" size="sm">
-                      Explorer les pathologies
+                      {t("explorePathologies")}
                     </ButtonLink>
                   </div>
                 }
@@ -335,8 +329,8 @@ export default function SearchResults() {
                 />
               ) : (
                 <EmptyState
-                  title="Localisation indisponible"
-                  message="Ces structures n'ont pas encore de coordonnées géographiques."
+                  title={t("mapUnavailableTitle")}
+                  message={t("mapUnavailableMessage")}
                 />
               )
             ) : (

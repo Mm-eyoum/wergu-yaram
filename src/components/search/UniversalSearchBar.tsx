@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { SearchHit } from "@/types/domain";
@@ -14,27 +15,15 @@ interface UniversalSearchBarProps {
   placeholder?: string;
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  pathologie: "Pathologie",
-  medicament: "Médicament",
-  symptome: "Symptôme",
-  article: "Article",
-  video: "Vidéo",
-  etablissement: "Établissement",
-  communaute: "Communauté",
-  evenement: "Événement",
-  besoin: "Besoin",
-  partenaire: "Partenaire",
-};
-
 /** The universal health search — routes to /recherche and offers live suggestions. */
 export function UniversalSearchBar({
   size = "hero",
   defaultValue = "",
   className,
   autoFocus,
-  placeholder = "Rechercher un médicament, une pathologie, un symptôme, une structure…",
+  placeholder,
 }: UniversalSearchBarProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState(defaultValue);
   const [open, setOpen] = useState(false);
@@ -105,8 +94,8 @@ export function UniversalSearchBar({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          aria-label="Recherche santé universelle"
+          placeholder={placeholder ?? t("searchBar.placeholder")}
+          aria-label={t("searchBar.aria")}
           className={cn(
             "min-w-0 flex-1 bg-transparent text-text-primary placeholder:text-text-secondary/70 focus:outline-none",
             isHero ? "h-11 text-base" : "h-9 text-sm",
@@ -120,7 +109,7 @@ export function UniversalSearchBar({
             isHero ? "h-11 px-6 text-sm" : "h-9 px-4 text-sm",
           )}
         >
-          Rechercher
+          {t("actions.search")}
         </button>
       </div>
 
@@ -146,7 +135,7 @@ export function UniversalSearchBar({
                   <span className="block truncate text-xs text-text-secondary">{s.description}</span>
                 </span>
                 <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-text-secondary">
-                  {TYPE_LABEL[s.type]}
+                  {t(`contentTypesSingular.${s.type}`)}
                 </span>
               </button>
             </li>

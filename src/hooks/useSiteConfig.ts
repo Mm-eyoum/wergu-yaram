@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import {
   DEFAULT_APPEARANCE,
   DEFAULT_EMAILS,
+  DEFAULT_LEGAL,
   DEFAULT_MENUS,
   DEFAULT_REDIRECTS,
   DEFAULT_SETTINGS,
   getAppearance,
   getEmailConfig,
+  getLegalConfig,
   getMenuConfig,
   getRedirects,
   getSiteSettings,
@@ -18,6 +20,7 @@ export const siteConfigKeys = {
   appearance: ["siteConfig", "appearance"] as const,
   redirects: ["siteConfig", "redirects"] as const,
   emails: ["siteConfig", "emails"] as const,
+  legal: ["siteConfig", "legal"] as const,
 };
 
 // Long stale time: config rarely changes and is read on every page (header/footer).
@@ -65,5 +68,14 @@ export const useEmailConfig = () =>
     queryKey: siteConfigKeys.emails,
     queryFn: getEmailConfig,
     placeholderData: DEFAULT_EMAILS,
+    staleTime: STALE,
+  });
+
+/** Legal text (terms & privacy), with bundled defaults as placeholder. */
+export const useLegalConfig = () =>
+  useQuery({
+    queryKey: siteConfigKeys.legal,
+    queryFn: getLegalConfig,
+    placeholderData: DEFAULT_LEGAL,
     staleTime: STALE,
   });

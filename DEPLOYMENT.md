@@ -3,8 +3,9 @@
 Checklist de mise en production. Projet Firebase par défaut : `werguyaram` (`.firebaserc`).
 
 > **Lancement actuel** : tout SAUF les dons en ligne (CTA neutralisé « Bientôt »,
-> `VITE_BICTORYS_ENABLED=false`). Domaine de lancement : `https://werguyaram.web.app`
-> (domaine custom ultérieur). Branche de prod : `main` (= la plateforme React ;
+> `VITE_BICTORYS_ENABLED=false`). Domaine principal : `https://werguyaram.org`
+> (servi via Cloudflare → origine Firebase Hosting `werguyaram.web.app`).
+> Branche de prod : `main` (= la plateforme React ;
 > l'ancien site vitrine Astro est conservé sur la branche `website-astro`).
 
 ## 1. Pré-requis
@@ -14,7 +15,7 @@ Checklist de mise en production. Projet Firebase par défaut : `werguyaram` (`.f
 - `.env.local` rempli avec les clés `VITE_FIREBASE_*` (jamais commité — voir `.env.example`)
 - `VITE_APPCHECK_SITE_KEY` : clé reCAPTCHA v3 (console Firebase > App Check). Sans elle, App Check
   est désactivé côté client — l'app fonctionne mais sans la protection anti-abus.
-- `VITE_SITE_URL=https://werguyaram.web.app` (origine canonique pour OG/sitemap)
+- `VITE_SITE_URL=https://werguyaram.org` (origine canonique pour OG/sitemap)
 - `VITE_PLACES_API_KEY` (import annuaire admin) ; secret serveur `PLACES_API_KEY` côté Functions
 - Java 11+ **uniquement pour les tests de règles via l'émulateur** (l'app n'en a pas besoin)
 
@@ -106,3 +107,45 @@ obligatoire). Renseigner les secrets requis (voir l'en-tête du workflow : `FIRE
   **Reste à fournir** : le compte marchand + les secrets (`BICTORYS_API_KEY`, `BICTORYS_WEBHOOK_SECRET`)
   et la confirmation des noms de champs/événements de l'API Bictorys. D'ici là, le CTA de don reste
   honnête (pas de fausse promesse « 100 % reversé »).
+
+---
+
+## Bascule des lectures vers Cloudflare D1 (2026-09-05)
+
+Les **lectures** de 13 collections (contenu éditorial public, `settings`,
+`facilities`, `tenants`) sont servies par l'API Workers depuis D1. **Toutes les
+écritures restent sur Firestore**, qui demeure la source de vérité.
+
+```
+VITE_API_BASE_URL=https://werguyaram-api.eyone.workers.dev
+VITE_DB_ROUTES=settings:d1-read,medications:d1-read,…   (cf. .env.example)
+```
+
+### Déploiement
+
+`firebase-tools` s'authentifie avec sa propre session ; sur les postes où elle
+appartient à un compte sans accès au projet, utiliser :
+
+```bash
+npm run deploy:hosting:adc     # via l'API REST + identifiants ADC gcloud
+```
+
+### Retour arrière
+
+| Portée | Action | Délai |
+|---|---|---|
+| Un poste | `__wyRoutes(null)` en console, puis rechargement | immédiat |
+| Toute la production | vider `VITE_DB_ROUTES`, `npm run deploy:hosting:adc` | ~10 min (prerender) |
+
+Le retour arrière est **sans perte** : en mode `d1-read`, aucune écriture n'a été
+faite ailleurs que dans Firestore.
+
+### Resynchronisation de D1
+
+Les écritures continuant d'aller dans Firestore, D1 dérive. Resynchroniser après
+toute session d'édition dans le CMS :
+
+```bash
+npm run migrate:export && npm run migrate:load && npm run migrate:verify
+# puis appliquer les fichiers .migration/sql/ sur D1
+```

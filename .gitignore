@@ -20,3 +20,19 @@ coverage
 # Firebase / build caches
 .firebase
 *.tsbuildinfo
+
+# Generated search index (built from Firestore at deploy via `npm run search:index`)
+/public/search-index.json
+
+# Local service-account key (GA4 tenant analytics) — never commit
+ga4-reader-key.json
+# Stray empty export artifact
+/export
+
+# Cloudflare Workers — état local de wrangler (base D1 --local, caches)
+.wrangler
+workers/**/.wrangler
+
+# Export de migration — contient des DONNÉES PERSONNELLES de production
+# (emails, uids, profils). Ne jamais committer.
+.migration
