@@ -1,85 +1,96 @@
-# Réparer `chat.werguyaram.org` (Chatwoot) après le passage à Cloudflare
+# `chat.werguyaram.org` — diagnostic corrigé (2026-09-05)
 
-## Cause
+> **Ce document remplace une version antérieure dont le diagnostic était faux.**
+> Elle affirmait que Chatwoot était auto-hébergé et que le sous-domaine avait
+> perdu son enregistrement DNS lors du passage à Cloudflare. Suivre cette
+> procédure aurait créé un enregistrement `chat` pointant vers le vide.
 
-Depuis la migration du DNS de `werguyaram.org` vers **Cloudflare**, il n'y a plus
-d'enregistrement **explicite** pour le sous-domaine `chat`. Il est donc capté par
-le **wildcard `*.werguyaram.org`** (proxifié) et le **Worker** le détourne (404)
-au lieu de l'envoyer au **serveur Chatwoot**. Résultat : Chatwoot est injoignable.
+## Ce qui se passe réellement
 
-Diagnostic actuel : `dig chat.werguyaram.org` renvoie des IP Cloudflare
-(`104.21.x` / `172.67.x`) et `https://chat.werguyaram.org` → **404**.
+`https://chat.werguyaram.org` renvoie 404 — mais **rien n'a jamais été servi à
+cette adresse**. Trois éléments le prouvent :
 
-## Principe du correctif
+1. **La configuration déployée pointe ailleurs.** `functions/.env.werguyaram`
+   contient `CHATWOOT_BASE_URL=https://app.chatwoot.com` : le support tourne sur
+   **Chatwoot Cloud** (compte `171761`), pas sur une instance auto-hébergée.
+2. **Aucun certificat n'a jamais été émis** pour `chat.werguyaram.org` dans les
+   journaux de transparence (`crt.sh`). Les seuls sous-domaines certifiés sont
+   `demo`, `senhealth`, `www` et les hôtes mail IONOS. Un serveur Chatwoot
+   auto-hébergé aurait nécessairement laissé une trace Let's Encrypt.
+3. **Le compte Cloudflare ne contient aucun tunnel** ni aucune ressource pouvant
+   servir ce sous-domaine.
 
-Recréer un enregistrement DNS **explicite** `chat` → l'**origine réelle** du
-serveur Chatwoot, en **DNS-only (nuage gris)**. Un enregistrement spécifique a la
-**priorité sur le wildcard**, et le **gris** fait que ni le proxy ni le Worker
-Cloudflare ne s'exécutent dessus → `chat` repart directement vers Chatwoot.
+Le 404 vient du Worker `werguyaram-wildcard`, qui traite `chat` comme un
+sous-domaine **réservé** (`infra/cloudflare/wildcard-worker.js`) — un garde-fou
+posé en prévision d'un auto-hébergement qui n'a jamais eu lieu.
 
----
+## Le vrai problème : le widget est désactivé en production
 
-## Étape 1 — Retrouver l'origine du serveur Chatwoot
+`src/services/chatwoot.ts` :
 
-L'adresse vers laquelle `chat.werguyaram.org` pointait **avant** Cloudflare.
-Selon ton hébergement Chatwoot :
-
-- **VPS auto-hébergé** (DigitalOcean, Hetzner, OVH, Contabo…) → une **IP** (ex. `91.x.x.x`) → enregistrement **A**.
-- **PaaS** (Railway, Render, Fly.io, Heroku…) → un **hostname** (ex. `xxx.up.railway.app`) → enregistrement **CNAME**.
-- **Chatwoot Cloud** (app.chatwoot.com) → tu utiliserais leur domaine ; le custom domain se configure côté Chatwoot.
-
-Où la trouver :
-1. **Cloudflare → DNS** : un enregistrement `chat` a peut-être été importé lors du scan. S'il existe déjà :
-   - s'il pointe vers la bonne origine → il suffit de le passer en **DNS-only (gris)** → **fin** (saute à l'étape 3).
-   - s'il est en **proxifié (orange)** → clique l'icône nuage pour le passer en **gris**.
-2. **Dashboard de ton hébergeur Chatwoot** → l'IP publique / le hostname du service.
-3. **Historique DNS chez IONOS** (ancien gestionnaire) → la valeur de l'ancien enregistrement `chat`.
-4. **Toi-même** : un éventuel fichier d'install / docker-compose / note de déploiement de Chatwoot.
-
-## Étape 2 — Créer / corriger l'enregistrement dans Cloudflare
-
-Cloudflare → **DNS → Add record** (ou éditer l'existant) :
-
-| Champ | Valeur |
-|---|---|
-| Type | **A** (si IP) ou **CNAME** (si hostname) |
-| Name | `chat` |
-| Content/Target | l'**origine** trouvée à l'étape 1 |
-| Proxy status | **DNS only (nuage GRIS)** — important |
-| TTL | Auto |
-
-## Étape 3 — SSL de l'origine
-
-En DNS-only, le navigateur se connecte **directement** au serveur Chatwoot : ce
-serveur doit présenter un **certificat valide pour `chat.werguyaram.org`**.
-- Avant Cloudflare, ça marchait en direct → l'origine a déjà son **Let's Encrypt**
-  (Chatwoot/Nginx). Le greyage le réutilise → rien à faire.
-- Si le certificat avait expiré pendant la coupure, **renouvelle-le** sur le serveur
-  (`certbot renew`, ou la procédure de ton install) une fois le DNS repointé.
-
-## Étape 4 — Vérifier
-
-Après propagation (quelques minutes) :
-```bash
-dig +short chat.werguyaram.org          # doit renvoyer l'IP/origine Chatwoot, PAS 104.21.x / 172.67.x
-curl -sS -I https://chat.werguyaram.org  # doit répondre (page de login Chatwoot), cert valide
+```ts
+export const isChatwootConfigured = Boolean(baseUrl && websiteToken);
 ```
 
-## Étape 5 — Reconnecter Chatwoot à la plateforme (si besoin)
+Le bundle servi par `werguyaram.org` ne contient **aucune** URL Chatwoot : ni
+`VITE_CHATWOOT_BASE_URL` ni `VITE_CHATWOOT_WEBSITE_TOKEN` n'étaient définis au
+build. La bulle de support ne s'affiche donc pas, et ce **indépendamment** du DNS.
 
-Le DNS réparé, vérifie l'intégration côté app (cf. `docs/guide-mise-en-service.md`) :
-- **Widget web** : `CHATWOOT_BASE_URL` (functions) / config client pointent sur `https://chat.werguyaram.org`.
-- **Webhook Chatwoot → app** : dans Chatwoot, l'URL du webhook reste
-  `https://werguyaram.org/api/chatwootWebhook?token=<CHATWOOT_WEBHOOK_TOKEN>`
-  (servie par Firebase Hosting — indépendante de `chat`).
-- **Identité vérifiée (HMAC)** : inchangée.
+## Correctif
 
----
+### 1. CSP — fait
 
-## Alternative (si tu veux garder `chat` derrière Cloudflare)
+`firebase.json` autorisait `chat.werguyaram.org`, qui ne sert rien. Remplacé par
+`app.chatwoot.com` dans `script-src`, `style-src`, `font-src`, `connect-src`
+et `frame-src`. Sans cela, activer le widget l'aurait fait bloquer par la CSP.
 
-Possible mais plus complexe : laisser `chat` **proxifié (orange)** et **exclure**
-le sous-domaine du Worker (ajouter une route Worker `chat.werguyaram.org/*` vide,
-ou une règle d'exclusion), avec **SSL/TLS mode `Full`** et un cert valide à
-l'origine. Le **DNS-only reste recommandé** : plus simple, et Chatwoot gère déjà
-son propre HTTPS/WebSocket.
+*(Corrigé au passage : `https://overpass-api.de` manquait dans `connect-src`
+alors que c'est la source **par défaut** de l'import d'annuaire — un bug actif.)*
+
+### 2. Activer le widget — nécessite une valeur du tableau de bord Chatwoot
+
+Dans **Chatwoot Cloud → Settings → Inboxes → (inbox Website) → Configuration**,
+relever le **website token**, puis l'ajouter aux secrets de déploiement GitHub :
+
+```
+VITE_CHATWOOT_BASE_URL      = https://app.chatwoot.com
+VITE_CHATWOOT_WEBSITE_TOKEN = <website token de l'inbox>
+```
+
+Puis redéployer l'hébergement (`npm run deploy:hosting`).
+
+### 3. ⚠️ Incohérence à vérifier côté serveur
+
+`functions/.env.werguyaram` contient :
+
+```
+CHATWOOT_ACCOUNT_ID        = 171761
+CHATWOOT_WEBSITE_INBOX_ID  = 171761
+```
+
+Ces deux identifiants sont **identiques**, ce qui est très improbable : dans
+Chatwoot, l'id de compte et l'id d'inbox appartiennent à des espaces de
+numérotation distincts. `pushToChatwoot()` utilise `CHATWOOT_WEBSITE_INBOX_ID`
+pour créer les conversations ; s'il est faux, les inscriptions newsletter et les
+intentions de soutien échouent silencieusement (la fonction journalise et
+renvoie `false` sans lever). À vérifier dans le tableau de bord.
+
+### 4. Le sous-domaine `chat`
+
+Il n'a plus de raison d'être. Deux options :
+
+- **Le retirer** de `RESERVED_SUBS` (`src/lib/tenantHost.ts`) et de la liste
+  `RESERVED` du Worker — il redeviendrait alors un slug de tenant possible.
+- **Le conserver réservé** et, si l'on tient à l'adresse, le faire rediriger
+  (301) vers `https://app.chatwoot.com` — pratique pour les agents qui l'ont mise
+  en favori. À intégrer au Worker qui servira le site au Lot 1, plutôt que de
+  modifier le proxy wildcard actuel pour si peu.
+
+**Décision par défaut retenue : conserver la réservation**, et traiter la
+redirection au Lot 1 avec le reste de la bascule d'hébergement.
+
+## Webhook — non concerné
+
+L'URL du webhook Chatwoot → application reste
+`https://werguyaram.org/api/chatwootWebhook?token=<CHATWOOT_WEBHOOK_TOKEN>` :
+elle est servie par l'hébergement principal et n'a jamais dépendu de `chat`.

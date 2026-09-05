@@ -16,6 +16,11 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
+    // Le défaut de 5 s est trop juste : catalog.test.ts charge le jeu LME
+    // (848 Ko, 560 médicaments) via un import dynamique et consomme ~4 s à lui
+    // seul. Il passait de justesse en isolation et échouait sous charge
+    // parallèle — une suite intermittente, pas un vrai échec.
+    testTimeout: 20000,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["node_modules", "dist", "e2e"],
     css: false,

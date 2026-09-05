@@ -28,3 +28,11 @@ coverage
 ga4-reader-key.json
 # Stray empty export artifact
 /export
+
+# Cloudflare Workers — état local de wrangler (base D1 --local, caches)
+.wrangler
+workers/**/.wrangler
+
+# Export de migration — contient des DONNÉES PERSONNELLES de production
+# (emails, uids, profils). Ne jamais committer.
+.migration

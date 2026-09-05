@@ -107,3 +107,45 @@ obligatoire). Renseigner les secrets requis (voir l'en-tête du workflow : `FIRE
   **Reste à fournir** : le compte marchand + les secrets (`BICTORYS_API_KEY`, `BICTORYS_WEBHOOK_SECRET`)
   et la confirmation des noms de champs/événements de l'API Bictorys. D'ici là, le CTA de don reste
   honnête (pas de fausse promesse « 100 % reversé »).
+
+---
+
+## Bascule des lectures vers Cloudflare D1 (2026-09-05)
+
+Les **lectures** de 13 collections (contenu éditorial public, `settings`,
+`facilities`, `tenants`) sont servies par l'API Workers depuis D1. **Toutes les
+écritures restent sur Firestore**, qui demeure la source de vérité.
+
+```
+VITE_API_BASE_URL=https://werguyaram-api.eyone.workers.dev
+VITE_DB_ROUTES=settings:d1-read,medications:d1-read,…   (cf. .env.example)
+```
+
+### Déploiement
+
+`firebase-tools` s'authentifie avec sa propre session ; sur les postes où elle
+appartient à un compte sans accès au projet, utiliser :
+
+```bash
+npm run deploy:hosting:adc     # via l'API REST + identifiants ADC gcloud
+```
+
+### Retour arrière
+
+| Portée | Action | Délai |
+|---|---|---|
+| Un poste | `__wyRoutes(null)` en console, puis rechargement | immédiat |
+| Toute la production | vider `VITE_DB_ROUTES`, `npm run deploy:hosting:adc` | ~10 min (prerender) |
+
+Le retour arrière est **sans perte** : en mode `d1-read`, aucune écriture n'a été
+faite ailleurs que dans Firestore.
+
+### Resynchronisation de D1
+
+Les écritures continuant d'aller dans Firestore, D1 dérive. Resynchroniser après
+toute session d'édition dans le CMS :
+
+```bash
+npm run migrate:export && npm run migrate:load && npm run migrate:verify
+# puis appliquer les fichiers .migration/sql/ sur D1
+```

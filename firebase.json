@@ -7,65 +7,155 @@
     "rules": "storage.rules"
   },
   "emulators": {
-    "auth": { "port": 9099 },
-    "functions": { "port": 5001 },
-    "firestore": { "port": 8085 },
-    "storage": { "port": 9199 },
-    "ui": { "enabled": true },
+    "auth": {
+      "port": 9099
+    },
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8085
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true
+    },
     "singleProjectMode": true
   },
   "functions": {
     "source": "functions",
     "codebase": "default",
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ]
   },
   "hosting": {
+    "site": "werguyaram",
     "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "cleanUrls": true,
     "trailingSlash": false,
     "rewrites": [
-      { "source": "/api/searchPlaces", "function": { "functionId": "searchPlaces", "region": "us-central1" } },
-      { "source": "/api/importPlaces", "function": { "functionId": "importPlaces", "region": "us-central1" } },
-      { "source": "/api/chatwootWebhook", "function": { "functionId": "chatwootWebhook", "region": "us-central1" } },
-      { "source": "/api/bictorysWebhook", "function": { "functionId": "bictorysWebhook", "region": "us-central1" } },
-      { "source": "/api/impact", "function": { "functionId": "impactApi", "region": "us-central1" } },
-      { "source": "**", "destination": "/index.html" }
+      {
+        "source": "/api/searchPlaces",
+        "function": {
+          "functionId": "searchPlaces",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/api/importPlaces",
+        "function": {
+          "functionId": "importPlaces",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/api/chatwootWebhook",
+        "function": {
+          "functionId": "chatwootWebhook",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/api/bictorysWebhook",
+        "function": {
+          "functionId": "bictorysWebhook",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/api/impact",
+        "function": {
+          "functionId": "impactApi",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ],
     "headers": [
       {
         "source": "**",
         "headers": [
-          { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-          { "key": "X-Frame-Options", "value": "DENY" },
-          { "key": "X-Content-Type-Options", "value": "nosniff" },
-          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-          { "key": "Permissions-Policy", "value": "geolocation=(self), camera=(), microphone=(), payment=()" },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains; preload"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "geolocation=(self), camera=(), microphone=(), payment=()"
+          },
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://www.gstatic.com https://apis.google.com https://chat.werguyaram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://chat.werguyaram.org; font-src 'self' data: https://fonts.gstatic.com https://chat.werguyaram.org; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.cloudfunctions.net wss://*.firebaseio.com https://*.firebaseio.com https://*.firebaseapp.com https://*.typesense.net https://photon.komoot.io https://nominatim.openstreetmap.org https://chat.werguyaram.org wss://chat.werguyaram.org; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://chat.werguyaram.org; form-action 'self' https:"
+            "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://www.gstatic.com https://apis.google.com https://app.chatwoot.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://app.chatwoot.com; font-src 'self' data: https://fonts.gstatic.com https://app.chatwoot.com; img-src 'self' data: blob: https:; connect-src 'self' https://werguyaram-api.eyone.workers.dev wss://werguyaram-api.eyone.workers.dev https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.cloudfunctions.net wss://*.firebaseio.com https://*.firebaseio.com https://*.firebaseapp.com https://*.typesense.net https://photon.komoot.io https://nominatim.openstreetmap.org https://overpass-api.de https://app.chatwoot.com wss://app.chatwoot.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://app.chatwoot.com; form-action 'self' https:"
           }
         ]
       },
       {
         "source": "**/*.@(js|css|woff2)",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       },
       {
         "source": "**/*.@(png|jpg|jpeg|gif|webp|svg|ico)",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800"
+          }
+        ]
       },
       {
         "source": "**/*.html",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
       },
       {
         "source": "/sitemap.xml",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
       },
       {
         "source": "/search-index.json",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
       }
     ]
   }

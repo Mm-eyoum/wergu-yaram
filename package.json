@@ -15,10 +15,17 @@
     "doc:bmc": "node scripts/bmc-pptx.mjs",
     "docs": "npm run doc:pdf && npm run doc:bmc",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --force",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:authz": "npm --prefix workers/api run test",
+    "api:typecheck": "npm --prefix workers/api run typecheck",
+    "d1:migrate:local": "npm --prefix workers/api run db:migrate:local",
+    "migrate:export": "node --env-file=.env.local --import tsx scripts/migrate/export-firestore.ts",
+    "migrate:load": "node --env-file=.env.local --import tsx scripts/migrate/load-d1.ts",
+    "migrate:verify": "node --env-file=.env.local --import tsx scripts/migrate/verify.ts",
+    "migrate:storage": "node --env-file=.env.local --import tsx scripts/migrate/copy-storage-to-r2.ts",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "e2e": "playwright test",
     "e2e:emu": "bash scripts/e2e-emulators.sh",
@@ -30,7 +37,8 @@
     "typesense:index": "node --env-file=.env.local --import tsx scripts/typesense-index.ts",
     "search:index": "node --env-file=.env.local --import tsx scripts/build-search-index.ts",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
-    "deploy:hosting": "npm run search:index && npm run build:seo && firebase deploy --only hosting"
+    "deploy:hosting": "npm run search:index && npm run build:seo && firebase deploy --only hosting",
+    "deploy:hosting:adc": "node --env-file=.env.local scripts/deploy/firebase-hosting.mjs"
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",

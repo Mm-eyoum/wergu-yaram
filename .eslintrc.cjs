@@ -5,7 +5,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
   ],
-  ignorePatterns: ["dist", ".eslintrc.cjs", "vite.config.ts", "functions", "coverage"],
+  ignorePatterns: ["dist", ".eslintrc.cjs", "vite.config.ts", "functions", "workers", "coverage"],
   parser: "@typescript-eslint/parser",
   plugins: ["react-refresh", "react-hooks"],
   rules: {

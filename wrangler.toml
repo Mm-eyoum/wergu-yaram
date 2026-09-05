@@ -15,3 +15,10 @@ compatibility_date = "2024-11-01"
 routes = [
   { pattern = "*.werguyaram.org/*", zone_name = "werguyaram.org" },
 ]
+
+# Sert `media.werguyaram.org` depuis R2. Le bucket a bien un domaine
+# personnalisé, mais la route ci-dessus s'exécute AVANT l'origine et le
+# détournerait vers le SPA ; le binding évite ce détour et un saut réseau.
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "werguyaram-media"
