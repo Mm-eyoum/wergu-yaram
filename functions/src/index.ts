@@ -15,6 +15,7 @@
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { defineSecret, defineString } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
@@ -23,6 +24,22 @@ import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Request } from "firebase-functions/v2/https";
 import type { Response } from "express";
+
+/**
+ * Plafond de montée en charge — garde-fou de coût.
+ *
+ * Le projet est facturé à l'usage (plan Blaze) et Google Cloud n'offre AUCUN
+ * plafond de dépense dur. Sans `maxInstances`, chaque fonction v2 peut monter à
+ * 100 instances concurrentes ; quatre endpoints HTTP sont publics
+ * (`bictorysWebhook`, `chatwootWebhook`, `impactApi`, `searchPlaces`), donc une
+ * boucle de retry ou un abus se traduit directement en facture.
+ *
+ * 5 instances suffisent très largement au trafic actuel (agrégats quotidiens,
+ * webhooks de faible volume, API impact mise en cache 5 min). En cas de pic
+ * légitime, les requêtes patientent au lieu de coûter. À relever sciemment si
+ * une fonction sature — pas par défaut.
+ */
+setGlobalOptions({ maxInstances: 5 });
 
 initializeApp();
 const db = getFirestore();
