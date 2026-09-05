@@ -6,7 +6,9 @@
  * defaults, so the public header/footer always render — even before anything
  * is configured, or when Firebase is absent.
  */
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "@/services/db";
+import { apiGet } from "./apiClient";
+import { readsFromD1 } from "./dbRouting";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 import { PRIMARY_NAV } from "@/lib/constants";
@@ -107,12 +109,38 @@ export const DEFAULT_MENUS: MenuConfig = {
   ],
 };
 
+/**
+ * Les 6 sections de configuration en UN seul appel, mémoïsé pour la durée de vie
+ * de la page.
+ *
+ * Avant : 6 `getDoc` séparés sur `settings/*`, tous au démarrage. Depuis Dakar,
+ * chaque aller-retour coûte 150-250 ms — c'était près d'une seconde de latence
+ * avant le premier rendu. Le gain de la migration vient de là bien plus que du
+ * placement de la base.
+ */
+let settingsPromise: Promise<Record<string, unknown>> | null = null;
+function fetchAllSettings(): Promise<Record<string, unknown>> {
+  settingsPromise ??= apiGet<Record<string, unknown>>("/api/v1/settings").catch((err) => {
+    reportError(err, { scope: "siteConfig.fetchAllSettings" });
+    settingsPromise = null; // un échec ne doit pas être mis en cache
+    return {};
+  });
+  return settingsPromise;
+}
+
 async function readDoc<T>(id: string, fallback: T): Promise<T> {
+  if (readsFromD1("settings")) {
+    const all = await fetchAllSettings();
+    const section = all[id];
+    // Fusion superficielle sur les défauts : une clé nouvellement ajoutée au
+    // type ne vaut jamais `undefined` faute d'être encore en base.
+    return section ? { ...fallback, ...(section as Partial<T>) } : fallback;
+  }
+
   if (!db) return fallback;
   try {
     const snap = await getDoc(doc(db, "settings", id));
     if (!snap.exists()) return fallback;
-    // Shallow-merge over defaults so newly-added keys are never undefined.
     return { ...fallback, ...(snap.data() as Partial<T>) };
   } catch (err) {
     reportError(err, { scope: "siteConfig.readDoc", id });

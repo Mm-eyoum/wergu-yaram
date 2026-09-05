@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-} from "firebase/firestore";
+} from "@/services/db";
 import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import type { AppUser, Role, UserStatus } from "@/types/domain";

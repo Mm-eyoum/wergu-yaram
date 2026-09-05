@@ -12,6 +12,8 @@
  * en session non vérifiée (dégradation propre).
  */
 import { httpsCallable } from "firebase/functions";
+import { apiGet } from "./apiClient";
+import { readsFromD1 } from "./dbRouting";
 import { functions } from "./firebase";
 
 const baseUrl = import.meta.env.VITE_CHATWOOT_BASE_URL as string | undefined;
@@ -84,6 +86,19 @@ export async function openChatwoot(): Promise<void> {
  * runs an unverified session).
  */
 export async function fetchChatwootIdentity(): Promise<string | undefined> {
+  if (readsFromD1("support")) {
+    try {
+      const { identifierHash } = await apiGet<{ identifierHash?: string }>(
+        "/api/v1/support/identity",
+      );
+      return identifierHash;
+    } catch {
+      // Dégradation conservée : sans identité vérifiée, le widget ouvre une
+      // session non vérifiée plutôt que de ne pas s'ouvrir du tout.
+      return undefined;
+    }
+  }
+
   if (!functions) return undefined;
   try {
     const callable = httpsCallable<unknown, { identifierHash?: string }>(functions, "chatwootIdentity");

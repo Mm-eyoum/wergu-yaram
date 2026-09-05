@@ -11,7 +11,7 @@ import {
   limit,
   orderBy,
   query,
-} from "firebase/firestore";
+} from "@/services/db";
 import { db } from "@/services/firebase";
 import { logAudit } from "@/services/audit";
 import { timeAgoLabel } from "@/services/communityPosts";

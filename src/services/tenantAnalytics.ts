@@ -12,8 +12,10 @@ import {
   query,
   where,
   type Query,
-} from "firebase/firestore";
+} from "@/services/db";
 import { httpsCallable } from "firebase/functions";
+import { apiGet } from "./apiClient";
+import { readsFromD1 } from "./dbRouting";
 import { db, functions } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 
@@ -28,7 +30,21 @@ export interface TenantTraffic {
 }
 
 export async function fetchTenantTraffic(slug: string): Promise<TenantTraffic> {
-  if (!functions || !slug) return { configured: false };
+  if (!slug) return { configured: false };
+
+  if (readsFromD1("tenantReports")) {
+    try {
+      // Servi par l'agrégation interne (page_view_daily), plus par l'API GA4
+      // Data : celle-ci exigeait une bibliothèque gRPC/Node inutilisable sur
+      // Workers et une clé de compte de service Google embarquée.
+      return await apiGet<TenantTraffic>(`/api/v1/tenants/${encodeURIComponent(slug)}/traffic`);
+    } catch (err) {
+      reportError(err, { scope: "tenantAnalytics.fetchTenantTraffic" });
+      return { configured: false };
+    }
+  }
+
+  if (!functions) return { configured: false };
   try {
     const callable = httpsCallable<{ tenantSlug: string }, TenantTraffic>(functions, "getTenantTraffic");
     const { data } = await callable({ tenantSlug: slug });

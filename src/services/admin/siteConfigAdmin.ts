@@ -1,5 +1,5 @@
 /** Admin writes for site settings, menus, appearance, redirects, emails. */
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "@/services/db";
 import { db } from "@/services/firebase";
 import { logAudit } from "@/services/audit";
 import type {

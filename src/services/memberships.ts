@@ -13,7 +13,9 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
+import { apiPost } from "./apiClient";
+import { usesD1 } from "./dbRouting";
 import { db } from "./firebase";
 import type { Membership, MembershipStatus } from "@/types/domain";
 
@@ -26,6 +28,10 @@ export interface MembershipInput {
 }
 
 export async function joinTenant(input: MembershipInput): Promise<void> {
+  if (usesD1("memberships")) {
+    await apiPost("/api/v1/forms/membership", input);
+    return;
+  }
   if (!db) throw new Error("Firebase non configuré.");
   await addDoc(collection(db, "memberships"), {
     tenantSlug: input.tenantSlug,

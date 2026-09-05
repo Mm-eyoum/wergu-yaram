@@ -7,7 +7,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
-} from "firebase/firestore";
+} from "@/services/db";
 import { db } from "./firebase";
 import type { ContentType } from "@/types/domain";
 

@@ -18,7 +18,7 @@ import {
   setDoc,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { db } from "@/services/firebase";
 import { logAudit } from "@/services/audit";
 

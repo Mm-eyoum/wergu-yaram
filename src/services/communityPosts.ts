@@ -6,7 +6,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
-} from "firebase/firestore";
+} from "@/services/db";
 import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import { validateText } from "@/lib/validation";

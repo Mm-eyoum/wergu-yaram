@@ -6,13 +6,12 @@ import {
   getDoc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import { validateText } from "@/lib/validation";
@@ -108,27 +107,6 @@ export async function fetchUserOrganizations(uid: string): Promise<Organization[
   return snap.docs.map((d) => toOrganization(d.id, d.data()));
 }
 
-/** Live subscription to a user's pages. Returns the unsubscribe fn. */
-export function subscribeUserOrganizations(
-  uid: string,
-  onData: (orgs: Organization[]) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  if (!db) {
-    onData([]);
-    return () => {};
-  }
-  const q = query(
-    collection(db, COLLECTION),
-    where("ownerUid", "==", uid),
-    orderBy("createdAt", "desc"),
-  );
-  return onSnapshot(
-    q,
-    (snap) => onData(snap.docs.map((d) => toOrganization(d.id, d.data()))),
-    (err) => onError?.(err),
-  );
-}
 
 export async function fetchOrganization(id: string): Promise<Organization | null> {
   if (!db) return null;

@@ -18,7 +18,7 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { db } from "./firebase";
 import { logAudit } from "./audit";
 import { validateText } from "@/lib/validation";

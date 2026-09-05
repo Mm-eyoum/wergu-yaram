@@ -17,7 +17,7 @@ import {
   updateDoc,
   doc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { db } from "./firebase";
 import { setUserRole } from "./users";
 import { logAudit } from "./audit";

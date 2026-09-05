@@ -14,7 +14,7 @@ import {
   serverTimestamp,
   setDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { db } from "./firebase";
 import { logAudit } from "./audit";
 import { uniqueFacilitySlug } from "./facilities";

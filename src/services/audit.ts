@@ -7,7 +7,7 @@ import {
   query,
   serverTimestamp,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { auth, db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 

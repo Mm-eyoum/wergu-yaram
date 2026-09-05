@@ -7,7 +7,7 @@
  * cannot be counted (total verified info, funds mobilised) are NOT here — they
  * live in editable `settings/site.stats` (see SiteSettings).
  */
-import { collection, getCountFromServer, query, where, type Query } from "firebase/firestore";
+import { collection, getCountFromServer, query, where, type Query } from "@/services/db";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 

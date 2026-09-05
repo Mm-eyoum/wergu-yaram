@@ -18,7 +18,7 @@ import {
   setDoc,
   updateDoc,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import type { User } from "firebase/auth";
 import { db } from "./firebase";
 import { slugify } from "@/lib/slug";

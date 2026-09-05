@@ -5,8 +5,10 @@
  * qui résout l'audience consentante et dispatche via Chatwoot). Le client ne
  * fait que composer/lancer et lire l'historique.
  */
-import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "@/services/db";
 import { httpsCallable } from "firebase/functions";
+import { apiPost } from "./apiClient";
+import { usesD1 } from "./dbRouting";
 import { db, functions } from "./firebase";
 import type { Campaign, CampaignChannel } from "@/types/domain";
 
@@ -51,6 +53,19 @@ export async function fetchTenantCampaigns(tenantSlug: string, max = 100): Promi
 export async function startCampaign(
   input: CampaignInput,
 ): Promise<{ campaignId: string; targeted: number; sent: number }> {
+  if (usesD1("campaigns")) {
+    // ⚠️ SEUL changement de contrat des fonctions portées : le serveur renvoie
+    // `queued`, pas `sent`. La diffusion passe désormais par une file — la
+    // version Cloud Function enchaînait jusqu'à 1 500 appels Chatwoot
+    // séquentiels avec le client bloqué. Le compteur réel (`sentCount`) est
+    // incrémenté par le consommateur ; l'UI rafraîchit la ligne de campagne.
+    const res = await apiPost<{ campaignId: string; targeted: number; queued: number }>(
+      "/api/v1/campaigns",
+      input,
+    );
+    return { campaignId: res.campaignId, targeted: res.targeted, sent: res.queued };
+  }
+
   if (!functions) throw new Error("Backend non configuré.");
   const callable = httpsCallable<CampaignInput, { campaignId: string; targeted: number; sent: number }>(
     functions,

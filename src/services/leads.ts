@@ -3,7 +3,9 @@
  * request from a partner's space → `leads` collection; the tenant manager (and
  * admins) read their own leads. Writes are open-but-validated by the rules.
  */
-import { addDoc, collection, getDocs, limit, query, serverTimestamp, where } from "firebase/firestore";
+import { addDoc, collection, getDocs, limit, query, serverTimestamp, where } from "@/services/db";
+import { apiPost } from "./apiClient";
+import { usesD1 } from "./dbRouting";
 import { db } from "./firebase";
 import type { Lead, LeadKind } from "@/types/domain";
 
@@ -17,6 +19,10 @@ export interface LeadInput {
 }
 
 export async function submitLead(input: LeadInput): Promise<void> {
+  if (usesD1("leads")) {
+    await apiPost("/api/v1/forms/lead", input);
+    return;
+  }
   if (!db) throw new Error("Firebase non configuré.");
   await addDoc(collection(db, "leads"), {
     tenantSlug: input.tenantSlug,

@@ -12,7 +12,7 @@
  * `slug` (or `id` for events/equipment needs), so single-item lookups can
  * read the document directly.
  */
-import { collection, doc, getDoc, getDocs, limit, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, query, where } from "@/services/db";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
 import type {

@@ -15,8 +15,10 @@ import {
   orderBy,
   query,
   where,
-} from "firebase/firestore";
+} from "@/services/db";
 import { httpsCallable } from "firebase/functions";
+import { apiPost } from "./apiClient";
+import { usesD1 } from "./dbRouting";
 import { db, functions } from "./firebase";
 import { isPaymentsEnabled, type DonationPaymentType } from "./payments";
 import type {
@@ -85,7 +87,19 @@ export async function startPlanCheckout(input: {
   facilitySlug?: string;
   paymentType?: DonationPaymentType;
 }): Promise<void> {
-  if (!isPaymentsEnabled || !functions) throw new Error("Paiement non activé.");
+  if (!isPaymentsEnabled) throw new Error("Paiement non activé.");
+
+  if (usesD1("subscriptions")) {
+    const res = await apiPost<{ checkoutUrl: string; pendingId: string }>(
+      "/api/v1/billing/plan-checkout",
+      input,
+    );
+    if (!res?.checkoutUrl) throw new Error("URL de paiement indisponible.");
+    window.location.href = res.checkoutUrl;
+    return;
+  }
+
+  if (!functions) throw new Error("Paiement non activé.");
   const callable = httpsCallable<typeof input, { checkoutUrl: string; pendingId: string }>(
     functions,
     "createPlanCharge",
@@ -104,7 +118,19 @@ export async function startTicketCheckout(input: {
   quantity: number;
   paymentType?: DonationPaymentType;
 }): Promise<void> {
-  if (!isPaymentsEnabled || !functions) throw new Error("Paiement non activé.");
+  if (!isPaymentsEnabled) throw new Error("Paiement non activé.");
+
+  if (usesD1("tickets")) {
+    const res = await apiPost<{ checkoutUrl: string; pendingId: string }>(
+      "/api/v1/billing/ticket-checkout",
+      input,
+    );
+    if (!res?.checkoutUrl) throw new Error("URL de paiement indisponible.");
+    window.location.href = res.checkoutUrl;
+    return;
+  }
+
+  if (!functions) throw new Error("Paiement non activé.");
   const callable = httpsCallable<typeof input, { checkoutUrl: string; pendingId: string }>(
     functions,
     "createTicketCharge",

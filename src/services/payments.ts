@@ -7,6 +7,8 @@
  * VITE_BICTORYS_ENABLED=true (sinon l'UI affiche « bientôt disponible »).
  */
 import { httpsCallable } from "firebase/functions";
+import { apiPost } from "./apiClient";
+import { usesD1 } from "./dbRouting";
 import { app, functions } from "./firebase";
 
 export const isPaymentsEnabled = import.meta.env.VITE_BICTORYS_ENABLED === "true";
@@ -27,9 +29,19 @@ interface ChargeInput {
  * should fall back to a "coming soon" message.
  */
 export async function startDonation(input: ChargeInput): Promise<void> {
-  if (!isPaymentsEnabled || !app || !functions) {
-    throw new Error("Paiement non activé.");
+  if (!isPaymentsEnabled) throw new Error("Paiement non activé.");
+
+  if (usesD1("donations")) {
+    const data = await apiPost<{ checkoutUrl: string; donationId: string }>(
+      "/api/v1/donations/charge",
+      input,
+    );
+    if (!data?.checkoutUrl) throw new Error("URL de paiement indisponible.");
+    window.location.href = data.checkoutUrl;
+    return;
   }
+
+  if (!app || !functions) throw new Error("Paiement non activé.");
   const callable = httpsCallable<ChargeInput, { checkoutUrl: string; donationId: string }>(
     functions,
     "createBictorysCharge",
