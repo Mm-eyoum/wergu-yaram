@@ -16,7 +16,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildSearchHits, mockSearchContent } from "../src/data/mockSearchIndex";
-import { getDb, fetchLiveCatalog, fetchActiveOrgHits } from "./lib/firestoreCatalog";
+import { getCatalogHandle as getDb, fetchLiveCatalog, fetchActiveOrgHits } from "./lib/catalogSource";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "public", "search-index.json");
 

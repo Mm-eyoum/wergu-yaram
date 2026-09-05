@@ -15,7 +15,7 @@
  */
 import Typesense from "typesense";
 import { buildSearchHits, mockSearchContent } from "../src/data/mockSearchIndex";
-import { getDb, fetchLiveCatalog, fetchActiveOrgHits } from "./lib/firestoreCatalog";
+import { getCatalogHandle as getDb, fetchLiveCatalog, fetchActiveOrgHits } from "./lib/catalogSource";
 
 const COLLECTION = process.env.TYPESENSE_COLLECTION ?? "content";
 
