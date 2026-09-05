@@ -10,6 +10,8 @@
 import { collection, getCountFromServer, query, where, type Query } from "@/services/db";
 import { db } from "./firebase";
 import { reportError } from "@/lib/errorReporting";
+import { apiGet } from "./apiClient";
+import { readsFromD1 } from "./dbRouting";
 
 export interface PlatformStats {
   /** Active healthcare-facility pages (validated directory listings). */
@@ -41,6 +43,17 @@ function sum(a: number | null, b: number | null): number | null {
 }
 
 export async function getPlatformStats(): Promise<PlatformStats> {
+  if (readsFromD1("facilities")) {
+    try {
+      // Un agrégat en UNE requête, servi publiquement et mis en cache au edge —
+      // contre cinq `getCountFromServer` dont un échouait systématiquement.
+      return await apiGet<PlatformStats>("/api/v1/stats/platform");
+    } catch (err) {
+      reportError(err, { scope: "stats.getPlatformStats" });
+      return EMPTY;
+    }
+  }
+
   if (!db) return EMPTY;
   const orgs = collection(db, "organizations");
   const active = (type: string) =>

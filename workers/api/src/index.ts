@@ -22,6 +22,7 @@ import {
   updateDocument,
 } from "./routes/collections";
 import { exportCatalog, getSettings } from "./routes/catalog";
+import { platformStats } from "./routes/stats";
 import { deleteMedia, uploadAvatar, uploadMedia } from "./routes/uploads";
 import {
   recordPageView,
@@ -168,6 +169,7 @@ async function route(
   }
 
   if (url.pathname === "/api/v1/settings") return getSettings(env);
+  if (url.pathname === "/api/v1/stats/platform") return platformStats(env);
   if (url.pathname === "/api/v1/export/catalog") return exportCatalog(env);
   // --- Fonctions serveur portées (ex-Cloud Functions) ----------------------
   // Les chemins /api/* sont préservés AU BIT PRÈS : aucun tiers déjà intégré
